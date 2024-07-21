@@ -21,11 +21,6 @@ type SetlistFMRepository struct {
 	parser setlist.SetlistParser
 }
 
-// TODO: abstract client
-// TODO: check more pages until setlist found
-// raise error if no 200
-// hierarchy: HTTP multipage
-
 func (s *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
 
 	request, err := s.createSetlistRequest(artist)
@@ -42,6 +37,13 @@ func (s *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error
 		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		errorMsg := fmt.Sprintf(
+			"Setlistfm returned %d when trying to retrieve setlists for %s", response.StatusCode, artist,
+		)
+		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
+	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
