@@ -1,0 +1,36 @@
+# Overview
+
+The purpose of this application is to facilitate the creation of customized playlist using Golang.
+
+For now, we only provide a script to add a single artist setlist to an existing playlist, though we want to add new functionalities in the near future.
+
+# Development setup
+
+Make sure Go 1.22+ and Make are available in your system.
+
+# Testing the code
+
+You can run the tests by typing:
+
+```shell
+make run-tests
+```
+
+# Running the code
+
+We can add recent setlist songs from an artist using the `main` file:
+
+```shell
+go \
+    run cmd/main.go \
+    --spotify-token <spotify_token> \
+    --setlistfm-key <setlistfm_key> \
+    --artist <artist> \
+    --playlist-id <playlist_id>
+```
+
+Here we explain the parameters to provide and how to get them:
+- `<spotify_token>`: Spotify token to access the API. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
+- `<setlistfm_key>`: Setlistfm API token to obtain the latest setlist for an artist. It can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
+- `<artist>`: The artist to request songs from.
+- `<playlist_id>`: Identifier of the playlist to add songs to. To obtain that, go to your playlist and click the "..." button. Then go to `Share -> Copy link to playlist`. The copied content will look like this: `https://open.spotify.com/playlist/<playlist_id>?<params>`.
