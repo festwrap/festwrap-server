@@ -1,0 +1,177 @@
+{
+    "setlist": [
+        {
+            "id": "63ace203",
+            "versionId": "g4b897372",
+            "eventDate": "27-01-2024",
+            "lastUpdated": "2024-01-25T14:11:47.092+0000",
+            "artist": {
+                "mbid": "3071d829-b9ca-4499-b4f5-74d6d8531aed",
+                "name": "The Menzingers",
+                "sortName": "Menzingers, The",
+                "disambiguation": "",
+                "url": "https://www.setlist.fm/setlists/the-menzingers-13d5f175.html"
+            },
+            "venue": {
+                "id": "3bd634e8",
+                "name": "Szene",
+                "city": {
+                    "id": "2761369",
+                    "name": "Vienna",
+                    "state": "Vienna",
+                    "stateCode": "09",
+                    "coords": {
+                        "lat": 48.2084877601653,
+                        "long": 16.3720750808716
+                    },
+                    "country": {
+                        "code": "AT",
+                        "name": "Austria"
+                    }
+                },
+                "url": "https://www.setlist.fm/venue/szene-vienna-austria-3bd634e8.html"
+            },
+            "tour": {
+                "name": "Some Of It Was True Tour"
+            },
+            "sets": {
+                "set": []
+            },
+            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/szene-vienna-austria-63ace203.html"
+        },
+        {
+            "id": "3ace9e3",
+            "versionId": "g4b890f0a",
+            "eventDate": "26-01-2024",
+            "lastUpdated": "2024-01-24T11:46:04.405+0000",
+            "artist": {
+                "mbid": "3071d829-b9ca-4499-b4f5-74d6d8531aed",
+                "name": "The Menzingers",
+                "sortName": "Menzingers, The",
+                "disambiguation": "",
+                "url": "https://www.setlist.fm/setlists/the-menzingers-13d5f175.html"
+            },
+            "venue": {
+                "id": "bd58102",
+                "name": "Columbia Theater",
+                "city": {
+                    "id": "2950159",
+                    "name": "Berlin",
+                    "state": "Berlin",
+                    "stateCode": "16",
+                    "coords": {
+                        "lat": 52.5166667,
+                        "long": 13.4
+                    },
+                    "country": {
+                        "code": "DE",
+                        "name": "Germany"
+                    }
+                },
+                "url": "https://www.setlist.fm/venue/columbia-theater-berlin-germany-bd58102.html"
+            },
+            "tour": {
+                "name": "Some Of It Was True Tour"
+            },
+            "sets": {
+                "set": []
+            },
+            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/columbia-theater-berlin-germany-3ace9e3.html"
+        },
+        {
+            "id": "1bacf10c",
+            "versionId": "g53b60b69",
+            "eventDate": "25-01-2024",
+            "lastUpdated": "2024-02-03T15:05:30.427+0000",
+            "artist": {
+                "mbid": "3071d829-b9ca-4499-b4f5-74d6d8531aed",
+                "name": "The Menzingers",
+                "sortName": "Menzingers, The",
+                "disambiguation": "",
+                "url": "https://www.setlist.fm/setlists/the-menzingers-13d5f175.html"
+            },
+            "venue": {
+                "id": "1bd76588",
+                "name": "Gruenspan",
+                "city": {
+                    "id": "2911298",
+                    "name": "Hamburg",
+                    "state": "Hamburg",
+                    "stateCode": "04",
+                    "coords": {
+                        "lat": 53.55,
+                        "long": 10.0
+                    },
+                    "country": {
+                        "code": "DE",
+                        "name": "Germany"
+                    }
+                },
+                "url": "https://www.setlist.fm/venue/gruenspan-hamburg-germany-1bd76588.html"
+            },
+            "tour": {
+                "name": "Some Of It Was True Tour"
+            },
+            "sets": {
+                "set": [
+                    {
+                        "song": [
+                            {
+                                "name": "Walk of Life",
+                                "tape": true,
+                                "cover": {
+                                    "mbid": "614e3804-7d34-41ba-857f-811bad7c2b7a",
+                                    "name": "Dire Straits",
+                                    "sortName": "Dire Straits",
+                                    "disambiguation": "",
+                                    "url": "https://www.setlist.fm/setlists/dire-straits-4bd67bce.html"
+                                }
+                            },
+                            {
+                                "name": "Anna"
+                            },
+                            {
+                                "name": "Nice Things"
+                            },
+                            {
+                                "name": "America (You're Freaking Me Out)"
+                            },
+                            {
+                                "name": "The Obituaries"
+                            },
+                            {
+                                "name": "After the Party"
+                            }
+                        ]
+                    },
+                    {
+                        "encore": 1,
+                        "song": [
+                            {
+                                "name": "Irish Goodbyes"
+                            },
+                            {
+                                "name": "Casey"
+                            },
+                            {
+                                "name": "Layla",
+                                "tape": true,
+                                "cover": {
+                                    "mbid": "2155a81a-f0c6-417a-9b16-2f86f98bb8bc",
+                                    "name": "Derek and the Dominos",
+                                    "sortName": "Derek and the Dominos",
+                                    "disambiguation": "",
+                                    "url": "https://www.setlist.fm/setlists/derek-and-the-dominos-1bd6ad54.html"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/gruenspan-hamburg-germany-1bacf10c.html"
+        }
+    ],
+    "total": 3,
+    "page": 1,
+    "itemsPerPage": 20
+}
