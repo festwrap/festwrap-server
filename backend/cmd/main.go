@@ -33,8 +33,10 @@ func main() {
 	setlistFmParser := setlistfm.NewSetlistFMParser()
 	setlistFmParser.SetMinimumSongs(*minSongsPerSetlist)
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
-		&setlistfm.SetlistFMSetlistRepositoryConfig{Client: httpClient, Host: *setlistfmHost, ApiKey: *setlistfmApiKey},
+		*setlistfmHost,
+		*setlistfmApiKey,
 		&setlistFmParser,
+		&httpSender,
 	)
 
 	spotifySongParser := spotifySong.NewSpotifySongsParser()
