@@ -41,8 +41,9 @@ func main() {
 
 	spotifySongParser := spotifySong.NewSpotifySongsParser()
 	songRepository := spotifySong.NewSpotifySongRepository(
-		httpClient,
-		spotifySong.SpotifySongRepositoryConfig{Host: *spotifyHost, AccessToken: *spotifyAccessToken},
+		*spotifyAccessToken,
+		*spotifyHost,
+		&httpSender,
 		&spotifySongParser,
 	)
 
