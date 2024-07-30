@@ -1,6 +1,9 @@
 package testtools
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func HaveSameElements[T comparable](set1 []T, set2 []T) bool {
 	c1 := valueCounts(set1)
@@ -27,7 +30,7 @@ func AssertErrorNotNil(t *testing.T, err error) {
 }
 
 func AssertEqual(t *testing.T, actual interface{}, expected interface{}) {
-	if actual != expected {
+	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Expected %v, found %v", expected, actual)
 	}
 }

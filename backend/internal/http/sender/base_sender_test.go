@@ -79,7 +79,7 @@ func TestSendRequestHasProvidedBody(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := options.GetBody()
-	testtools.AssertEqual(t, string(actual), string(readBodyFromRequest(t, expected)))
+	testtools.AssertEqual(t, actual, readBodyFromRequest(t, expected))
 	testtools.AssertErrorIsNil(t, err)
 }
 

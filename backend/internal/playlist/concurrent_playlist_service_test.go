@@ -2,7 +2,6 @@ package playlist
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"festwrap/internal/setlist"
@@ -149,9 +148,7 @@ func TestAddSetlistAddsSongsFetched(t *testing.T) {
 	actual := playlistRepository.GetAddSongArgs()
 	expected := defaultAddSongsArgs()
 	testtools.AssertErrorIsNil(t, err)
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Expected added songs call to be %v, found %v", expected, actual)
-	}
+	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
@@ -164,9 +161,7 @@ func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
 	actual := playlistRepository.GetAddSongArgs()
 	expected := addSongsArgsWithErrors()
 	testtools.AssertErrorIsNil(t, err)
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Expected added songs call to be %v, found %v", expected, actual)
-	}
+	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
