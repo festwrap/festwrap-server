@@ -134,7 +134,7 @@ func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
 	actual := songRepository.GetGetSongArgs()
 	expected := defaultGetSongArgs()
 	testtools.AssertErrorIsNil(t, err)
-	if !testtools.HaveSameElements[song.GetSongArgs](actual, expected) {
+	if !testtools.HaveSameElements(actual, expected) {
 		t.Errorf("Expected called songs %v, found %v", expected, actual)
 	}
 }
