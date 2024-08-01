@@ -1,6 +1,6 @@
 import querystring from 'querystring';
 import axios from 'axios';
-import crypto from 'crypto'; 
+import crypto from 'crypto';
 
 export class SpotifyAuthConfig {
   constructor(authUrl, tokenUrl, redirectUri, scope) {

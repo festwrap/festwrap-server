@@ -28,11 +28,11 @@ const spotifyCredentials = new SpotifyCredentials(SPOTIFY_CLIENT_ID, SPOTIFY_SEC
 
 app.get('/', (_, response) => {
   response.render("index");
-}); 
+});
 
 app.get('/login', (_, response) => {
   redirectToSpotifyAuth(response, spotifyAuthConfig, spotifyCredentials.getClientId(), LOGIN_RANDOM_STRING_LEN)
-}); 
+});
 
 app.get(REDIRECT_ENDPOINT, async (request, response) => {
 
@@ -51,7 +51,7 @@ app.get(REDIRECT_ENDPOINT, async (request, response) => {
     console.log(`Error requesting access token. ${error}`);
     response.render("auth_error");
   }
-}); 
+});
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
