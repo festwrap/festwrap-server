@@ -4,7 +4,7 @@ This component implements a web application that we can use to retrieve Spotify 
 
 In the future, we want this to be an interface to enable and customize playlist creations for the user.
 
-# Development setup
+# Development setup test
 
 Make sure Node 20 and Make are available in your system. Then install dependencoes:
 
