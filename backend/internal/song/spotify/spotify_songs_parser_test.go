@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"slices"
 	"testing"
 
 	"festwrap/internal/song"
@@ -52,9 +51,7 @@ func TestSongRetrieved(t *testing.T) {
 	result := parseResponse(t, parser)
 
 	expected := expectedSongs(t)
-	if !slices.Equal(*result, *expected) {
-		t.Errorf("Found %v, expected %v", result, expected)
-	}
+	testtools.AssertEqual(t, *result, *expected)
 }
 
 func TestReturnsErrorWhenResponseIsNotJson(t *testing.T) {

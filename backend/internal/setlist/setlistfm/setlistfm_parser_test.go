@@ -56,9 +56,7 @@ func TestSetlistRetrieved(t *testing.T) {
 	actual := parseResponse(t, parser)
 
 	expected := expectedSetlist(t)
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Found %v, expected %v", actual, expected)
-	}
+	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestNoSetlistRetrievedWhenMinSongsNotReached(t *testing.T) {

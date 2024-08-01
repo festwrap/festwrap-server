@@ -1,11 +1,20 @@
 package testtools
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func HaveSameElements[T comparable](set1 []T, set2 []T) bool {
 	c1 := valueCounts(set1)
 	c2 := valueCounts(set2)
 	return areCountsEqual(c1, c2)
+}
+
+func AssertIsNil(t *testing.T, value interface{}) {
+	if value != nil {
+		t.Errorf("Value should be nil, but found %v", value)
+	}
 }
 
 func AssertErrorIsNil(t *testing.T, err error) {
@@ -17,6 +26,12 @@ func AssertErrorIsNil(t *testing.T, err error) {
 func AssertErrorNotNil(t *testing.T, err error) {
 	if err == nil {
 		t.Errorf("Expected error, found nil")
+	}
+}
+
+func AssertEqual(t *testing.T, actual interface{}, expected interface{}) {
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Expected %v, found %v", expected, actual)
 	}
 }
 

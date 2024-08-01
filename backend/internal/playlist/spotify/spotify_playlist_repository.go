@@ -1,19 +1,18 @@
 package spotify
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
+	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist/errors"
 	"festwrap/internal/song"
 )
 
 type SpotifyPlaylistRepository struct {
-	host        string
 	accessToken string
-	client      *http.Client
+	host        string
+	httpSender  httpsender.HTTPRequestSender
 }
 
 type SpotifyTrackUris struct {
@@ -27,32 +26,25 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
 	}
 
-	url := fmt.Sprintf("https://%s/v1/playlists/%s/tracks", r.host, playlistId)
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", r.accessToken))
-	request.Header.Set("Content-Type", "application/json")
+	httpOptions := r.createPlaylistHttpOptions(playlistId, body)
+	_, err = r.httpSender.Send(httpOptions)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Could not create request: %v", err.Error())
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
-	}
-
-	response, err := r.client.Do(request)
-	if err != nil {
-		errorMsg := fmt.Sprintf(
-			"Error sending request to add %v to playlist %s: %v", songs, playlistId, err.Error(),
-		)
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusCreated {
-		errorMsg := fmt.Sprintf(
-			"Could not add songs %v to playlist %s, responsed with %d", songs, playlistId, response.StatusCode,
-		)
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
+		return errors.NewCannotAddSongsToPlaylistError(err.Error())
 	}
 
 	return nil
+}
+
+func (r *SpotifyPlaylistRepository) createPlaylistHttpOptions(playlistId string, body []byte) httpsender.HTTPRequestOptions {
+	url := fmt.Sprintf("https://%s/v1/playlists/%s/tracks", r.host, playlistId)
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", r.accessToken),
+		"Content-Type":  "application/json",
+	}
+	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
+	httpOptions.SetBody(body)
+	httpOptions.SetHeaders(headers)
+	return httpOptions
 }
 
 func createRequestBody(songs []song.Song) ([]byte, error) {
@@ -64,6 +56,6 @@ func createRequestBody(songs []song.Song) ([]byte, error) {
 }
 
 func NewSpotifyPlaylistRepository(
-	host string, client *http.Client, accessToken string) SpotifyPlaylistRepository {
-	return SpotifyPlaylistRepository{host: host, client: client, accessToken: accessToken}
+	host string, httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
+	return SpotifyPlaylistRepository{host: host, httpSender: httpSender, accessToken: accessToken}
 }

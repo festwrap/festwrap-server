@@ -2,58 +2,30 @@ package spotify
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 
+	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/song"
 	"festwrap/internal/song/errors"
 )
 
-type SpotifySongRepositoryConfig struct {
-	Host        string
-	AccessToken string
-}
-
 type SpotifySongRepository struct {
-	client *http.Client
-	parser *SpotifySongsParser
-	config SpotifySongRepositoryConfig
+	accessToken string
+	host        string
+	httpSender  httpsender.HTTPRequestSender
+	parser      *SpotifySongsParser
 }
 
-func (s *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
-
-	request, err := s.createSongSearchRequest(artist, title)
+func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
+	httpOptions := r.createSongHttpOptions(artist, title)
+	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Cannot song search request for %s: %s", s.config.Host, err.Error())
-		return nil, errors.NewCannotRetrieveSongError(errorMsg)
+		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	response, err := s.client.Do(request)
+	songs, err := r.parser.Parse(*responseBody)
 	if err != nil {
-		errorMsg := fmt.Sprintf(
-			"Cannot retrieve song search response for %s: %s", s.config.Host, err.Error(),
-		)
-		return nil, errors.NewCannotRetrieveSongError(errorMsg)
-	}
-
-	if response.StatusCode != http.StatusOK {
-		errorMsg := fmt.Sprintf(
-			"Spotify returned %d when trying to retrieve song %s (%s)", response.StatusCode, title, artist,
-		)
-		return nil, errors.NewCannotRetrieveSongError(errorMsg)
-	}
-
-	defer response.Body.Close()
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		errorMsg := fmt.Sprintf("Error reading song search response %s: ", err.Error())
-		return nil, errors.NewCannotRetrieveSongError(errorMsg)
-	}
-
-	songs, err := s.parser.Parse(body)
-	if err != nil {
-		return nil, err
+		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
 	allSongs := *songs
@@ -66,27 +38,27 @@ func (s *SpotifySongRepository) GetSong(artist string, title string) (*song.Song
 	return &allSongs[0], nil
 }
 
-func (s *SpotifySongRepository) createSongSearchRequest(artist string, title string) (*http.Request, error) {
-	request, err := http.NewRequest("GET", s.getSetlistFullUrl(artist, title), nil)
-	if err != nil {
-		return nil, err
-	}
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.config.AccessToken))
-	return request, nil
+func (r *SpotifySongRepository) createSongHttpOptions(artist string, title string) httpsender.HTTPRequestOptions {
+	httpOptions := httpsender.NewHTTPRequestOptions(r.getSetlistFullUrl(artist, title), httpsender.GET, 200)
+	httpOptions.SetHeaders(
+		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", r.accessToken)},
+	)
+	return httpOptions
 }
 
-func (s *SpotifySongRepository) getSetlistFullUrl(artist string, title string) string {
+func (r *SpotifySongRepository) getSetlistFullUrl(artist string, title string) string {
 	queryParams := url.Values{}
 	queryParams.Set("q", fmt.Sprintf("artist:%s track:%s", artist, title))
 	queryParams.Set("type", "track")
 	setlistPath := "v1/search"
-	return fmt.Sprintf("https://%s/%s?%s", s.config.Host, setlistPath, queryParams.Encode())
+	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
 }
 
 func NewSpotifySongRepository(
-	client *http.Client,
-	config SpotifySongRepositoryConfig,
+	accessToken string,
+	host string,
+	httpSender httpsender.HTTPRequestSender,
 	parser *SpotifySongsParser,
 ) *SpotifySongRepository {
-	return &SpotifySongRepository{client: client, config: config, parser: parser}
+	return &SpotifySongRepository{accessToken: accessToken, host: host, httpSender: httpSender, parser: parser}
 }
