@@ -20,6 +20,10 @@ type SpotifyTrackUris struct {
 }
 
 func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Song) error {
+	if len(songs) == 0 {
+		return errors.NewCannotAddSongsToPlaylistError("No songs provided")
+	}
+
 	body, err := createRequestBody(songs)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Could not serialize request body: %v", err.Error())
