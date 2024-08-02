@@ -1,7 +1,6 @@
 package spotify
 
 import (
-	"encoding/json"
 	"fmt"
 
 	httpsender "festwrap/internal/http/sender"
@@ -10,9 +9,10 @@ import (
 )
 
 type SpotifyPlaylistRepository struct {
-	accessToken string
-	host        string
-	httpSender  httpsender.HTTPRequestSender
+	songsSerializer SongsSerializer
+	accessToken     string
+	host            string
+	httpSender      httpsender.HTTPRequestSender
 }
 
 type SpotifyTrackUris struct {
@@ -24,7 +24,7 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 		return errors.NewCannotAddSongsToPlaylistError("No songs provided")
 	}
 
-	body, err := createRequestBody(songs)
+	body, err := r.songsSerializer.Serialize(songs)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Could not serialize request body: %v", err.Error())
 		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
@@ -39,6 +39,10 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 	return nil
 }
 
+func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer SongsSerializer) {
+	r.songsSerializer = serializer
+}
+
 func (r *SpotifyPlaylistRepository) createPlaylistHttpOptions(playlistId string, body []byte) httpsender.HTTPRequestOptions {
 	url := fmt.Sprintf("https://%s/v1/playlists/%s/tracks", r.host, playlistId)
 	headers := map[string]string{
@@ -51,15 +55,12 @@ func (r *SpotifyPlaylistRepository) createPlaylistHttpOptions(playlistId string,
 	return httpOptions
 }
 
-func createRequestBody(songs []song.Song) ([]byte, error) {
-	songUris := []string{}
-	for _, currentSong := range songs {
-		songUris = append(songUris, currentSong.GetUri())
-	}
-	return json.Marshal(SpotifyTrackUris{Uris: songUris})
-}
-
 func NewSpotifyPlaylistRepository(
 	host string, httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
-	return SpotifyPlaylistRepository{host: host, httpSender: httpSender, accessToken: accessToken}
+	return SpotifyPlaylistRepository{
+		accessToken:     accessToken,
+		host:            host,
+		httpSender:      httpSender,
+		songsSerializer: &SpotifySongsSerializer{},
+	}
 }
