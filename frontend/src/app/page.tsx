@@ -31,6 +31,14 @@ export default function Home() {
     window.location.href = authUrl
   }
 
+  const copyToClipboardAccessToken = () => {
+    navigator.clipboard.writeText(localStorage.getItem("access_token") || "")
+  }
+
+  const copyToClipboardRefreshToken = () => {
+    navigator.clipboard.writeText(localStorage.getItem("refresh_token") || "")
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col items-center space-y-8">
@@ -41,12 +49,20 @@ export default function Home() {
         >
           Login with Spotify
         </button>
-        <code className="text-sm">
-          accessToken: {localStorage.getItem("access_token")}
-        </code>
-        <code className="text-sm">
-          refreshToken: {localStorage.getItem("refresh_token")}
-        </code>
+        <div className="flex flex-row gap-2">
+          <button
+            className="border border-gray-200 text-gray-800 px-4 py-2 rounded-md"
+            onClick={() => copyToClipboardAccessToken()}
+          >
+            Copy access token
+          </button>
+          <button
+            className="border border-gray-200 text-gray-800 px-4 py-2 rounded-md"
+            onClick={() => copyToClipboardRefreshToken()}
+          >
+            Copy refresh token
+          </button>
+        </div>
       </div>
     </main>
   )
