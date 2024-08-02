@@ -46,7 +46,7 @@ const Callback = () => {
   const state = searchParams.get("state")
 
   useEffect(() => {
-    async function fetchData() {
+    async function requestAndStoreToken() {
       if (code) {
         const response = await requestSpotifyToken(code)
 
@@ -55,7 +55,7 @@ const Callback = () => {
       }
     }
 
-    fetchData()
+    requestAndStoreToken()
     router.push("/")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
