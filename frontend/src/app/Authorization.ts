@@ -1,6 +1,7 @@
 import querystring from "querystring"
 import axios, { AxiosResponse } from "axios"
 import crypto from "crypto"
+import { SPOTIFY_URL } from "../../env"
 
 export class SpotifyAuthConfig {
   constructor(
@@ -55,17 +56,36 @@ export function redirectToSpotifyAuth(
   )
 }
 
+interface SpotifyAuthResponse {
+  access_token: string
+  refresh_token: string
+}
+
+const authUrl = `${SPOTIFY_URL}authorize`
+const tokenUrl = `${SPOTIFY_URL}api/token`
+const redirectUri =
+  process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000/callback"
+const scope =
+  "playlist-modify-private playlist-modify-public playlist-read-private"
+
+export const authConfig = new SpotifyAuthConfig(
+  authUrl,
+  tokenUrl,
+  redirectUri,
+  scope
+)
+
 export async function requestSpotifyToken(
-  authConfig: SpotifyAuthConfig,
   authCode: string,
   secretBase64: string
-): Promise<string> {
+): Promise<SpotifyAuthResponse> {
   const tokenRequestOptions = {
     method: "post",
     url: authConfig.getTokenUrl(),
     data: querystring.stringify({
       code: authCode,
-      grant_type: "client_credentials",
+      redirect_uri: authConfig.getRedirectUri(),
+      grant_type: "authorization_code",
     }),
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -75,7 +95,7 @@ export async function requestSpotifyToken(
 
   return axios(tokenRequestOptions)
     .then((authResponse: AxiosResponse) => {
-      return authResponse.data.access_token
+      return authResponse.data
     })
     .catch((error: any) => {
       throw new Error(`Could not get access token: ${error}`)

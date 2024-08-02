@@ -1,54 +1,29 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import querystring from "querystring"
 import { useEffect } from "react"
-import axios, { AxiosResponse } from "axios"
 import { SPOTIFY_CLIENT_ID, SPOTIFY_SECRET } from "../../../env"
-
-const TOKEN_URL = "https://accounts.spotify.com/api/token"
-
-export async function requestSpotifyToken(
-  authCode: string
-): Promise<{ access_token: string; refresh_token: string }> {
-  const tokenRequestOptions = {
-    method: "post",
-    url: TOKEN_URL,
-    data: querystring.stringify({
-      code: authCode,
-      redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI,
-      grant_type: "authorization_code",
-    }),
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      Authorization:
-        "Basic " +
-        Buffer.from(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_SECRET).toString(
-          "base64"
-        ),
-    },
-  }
-
-  return axios(tokenRequestOptions)
-    .then((authResponse: AxiosResponse<any>) => {
-      return authResponse.data
-    })
-    .catch((error: any) => {
-      throw new Error(`Could not get access token: ${error}`)
-    })
-}
+import { requestSpotifyToken } from "../Authorization"
+import { SpotifyCredentials } from "../Credentials"
 
 const Callback = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const code = searchParams.get("code")
+  const authCode = searchParams.get("code")
   const state = searchParams.get("state")
 
   useEffect(() => {
     async function requestAndStoreToken() {
-      if (code) {
-        const response = await requestSpotifyToken(code)
+      if (authCode && SPOTIFY_CLIENT_ID && SPOTIFY_SECRET) {
+        const spotifyCredentials = new SpotifyCredentials(
+          SPOTIFY_CLIENT_ID,
+          SPOTIFY_SECRET
+        )
+        const response = await requestSpotifyToken(
+          authCode,
+          spotifyCredentials.getBase64Secret()
+        )
 
         localStorage.setItem("access_token", response.access_token)
         localStorage.setItem("refresh_token", response.refresh_token)
