@@ -7,9 +7,9 @@ import {
   SpotifyAuthConfig,
 } from "./Authorization"
 import { SpotifyCredentials } from "./Credentials"
-import { REDIRECT_URI, SPOTIFY_CLIENT_ID } from "../../env"
+import { REDIRECT_URI, SPOTIFY_CLIENT_ID, SPOTIFY_URL } from "../../env"
 
-const AUTH_URL = "https://accounts.spotify.com/authorize?"
+const AUTH_URL = `${SPOTIFY_URL}authorize?`
 const SCOPE =
   "playlist-modify-private playlist-modify-public playlist-read-private"
 
