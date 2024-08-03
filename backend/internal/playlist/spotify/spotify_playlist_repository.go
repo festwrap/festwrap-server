@@ -39,6 +39,10 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 	return nil
 }
 
+func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequestSender) {
+	r.httpSender = httpSender
+}
+
 func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer SongsSerializer) {
 	r.songsSerializer = serializer
 }
