@@ -171,7 +171,7 @@ func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
 
 	err := service.AddSetlist(defaultPlaylistId(), defaultArtist())
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
@@ -182,5 +182,5 @@ func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
 
 	err := service.AddSetlist(defaultPlaylistId(), defaultArtist())
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }

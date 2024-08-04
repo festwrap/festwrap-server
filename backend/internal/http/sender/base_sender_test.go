@@ -127,7 +127,7 @@ func TestSendRequestReturnsErrorOnErrorRequestOptions(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestSendRequestReturnsErrorOnClientError(t *testing.T) {
@@ -136,7 +136,7 @@ func TestSendRequestReturnsErrorOnClientError(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestSendRequestReturnsErrorWhenStatusNotExpected(t *testing.T) {
@@ -145,7 +145,7 @@ func TestSendRequestReturnsErrorWhenStatusNotExpected(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestSendRequestReturnsErrorOnResponseBodyError(t *testing.T) {
@@ -154,7 +154,7 @@ func TestSendRequestReturnsErrorOnResponseBodyError(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestSendRequestReturnsResponseBody(t *testing.T) {

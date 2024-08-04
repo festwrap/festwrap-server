@@ -23,7 +23,7 @@ func AssertErrorIsNil(t *testing.T, err error) {
 	}
 }
 
-func AssertErrorNotNil(t *testing.T, err error) {
+func AssertErrorIsNotNil(t *testing.T, err error) {
 	if err == nil {
 		t.Errorf("Expected error, found nil")
 	}
