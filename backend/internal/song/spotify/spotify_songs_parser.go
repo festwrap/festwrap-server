@@ -9,7 +9,7 @@ import (
 
 type SpotifySongsParser struct{}
 
-func (s *SpotifySongsParser) Parse(setlist []byte) (*[]song.Song, error) {
+func (s *SpotifySongsParser) Parse(setlist []byte) ([]song.Song, error) {
 	var parsedResponse SpotifyResponse
 	err := json.Unmarshal(setlist, &parsedResponse)
 	if err != nil {
@@ -20,7 +20,7 @@ func (s *SpotifySongsParser) Parse(setlist []byte) (*[]song.Song, error) {
 	for _, currentSong := range parsedResponse.Tracks.Songs {
 		result = append(result, song.NewSong(currentSong.Uri))
 	}
-	return &result, nil
+	return result, nil
 }
 
 func NewSpotifySongsParser() SpotifySongsParser {

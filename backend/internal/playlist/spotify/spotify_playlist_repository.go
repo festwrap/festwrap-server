@@ -1,19 +1,18 @@
 package spotify
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 
+	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist/errors"
 	"festwrap/internal/song"
 )
 
 type SpotifyPlaylistRepository struct {
-	host        string
-	accessToken string
-	client      *http.Client
+	songsSerializer SongsSerializer
+	accessToken     string
+	host            string
+	httpSender      httpsender.HTTPRequestSender
 }
 
 type SpotifyTrackUris struct {
@@ -21,49 +20,51 @@ type SpotifyTrackUris struct {
 }
 
 func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Song) error {
-	body, err := createRequestBody(songs)
+	if len(songs) == 0 {
+		return errors.NewCannotAddSongsToPlaylistError("no songs provided")
+	}
+
+	body, err := r.songsSerializer.Serialize(songs)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Could not serialize request body: %v", err.Error())
+		errorMsg := fmt.Sprintf("could not serialize request body: %v", err.Error())
 		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
 	}
 
-	url := fmt.Sprintf("https://%s/v1/playlists/%s/tracks", r.host, playlistId)
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", r.accessToken))
-	request.Header.Set("Content-Type", "application/json")
+	httpOptions := r.createPlaylistHttpOptions(playlistId, body)
+	_, err = r.httpSender.Send(httpOptions)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Could not create request: %v", err.Error())
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
-	}
-
-	response, err := r.client.Do(request)
-	if err != nil {
-		errorMsg := fmt.Sprintf(
-			"Error sending request to add %v to playlist %s: %v", songs, playlistId, err.Error(),
-		)
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusCreated {
-		errorMsg := fmt.Sprintf(
-			"Could not add songs %v to playlist %s, responsed with %d", songs, playlistId, response.StatusCode,
-		)
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
+		return errors.NewCannotAddSongsToPlaylistError(err.Error())
 	}
 
 	return nil
 }
 
-func createRequestBody(songs []song.Song) ([]byte, error) {
-	songUris := []string{}
-	for _, currentSong := range songs {
-		songUris = append(songUris, currentSong.GetUri())
+func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequestSender) {
+	r.httpSender = httpSender
+}
+
+func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer SongsSerializer) {
+	r.songsSerializer = serializer
+}
+
+func (r *SpotifyPlaylistRepository) createPlaylistHttpOptions(playlistId string, body []byte) httpsender.HTTPRequestOptions {
+	url := fmt.Sprintf("https://%s/v1/playlists/%s/tracks", r.host, playlistId)
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", r.accessToken),
+		"Content-Type":  "application/json",
 	}
-	return json.Marshal(SpotifyTrackUris{Uris: songUris})
+	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
+	httpOptions.SetBody(body)
+	httpOptions.SetHeaders(headers)
+	return httpOptions
 }
 
 func NewSpotifyPlaylistRepository(
-	host string, client *http.Client, accessToken string) SpotifyPlaylistRepository {
-	return SpotifyPlaylistRepository{host: host, client: client, accessToken: accessToken}
+	host string, httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
+	return SpotifyPlaylistRepository{
+		accessToken:     accessToken,
+		host:            host,
+		httpSender:      httpSender,
+		songsSerializer: &SpotifySongsSerializer{},
+	}
 }
