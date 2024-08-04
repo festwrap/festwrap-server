@@ -69,7 +69,7 @@ func TestAddSongsReturnsErrorWhenNoSongsProvided(t *testing.T) {
 
 	err := repository.AddSongs(defaultPlaylistId(), []song.Song{})
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestAddSongsReturnsErrorOnNonSerializableInput(t *testing.T) {
@@ -78,7 +78,7 @@ func TestAddSongsReturnsErrorOnNonSerializableInput(t *testing.T) {
 
 	err := repository.AddSongs(defaultPlaylistId(), defaultSongs())
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestAddSongsSendsRequestUsingProperOptions(t *testing.T) {
@@ -99,5 +99,5 @@ func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
 
 	err := repository.AddSongs(defaultPlaylistId(), defaultSongs())
 
-	testtools.AssertErrorNotNil(t, err)
+	testtools.AssertErrorIsNotNil(t, err)
 }
