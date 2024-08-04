@@ -36,7 +36,7 @@ func expectedSongs(t *testing.T) *[]song.Song {
 	return &songs
 }
 
-func parseResponse(t *testing.T, parser SpotifySongsParser) *[]song.Song {
+func parsedResponse(t *testing.T, parser SpotifySongsParser) []song.Song {
 	response := loadResponse(t)
 	result, err := parser.Parse(response)
 	if err != nil {
@@ -48,10 +48,10 @@ func parseResponse(t *testing.T, parser SpotifySongsParser) *[]song.Song {
 func TestSongRetrieved(t *testing.T) {
 	parser := NewSpotifySongsParser()
 
-	result := parseResponse(t, parser)
+	result := parsedResponse(t, parser)
 
 	expected := expectedSongs(t)
-	testtools.AssertEqual(t, *result, *expected)
+	testtools.AssertEqual(t, result, *expected)
 }
 
 func TestReturnsErrorWhenResponseIsNotJson(t *testing.T) {

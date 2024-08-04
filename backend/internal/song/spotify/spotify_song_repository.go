@@ -13,7 +13,7 @@ type SpotifySongRepository struct {
 	accessToken string
 	host        string
 	httpSender  httpsender.HTTPRequestSender
-	parser      *SpotifySongsParser
+	parser      SongsParser
 }
 
 func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
@@ -28,7 +28,7 @@ func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	allSongs := *songs
+	allSongs := songs
 	if len(allSongs) == 0 {
 		errorMsg := fmt.Sprintf("No songs found for song %s (%s)", title, artist)
 		return nil, errors.NewCannotRetrieveSongError(errorMsg)
@@ -36,6 +36,10 @@ func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song
 
 	// We assume the first result is the most trusted one
 	return &allSongs[0], nil
+}
+
+func (r *SpotifySongRepository) SetParser(parser SongsParser) {
+	r.parser = parser
 }
 
 func (r *SpotifySongRepository) createSongHttpOptions(artist string, title string) httpsender.HTTPRequestOptions {
@@ -58,7 +62,7 @@ func NewSpotifySongRepository(
 	accessToken string,
 	host string,
 	httpSender httpsender.HTTPRequestSender,
-	parser *SpotifySongsParser,
 ) *SpotifySongRepository {
-	return &SpotifySongRepository{accessToken: accessToken, host: host, httpSender: httpSender, parser: parser}
+	return &SpotifySongRepository{
+		accessToken: accessToken, host: host, httpSender: httpSender, parser: &SpotifySongsParser{}}
 }

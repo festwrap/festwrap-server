@@ -39,12 +39,10 @@ func main() {
 		&httpSender,
 	)
 
-	spotifySongParser := spotifySong.NewSpotifySongsParser()
 	songRepository := spotifySong.NewSpotifySongRepository(
 		*spotifyAccessToken,
 		*spotifyHost,
 		&httpSender,
-		&spotifySongParser,
 	)
 
 	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(*spotifyHost, &httpSender, *spotifyAccessToken)
