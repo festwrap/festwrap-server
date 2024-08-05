@@ -14,8 +14,7 @@ For this initial version I have allowed some technical debt to slip in (e.g. cod
 We use pre-commit for static code analysis. Make sure hooks are installed (i.e. `brew install pre-commit` in MacOS) before contributing:
 
 ```shell
-pre-commit install
-pre-commit install --hook-type commit-msg
+make pre-commit-install
 ```
 
 # Components

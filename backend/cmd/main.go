@@ -35,7 +35,6 @@ func main() {
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
 		*setlistfmHost,
 		*setlistfmApiKey,
-		&setlistFmParser,
 		&httpSender,
 	)
 

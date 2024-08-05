@@ -12,8 +12,12 @@ import (
 type SetlistFMRepository struct {
 	host       string
 	apiKey     string
-	parser     setlist.SetlistParser
+	parser     SetlistParser
 	httpSender httpsender.HTTPRequestSender
+}
+
+func (r *SetlistFMRepository) SetParser(parser SetlistParser) {
+	r.parser = parser
 }
 
 func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
@@ -57,7 +61,7 @@ func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
 }
 
 func NewSetlistFMSetlistRepository(
-	host string, apiKey string, parser setlist.SetlistParser, httpSender httpsender.HTTPRequestSender,
+	host string, apiKey string, httpSender httpsender.HTTPRequestSender,
 ) *SetlistFMRepository {
-	return &SetlistFMRepository{host: host, apiKey: apiKey, parser: parser, httpSender: httpSender}
+	return &SetlistFMRepository{host: host, apiKey: apiKey, parser: &SetlistFMParser{}, httpSender: httpSender}
 }
