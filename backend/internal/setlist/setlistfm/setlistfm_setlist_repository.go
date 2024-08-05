@@ -16,6 +16,10 @@ type SetlistFMRepository struct {
 	httpSender httpsender.HTTPRequestSender
 }
 
+func (r *SetlistFMRepository) SetParser(parser SetlistParser) {
+	r.parser = parser
+}
+
 func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
 
 	httpOptions := r.createSetlistHttpOptions(artist)
