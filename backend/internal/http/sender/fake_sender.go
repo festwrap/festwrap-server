@@ -27,7 +27,3 @@ func (s *FakeHTTPSender) Send(options HTTPRequestOptions) (*[]byte, error) {
 		return s.response, nil
 	}
 }
-
-func NewFakeHTTPSender() FakeHTTPSender {
-	return FakeHTTPSender{}
-}

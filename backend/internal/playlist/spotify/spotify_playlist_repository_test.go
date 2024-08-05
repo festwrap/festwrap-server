@@ -10,14 +10,14 @@ import (
 )
 
 func fakeSender() *httpsender.FakeHTTPSender {
-	sender := httpsender.NewFakeHTTPSender()
+	sender := httpsender.FakeHTTPSender{}
 	emptyResponse := []byte("")
 	sender.SetResponse(&emptyResponse)
 	return &sender
 }
 
 func errorSender() *httpsender.FakeHTTPSender {
-	sender := httpsender.NewFakeHTTPSender()
+	sender := httpsender.FakeHTTPSender{}
 	sender.SetError(errors.New("test send error"))
 	return &sender
 }
