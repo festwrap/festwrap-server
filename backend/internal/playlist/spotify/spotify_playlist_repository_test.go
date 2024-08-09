@@ -47,7 +47,7 @@ func errorSerializer() SongsSerializer {
 }
 
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	options := httpsender.NewHTTPRequestOptions("https://spotify.com/v1/playlists/test_id/tracks", httpsender.POST, 201)
+	options := httpsender.NewHTTPRequestOptions("https://api.spotify.com/v1/playlists/test_id/tracks", httpsender.POST, 201)
 	options.SetHeaders(
 		map[string]string{
 			"Authorization": "Bearer abcdefg12345",
@@ -59,7 +59,7 @@ func expectedHttpOptions() httpsender.HTTPRequestOptions {
 }
 
 func spotifyPlaylistRepository() SpotifyPlaylistRepository {
-	repository := NewSpotifyPlaylistRepository("spotify.com", fakeSender(), "abcdefg12345")
+	repository := NewSpotifyPlaylistRepository(fakeSender(), "abcdefg12345")
 	repository.SetSongSerializer(defaultSerializer())
 	return repository
 }

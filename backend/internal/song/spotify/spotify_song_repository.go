@@ -60,9 +60,8 @@ func (r *SpotifySongRepository) getSetlistFullUrl(artist string, title string) s
 
 func NewSpotifySongRepository(
 	accessToken string,
-	host string,
 	httpSender httpsender.HTTPRequestSender,
 ) *SpotifySongRepository {
 	return &SpotifySongRepository{
-		accessToken: accessToken, host: host, httpSender: httpSender, parser: &SpotifySongsParser{}}
+		accessToken: accessToken, host: "api.spotify.com", httpSender: httpSender, parser: &SpotifySongsParser{}}
 }

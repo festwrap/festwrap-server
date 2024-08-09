@@ -60,10 +60,10 @@ func (r *SpotifyPlaylistRepository) createPlaylistHttpOptions(playlistId string,
 }
 
 func NewSpotifyPlaylistRepository(
-	host string, httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
+	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
 	return SpotifyPlaylistRepository{
 		accessToken:     accessToken,
-		host:            host,
+		host:            "api.spotify.com",
 		httpSender:      httpSender,
 		songsSerializer: &SpotifySongsSerializer{},
 	}
