@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
 import { SPOTIFY_CLIENT_ID, SPOTIFY_SECRET } from "../../../env"
-import { requestSpotifyToken } from "../Authorization"
+import { requestSpotifyToken, SpotifyAuthTokens } from "../Authorization"
 import { SpotifyCredentials } from "../Credentials"
 
 const Callback = () => {
@@ -25,8 +25,14 @@ const Callback = () => {
           spotifyCredentials.getBase64Secret()
         )
 
-        localStorage.setItem("access_token", response.access_token)
-        localStorage.setItem("refresh_token", response.refresh_token)
+        localStorage.setItem(
+          SpotifyAuthTokens.ACCESS_TOKEN,
+          response.access_token
+        )
+        localStorage.setItem(
+          SpotifyAuthTokens.REFRESH_TOKEN,
+          response.refresh_token
+        )
       }
     }
 

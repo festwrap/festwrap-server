@@ -5,6 +5,7 @@ import {
   redirectToSpotifyAuth,
   requestSpotifyToken,
   SpotifyAuthConfig,
+  SpotifyAuthTokens,
 } from "./Authorization"
 import { SpotifyCredentials } from "./Credentials"
 import { REDIRECT_URI, SPOTIFY_CLIENT_ID, SPOTIFY_URL } from "../../env"
@@ -31,12 +32,8 @@ export default function Home() {
     window.location.href = authUrl
   }
 
-  const copyToClipboardAccessToken = () => {
-    navigator.clipboard.writeText(localStorage.getItem("access_token") || "")
-  }
-
-  const copyToClipboardRefreshToken = () => {
-    navigator.clipboard.writeText(localStorage.getItem("refresh_token") || "")
+  const copyToClipboardToken = (token: SpotifyAuthTokens) => {
+    navigator.clipboard.writeText(localStorage.getItem(token) || "")
   }
 
   return (
@@ -52,13 +49,15 @@ export default function Home() {
         <div className="flex flex-row gap-2">
           <button
             className="border border-gray-200 text-gray-800 px-4 py-2 rounded-md"
-            onClick={() => copyToClipboardAccessToken()}
+            onClick={() => copyToClipboardToken(SpotifyAuthTokens.ACCESS_TOKEN)}
           >
             Copy access token
           </button>
           <button
             className="border border-gray-200 text-gray-800 px-4 py-2 rounded-md"
-            onClick={() => copyToClipboardRefreshToken()}
+            onClick={() =>
+              copyToClipboardToken(SpotifyAuthTokens.REFRESH_TOKEN)
+            }
           >
             Copy refresh token
           </button>

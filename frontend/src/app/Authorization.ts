@@ -3,6 +3,11 @@ import axios, { AxiosResponse } from "axios"
 import crypto from "crypto"
 import { SPOTIFY_URL } from "../../env"
 
+export enum SpotifyAuthTokens {
+  ACCESS_TOKEN = "access_token",
+  REFRESH_TOKEN = "refresh_token",
+}
+
 export class SpotifyAuthConfig {
   constructor(
     public authUrl: string,
