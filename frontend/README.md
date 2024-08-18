@@ -25,5 +25,5 @@ REDIRECT_URI=<redirect_uri>
 To run the app, type:
 
 ```shell
-npm run dev
+make run-app
 ```
