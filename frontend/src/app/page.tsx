@@ -1,5 +1,6 @@
 "use client"
 import { useSession, signIn, signOut } from "next-auth/react"
+import Button from "./components/Button"
 
 export default function Home() {
   const { data: session } = useSession()
@@ -8,12 +9,9 @@ export default function Home() {
     return (
       <>
         Signed in as {session?.user?.email} <br />
-        <button
-          className="hover:bg-gray-100 border border-gray-200 px-4 py-2 rounded-md"
-          onClick={() => signOut()}
-        >
+        <Button accent="tertiary" onClick={() => signOut()}>
           Sign out
-        </button>
+        </Button>
       </>
     )
   }
@@ -21,14 +19,14 @@ export default function Home() {
   return (
     <>
       Not signed in <br />
-      <button
-        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md"
+      <Button
+        accent="secondary"
         onClick={() =>
           signIn("spotify", { callbackUrl: "http://localhost:3000" })
         }
       >
         Login with Spotify
-      </button>
+      </Button>
     </>
   )
 }
