@@ -17,6 +17,7 @@ jobs:
       - name: Run the tests
         run: make run-tests
         working-directory: ./backend
+
   frontend-tests:
     runs-on: ubuntu-latest
     steps:
@@ -29,18 +30,3 @@ jobs:
         working-directory: ./frontend
       - run: npm test
         working-directory: ./frontend
-    # steps:
-    #   - uses: actions/checkout@v4
-    #   - name: Setup Node.js
-    #     uses: actions/setup-node@v3
-    #     with:
-    #       node-version: "20"
-    #       cache: "npm"
-    #   - name: Install dependencies
-    #     run: npm install
-    #     working-directory: ./frontend
-    #   - name: Run the tests
-    #     run: npm test
-    #     working-directory: ./frontend
-
-    #   runs-on: ubuntu-latest
