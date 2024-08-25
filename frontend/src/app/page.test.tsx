@@ -4,10 +4,6 @@ import Home from "./page"
 import { useSession } from "next-auth/react"
 
 vi.mock("next-auth/react", () => {
-  const mockSession = {
-    expires: new Date(Date.now() + 2 * 86400).toISOString(),
-    user: { username: "admin" },
-  }
   return {
     __esModule: true,
     useSession: vi.fn(),
