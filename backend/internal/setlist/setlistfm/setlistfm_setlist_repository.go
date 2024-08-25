@@ -2,86 +2,66 @@ package setlistfm
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 
+	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/setlist"
 	"festwrap/internal/setlist/errors"
 )
 
-type SetlistFMSetlistRepositoryConfig struct {
-	Client *http.Client
-	Host   string
-	ApiKey string
-}
-
 type SetlistFMRepository struct {
-	config *SetlistFMSetlistRepositoryConfig
-	parser setlist.SetlistParser
+	host       string
+	apiKey     string
+	parser     SetlistParser
+	httpSender httpsender.HTTPRequestSender
 }
 
-func (s *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
+func (r *SetlistFMRepository) SetParser(parser SetlistParser) {
+	r.parser = parser
+}
 
-	request, err := s.createSetlistRequest(artist)
+func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
+
+	httpOptions := r.createSetlistHttpOptions(artist)
+	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Cannot create request for %s: %s", s.config.Host, err.Error())
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
+		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
 
-	response, err := s.config.Client.Do(request)
+	setlist, err := r.parser.Parse(*responseBody)
 	if err != nil {
-		errorMsg := fmt.Sprintf(
-			"Cannot retrieve response for %s: %s", s.config.Host, err.Error(),
-		)
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		errorMsg := fmt.Sprintf(
-			"Setlistfm returned %d when trying to retrieve setlists for %s", response.StatusCode, artist,
-		)
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		errorMsg := fmt.Sprintf("Error reading response %s: ", err.Error())
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
-	}
-
-	setlist, err := s.parser.Parse(body)
-	if err != nil {
-		return nil, err
+		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
 	if setlist == nil {
 		// TODO: if no valid setlist found, we should check for the next page
 		// TODO: probable a good idea to move the min songs filter to repository and keep parser simpler
 		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
-		errors.NewCannotRetrieveSetlistError(errorMsg)
+		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
 	}
 
 	return setlist, nil
 }
 
-func (s *SetlistFMRepository) createSetlistRequest(artist string) (*http.Request, error) {
-	request, err := http.NewRequest("GET", s.getSetlistFullUrl(artist), nil)
-	if err != nil {
-		return nil, err
-	}
-	request.Header.Add("x-api-key", s.config.ApiKey)
-	request.Header.Add("Accept", "application/json")
-	return request, nil
+func (r *SetlistFMRepository) createSetlistHttpOptions(artist string) httpsender.HTTPRequestOptions {
+	httpOptions := httpsender.NewHTTPRequestOptions(r.getSetlistFullUrl(artist), httpsender.GET, 200)
+	httpOptions.SetHeaders(
+		map[string]string{
+			"x-api-key": r.apiKey,
+			"Accept":    "application/json",
+		},
+	)
+	return httpOptions
 }
 
-func (s *SetlistFMRepository) getSetlistFullUrl(artist string) string {
+func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
 	queryParams := url.Values{}
 	queryParams.Set("artistName", artist)
 	setlistPath := "rest/1.0/search/setlists"
-	return fmt.Sprintf("https://%s/%s?%s", s.config.Host, setlistPath, queryParams.Encode())
+	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
 }
 
-func NewSetlistFMSetlistRepository(config *SetlistFMSetlistRepositoryConfig, parser setlist.SetlistParser) *SetlistFMRepository {
-	return &SetlistFMRepository{config: config, parser: parser}
+func NewSetlistFMSetlistRepository(
+	host string, apiKey string, httpSender httpsender.HTTPRequestSender,
+) *SetlistFMRepository {
+	return &SetlistFMRepository{host: host, apiKey: apiKey, parser: &SetlistFMParser{}, httpSender: httpSender}
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	httpclient "festwrap/internal/http/client"
+	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist"
 	spotifyPlaylist "festwrap/internal/playlist/spotify"
 	"festwrap/internal/setlist/setlistfm"
@@ -23,24 +25,26 @@ func main() {
 	flag.Parse()
 
 	httpClient := &http.Client{}
+	baseHttpClient := httpclient.NewBaseHTTPClient(httpClient)
+	httpSender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
 
 	fmt.Printf("Adding latest setlist songs for %s into Spotify playlist with id %s \n", *artist, *playlistId)
 
 	setlistFmParser := setlistfm.NewSetlistFMParser()
 	setlistFmParser.SetMinimumSongs(*minSongsPerSetlist)
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
-		&setlistfm.SetlistFMSetlistRepositoryConfig{Client: httpClient, Host: *setlistfmHost, ApiKey: *setlistfmApiKey},
-		&setlistFmParser,
+		*setlistfmHost,
+		*setlistfmApiKey,
+		&httpSender,
 	)
 
-	spotifySongParser := spotifySong.NewSpotifySongsParser()
 	songRepository := spotifySong.NewSpotifySongRepository(
-		httpClient,
-		spotifySong.SpotifySongRepositoryConfig{Host: *spotifyHost, AccessToken: *spotifyAccessToken},
-		&spotifySongParser,
+		*spotifyAccessToken,
+		*spotifyHost,
+		&httpSender,
 	)
 
-	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(*spotifyHost, httpClient, *spotifyAccessToken)
+	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(*spotifyHost, &httpSender, *spotifyAccessToken)
 	playlistService := playlist.NewConcurrentPlaylistService(
 		&playlistRepository,
 		setlistRepository,

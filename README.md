@@ -9,6 +9,14 @@ We are relying on Spotify for storing the playlists and Setlistfm for retrieving
 
 For this initial version I have allowed some technical debt to slip in (e.g. code duplication), but I plan to remove it in incoming iterations. I keep a small backlog of tasks in this [board](https://trello.com/b/Iv1rrKwE/festwrap).
 
+# Local development
+
+We use pre-commit for static code analysis. Make sure hooks are installed (i.e. `brew install pre-commit` in MacOS) before contributing:
+
+```shell
+make pre-commit-install
+```
+
 # Components
 
 This application has two main components:
