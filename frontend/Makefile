@@ -1,5 +1,5 @@
 APP_PORT ?= 3000
-ENV_FILE ?= .env
+ENV_FILE ?= .env.local
 
 include ${ENV_FILE}
 
@@ -15,5 +15,6 @@ pre-commit-install:
 
 .PHONY: run-app
 run-app:
+	@echo "Starting the frontend app..."
 	@set -a; source ${ENV_FILE}; set +a; \
-	REDIRECT_ENDPOINT="$(call extract_endpoint,${REDIRECT_URI})" npm run dev
+	SPOTIFY_REDIRECT_URI="$(call extract_endpoint,${REDIRECT_URI})" npm run dev
