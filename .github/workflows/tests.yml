@@ -12,8 +12,23 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.2'
+          go-version: "1.22.2"
           cache-dependency-path: "**/go.sum"
       - name: Run the tests
         run: make run-tests
         working-directory: ./backend
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+      - name: Run the tests
+        run: npm run test
+        working-directory: ./frontend
