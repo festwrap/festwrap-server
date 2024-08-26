@@ -14,7 +14,7 @@ npm install
 
 To run this app you need to create your own Spotify app following [these instructions](https://developer.spotify.com/documentation/web-api/tutorials/getting-started#create-an-app).
 
-Then fill the env file (i.e. `.env`) with the corresponding Spotify secrets. Use `.env.sample` to create `.env` with the required variables to run the project.
+Then fill the env file (i.e. `.env.local`) with the corresponding Spotify secrets. Use `.env.sample` to create `.env.local` with the required variables to run the project.
 
 ```text
 SPOTIFY_CLIENT_ID=<spotify_client_id>
