@@ -13,6 +13,8 @@ vi.mock("next-auth/react", () => {
 const useSessionMock = useSession as Mock<typeof useSession>
 
 describe("Home", () => {
+  const TOMORRROW_DATE = new Date(Date.now() + 86400).toISOString()
+
   test("should render sign in button when there is not session", () => {
     useSessionMock.mockReturnValue({
       update: vi.fn(),
@@ -26,7 +28,7 @@ describe("Home", () => {
 
   test("should render sign out button when there is session", () => {
     const mockSession = {
-      expires: new Date(Date.now() + 2 * 86400).toISOString(),
+      expires: TOMORRROW_DATE,
       user: { username: "user", email: "user@gmail.com" },
     }
 
