@@ -2,6 +2,7 @@
 import { useSession, signIn, signOut } from "next-auth/react"
 import Button from "@components/Button"
 import Card from "@components/Card"
+import { PUBLIC_SPOTIFY_REDIRECT_URI } from "../../env"
 
 export default function Home() {
   const { data: session } = useSession()
@@ -23,7 +24,7 @@ export default function Home() {
       <Button
         accent="secondary"
         onClick={() =>
-          signIn("spotify", { callbackUrl: "http://localhost:3000" })
+          signIn("spotify", { callbackUrl: PUBLIC_SPOTIFY_REDIRECT_URI })
         }
       >
         Login with Spotify
