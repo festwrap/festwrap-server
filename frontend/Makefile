@@ -1,5 +1,5 @@
 APP_PORT ?= 3000
-ENV_FILE ?= .env.local
+ENV_FILE ?= .env
 
 include ${ENV_FILE}
 
