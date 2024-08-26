@@ -1,24 +1,25 @@
 "use client"
 import { useSession, signIn, signOut } from "next-auth/react"
 import Button from "@components/Button"
+import Card from "@components/Card"
 
 export default function Home() {
   const { data: session } = useSession()
 
   if (session) {
     return (
-      <>
-        Signed in as {session?.user?.email} <br />
+      <Card>
+        <span>Signed in as {session?.user?.email || session?.user?.name}</span>
         <Button accent="tertiary" onClick={() => signOut()}>
           Sign out
         </Button>
-      </>
+      </Card>
     )
   }
 
   return (
-    <>
-      Not signed in <br />
+    <Card>
+      <span>Not signed in</span>
       <Button
         accent="secondary"
         onClick={() =>
@@ -27,6 +28,6 @@ export default function Home() {
       >
         Login with Spotify
       </Button>
-    </>
+    </Card>
   )
 }

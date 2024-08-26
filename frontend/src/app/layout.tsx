@@ -21,7 +21,11 @@ export default function RootLayout({
   return (
     <SessionWrapper>
       <html lang="en">
-        <body className={poppins.className}>{children}</body>
+        <body className={poppins.className}>
+          <div className="flex flex-col h-full items-center justify-center">
+            {children}
+          </div>
+        </body>
       </html>
     </SessionWrapper>
   )
