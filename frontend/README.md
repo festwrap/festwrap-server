@@ -19,10 +19,7 @@ Then fill the env file (i.e. `.env`) with the corresponding Spotify secrets. Use
 ```text
 SPOTIFY_CLIENT_ID=<spotify_client_id>
 SPOTIFY_SECRET=<spotify_secret>
-SPOTIFY_REDIRECT_URI=<redirect_uri>
 ```
-
-**Important** You need to put `http://localhost:3000` as a `NEXT_SPOTIFY_REDIRECT_URI` in your local environment to work properly
 
 To run the app, type:
 
