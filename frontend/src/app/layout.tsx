@@ -22,7 +22,7 @@ export default function RootLayout({
     <SessionWrapper>
       <html lang="en">
         <body className={poppins.className}>
-          <div className="flex flex-col h-full items-center justify-center">
+          <div className="flex flex-col h-full items-center justify-center bg-gray-50">
             {children}
           </div>
         </body>
