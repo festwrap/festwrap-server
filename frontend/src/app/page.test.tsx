@@ -37,6 +37,8 @@ describe("Home", () => {
     })
 
     const { getByText } = render(<Home />)
-    expect(getByText("Not signed in")).toBeTruthy()
+
+    const expectedMessage = `Signed in as ${mockSession.user.email}`
+    expect(getByText(expectedMessage)).toBeTruthy()
   })
 })
