@@ -14,11 +14,6 @@ const useSessionMock = useSession as Mock<typeof useSession>
 
 describe("Home", () => {
   test("should render sign in button when there is not session", () => {
-    const mockSession = {
-      expires: new Date(Date.now() + 2 * 86400).toISOString(),
-      user: { username: "user", email: "user@gmail.com" },
-    }
-
     useSessionMock.mockReturnValue({
       update: vi.fn(),
       data: null,
