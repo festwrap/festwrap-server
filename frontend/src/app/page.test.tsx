@@ -1,5 +1,5 @@
-import { describe, test, expect, vi, Mock } from "vitest"
-import { render } from "@testing-library/react"
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
+import { cleanup, render, screen } from "@testing-library/react"
 import Home from "./page"
 import { useSession } from "next-auth/react"
 
@@ -10,20 +10,27 @@ vi.mock("next-auth/react", () => {
   }
 })
 
-const useSessionMock = useSession as Mock<typeof useSession>
-
 describe("Home", () => {
   const TOMORRROW_DATE = new Date(Date.now() + 86400).toISOString()
 
+  afterEach(() => {
+    vi.clearAllMocks()
+    cleanup()
+  })
+
   test("should render sign in button when there is not session", () => {
-    useSessionMock.mockReturnValue({
+    vi.mocked(useSession).mockReturnValue({
       update: vi.fn(),
       data: null,
       status: "unauthenticated",
     })
 
-    const { getByText } = render(<Home />)
-    expect(getByText("Not signed in")).toBeTruthy()
+    render(<Home />)
+
+    expect(screen.getByText("Not signed in")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /Login with Spotify/i })
+    ).toBeTruthy()
   })
 
   test("should render sign out button when there is session", () => {
@@ -32,15 +39,19 @@ describe("Home", () => {
       user: { username: "user", email: "user@gmail.com" },
     }
 
-    useSessionMock.mockReturnValue({
+    vi.mocked(useSession).mockReturnValue({
       update: vi.fn(),
       data: mockSession,
       status: "authenticated",
     })
 
-    const { getByText } = render(<Home />)
+    render(<Home />)
 
     const expectedMessage = `Signed in as ${mockSession.user.email}`
-    expect(getByText(expectedMessage)).toBeTruthy()
+    expect(screen.getByText(expectedMessage)).toBeInTheDocument()
+
+    expect(
+      screen.getByRole("button", { name: /Sign out/i })
+    ).toBeInTheDocument()
   })
 })
