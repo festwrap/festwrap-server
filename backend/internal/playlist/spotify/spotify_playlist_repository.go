@@ -92,9 +92,10 @@ func (r *SpotifyPlaylistRepository) GetSpotifyBaseHeaders() map[string]string {
 func NewSpotifyPlaylistRepository(
 	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
 	return SpotifyPlaylistRepository{
-		accessToken:     accessToken,
-		host:            "api.spotify.com",
-		httpSender:      httpSender,
-		songsSerializer: &SpotifySongsSerializer{},
+		accessToken:        accessToken,
+		host:               "api.spotify.com",
+		httpSender:         httpSender,
+		songsSerializer:    &SpotifySongsSerializer{},
+		playlistSerializer: &SpotifyPlaylistSerializer{},
 	}
 }
