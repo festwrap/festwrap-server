@@ -6,12 +6,13 @@ import (
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist"
 	"festwrap/internal/playlist/errors"
+	"festwrap/internal/serialization"
 	"festwrap/internal/song"
 )
 
 type SpotifyPlaylistRepository struct {
-	songsSerializer    SongsSerializer
-	playlistSerializer PlaylistSerializer
+	songsSerializer    serialization.Serializer[SongList]
+	playlistSerializer serialization.Serializer[playlist.Playlist]
 	accessToken        string
 	host               string
 	httpSender         httpsender.HTTPRequestSender
@@ -22,7 +23,7 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 		return errors.NewCannotAddSongsToPlaylistError("no songs provided")
 	}
 
-	body, err := r.songsSerializer.Serialize(songs)
+	body, err := r.songsSerializer.Serialize(SongList{songs: songs})
 	if err != nil {
 		errorMsg := fmt.Sprintf("could not serialize songs: %v", err.Error())
 		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
@@ -57,11 +58,11 @@ func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequ
 	r.httpSender = httpSender
 }
 
-func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer SongsSerializer) {
+func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer serialization.Serializer[SongList]) {
 	r.songsSerializer = serializer
 }
 
-func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer PlaylistSerializer) {
+func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serialization.Serializer[playlist.Playlist]) {
 	r.playlistSerializer = serializer
 }
 
