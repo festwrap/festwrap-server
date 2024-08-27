@@ -60,8 +60,6 @@ func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
 	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
 }
 
-func NewSetlistFMSetlistRepository(
-	host string, apiKey string, httpSender httpsender.HTTPRequestSender,
-) *SetlistFMRepository {
-	return &SetlistFMRepository{host: host, apiKey: apiKey, parser: &SetlistFMParser{}, httpSender: httpSender}
+func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
+	return &SetlistFMRepository{host: "api.setlist.fm", apiKey: apiKey, parser: &SetlistFMParser{}, httpSender: httpSender}
 }

@@ -19,8 +19,6 @@ func main() {
 	setlistfmApiKey := flag.String("setlistfm-key", "", "Setlistfm API Key")
 	artist := flag.String("artist", "", "Artist to add to the playlist")
 	playlistId := flag.String("playlist-id", "", "Spotify playlist identifier where to add songs")
-	spotifyHost := flag.String("spotify-api", "api.spotify.com", "Spotify API url")
-	setlistfmHost := flag.String("setlistfm-api", "api.setlist.fm", "Setlistfm API url")
 	minSongsPerSetlist := flag.Int("min-setlist-songs", 5, "Minimum number of songs to include")
 	flag.Parse()
 
@@ -33,18 +31,16 @@ func main() {
 	setlistFmParser := setlistfm.NewSetlistFMParser()
 	setlistFmParser.SetMinimumSongs(*minSongsPerSetlist)
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
-		*setlistfmHost,
 		*setlistfmApiKey,
 		&httpSender,
 	)
 
 	songRepository := spotifySong.NewSpotifySongRepository(
 		*spotifyAccessToken,
-		*spotifyHost,
 		&httpSender,
 	)
 
-	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(*spotifyHost, &httpSender, *spotifyAccessToken)
+	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(&httpSender, *spotifyAccessToken)
 	playlistService := playlist.NewConcurrentPlaylistService(
 		&playlistRepository,
 		setlistRepository,

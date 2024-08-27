@@ -42,7 +42,7 @@ func defaultParser() FakeSetlistParser {
 }
 
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	url := "https://setlistm.com/rest/1.0/search/setlists?artistName=Boysetsfire"
+	url := "https://api.setlist.fm/rest/1.0/search/setlists?artistName=Boysetsfire"
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
 		map[string]string{
@@ -54,7 +54,7 @@ func expectedHttpOptions() httpsender.HTTPRequestOptions {
 }
 
 func setlistRepository(sender httpsender.HTTPRequestSender) SetlistFMRepository {
-	repository := *NewSetlistFMSetlistRepository("setlistm.com", "some_api_key", sender)
+	repository := *NewSetlistFMSetlistRepository("some_api_key", sender)
 	parser := defaultParser()
 	repository.SetParser(&parser)
 	return repository
