@@ -18,3 +18,8 @@ run-app:
 	@echo "Starting the frontend app..."
 	@set -a; source ${ENV_FILE}; set +a; \
 	SPOTIFY_REDIRECT_URI="$(call extract_endpoint,${REDIRECT_URI})" npm run dev
+
+.PHONY: run-tests
+run-tests:
+	@echo "Running tests..."
+	@npm run test
