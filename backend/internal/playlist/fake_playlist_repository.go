@@ -7,9 +7,20 @@ type AddSongsArgs struct {
 	Songs      []song.Song
 }
 
+type CreatePlaylistArgs struct {
+	UserId   string
+	Playlist Playlist
+}
+
 type FakePlaylistRepository struct {
-	addSongArgs AddSongsArgs
-	err         error
+	addSongArgs        AddSongsArgs
+	createPlaylistArgs CreatePlaylistArgs
+	err                error
+}
+
+func (s *FakePlaylistRepository) CreatePlaylist(userId string, playlist Playlist) error {
+	s.createPlaylistArgs = CreatePlaylistArgs{UserId: userId, Playlist: playlist}
+	return s.err
 }
 
 func (s *FakePlaylistRepository) AddSongs(playlistId string, songs []song.Song) error {
@@ -23,6 +34,10 @@ func (s *FakePlaylistRepository) SetError(err error) {
 
 func (s *FakePlaylistRepository) GetAddSongArgs() AddSongsArgs {
 	return s.addSongArgs
+}
+
+func (s *FakePlaylistRepository) GetCreatePlaylistSongArgs() CreatePlaylistArgs {
+	return s.createPlaylistArgs
 }
 
 func NewFakePlaylistRepository() FakePlaylistRepository {

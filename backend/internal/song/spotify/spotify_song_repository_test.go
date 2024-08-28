@@ -17,7 +17,7 @@ func defaultTitle() string {
 }
 
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	url := "https://spotify.com/v1/search?q=artist%3AMovements+track%3ADaylily&type=track"
+	url := "https://api.spotify.com/v1/search?q=artist%3AMovements+track%3ADaylily&type=track"
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
 		map[string]string{"Authorization": "Bearer some_token"},
@@ -47,7 +47,7 @@ func defaultParser() *FakeSongsParser {
 }
 
 func spotifySongRepository(sender httpsender.HTTPRequestSender) SpotifySongRepository {
-	repository := NewSpotifySongRepository("some_token", "spotify.com", sender)
+	repository := NewSpotifySongRepository("some_token", sender)
 	repository.SetParser(defaultParser())
 	return *repository
 }

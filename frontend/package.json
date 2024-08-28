@@ -1,24 +1,12 @@
 {
-  "name": "festwrap-ui",
-  "version": "1.0.0",
-  "description": "UI for creating playlists for your favourite festivals",
-  "main": "index.js",
   "author": "Daniel Mora",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
-    "test": "vitest"
-  },
   "dependencies": {
     "next": "14.2.5",
     "next-auth": "^4.24.7",
     "react": "^18",
     "react-dom": "^18"
   },
+  "description": "UI for creating playlists for your favourite festivals",
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.5.0",
@@ -38,5 +26,17 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^2.0.5"
-  }
+  },
+  "main": "index.js",
+  "name": "festwrap-ui",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "start": "next start",
+    "test": "vitest"
+  },
+  "version": "1.0.0"
 }
