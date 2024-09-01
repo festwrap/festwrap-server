@@ -61,5 +61,6 @@ func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
 }
 
 func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
-	return &SetlistFMRepository{host: "api.setlist.fm", apiKey: apiKey, parser: &SetlistFMParser{}, httpSender: httpSender}
+	parser := NewSetlistFMParser()
+	return &SetlistFMRepository{host: "api.setlist.fm", apiKey: apiKey, parser: &parser, httpSender: httpSender}
 }
