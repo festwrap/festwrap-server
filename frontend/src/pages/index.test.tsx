@@ -10,6 +10,14 @@ vi.mock("next-auth/react", () => {
   }
 })
 
+const writeTextMock = vi.fn()
+
+Object.assign(navigator, {
+  clipboard: {
+    writeText: writeTextMock,
+  },
+})
+
 describe("Home", () => {
   const TOMORRROW_DATE = new Date(Date.now() + 86400).toISOString()
 
@@ -53,5 +61,28 @@ describe("Home", () => {
     expect(
       screen.getByRole("button", { name: /Sign out/i })
     ).toBeInTheDocument()
+  })
+
+  test("should copy access token to clipboard", () => {
+    const mockSession = {
+      expires: TOMORRROW_DATE,
+      user: { name: "user", email: "user@gmail.com", accessToken: "token" },
+    }
+
+    vi.mocked(useSession).mockReturnValue({
+      update: vi.fn(),
+      data: mockSession,
+      status: "authenticated",
+    })
+
+    render(<Home />)
+
+    const copyButton = screen.getByRole("button", {
+      name: /Copy access token/i,
+    })
+
+    copyButton.click()
+
+    expect(writeTextMock).toHaveBeenCalledWith(mockSession.user.accessToken)
   })
 })
