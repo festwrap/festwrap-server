@@ -12,7 +12,12 @@ Make sure Node 20 and Make are available in your system. Then install dependenci
 npm install
 ```
 
+## Create new Spotify app and config the redirect URIs
+
 To run this app you need to create your own Spotify app following [these instructions](https://developer.spotify.com/documentation/web-api/tutorials/getting-started#create-an-app).
+
+Put this URL `http://XXX:3000/api/auth/callback/spotify` as a redirect URI
+
 
 Then fill the env file (i.e. `.env`) with the corresponding Spotify secrets. Use `.env.sample` to create `.env` with the required variables to run the project.
 
