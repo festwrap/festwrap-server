@@ -7,7 +7,7 @@ import (
 )
 
 func TestSpotifySongsSerializer(t *testing.T) {
-	songs := []song.Song{song.NewSong("first_uri"), song.NewSong("second_uri")}
+	songs := SongList{songs: []song.Song{song.NewSong("first_uri"), song.NewSong("second_uri")}}
 	serializer := SpotifySongsSerializer{}
 
 	actual, err := serializer.Serialize(songs)
