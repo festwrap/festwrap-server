@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, test, expect, vi, afterEach } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
 import Home from "."
 import { useSession } from "next-auth/react"
