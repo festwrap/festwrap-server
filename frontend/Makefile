@@ -22,4 +22,4 @@ run-app:
 .PHONY: run-tests
 run-tests:
 	@echo "Running tests..."
-	@npm run test
+	npm run test
