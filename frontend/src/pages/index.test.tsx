@@ -36,7 +36,7 @@ describe("Home", () => {
   test("should render sign out button when there is session", () => {
     const mockSession = {
       expires: TOMORRROW_DATE,
-      user: { username: "user", email: "user@gmail.com" },
+      user: { name: "user", email: "user@gmail.com", accessToken: "token" },
     }
 
     vi.mocked(useSession).mockReturnValue({
