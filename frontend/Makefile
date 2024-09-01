@@ -17,7 +17,7 @@ pre-commit-install:
 run-app:
 	@echo "Starting the frontend app..."
 	@set -a; source ${ENV_FILE}; set +a; \
-	SPOTIFY_REDIRECT_URI="$(call extract_endpoint,${REDIRECT_URI})" npm run dev
+	npm run dev
 
 .PHONY: run-tests
 run-tests:
