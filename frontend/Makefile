@@ -1,7 +1,11 @@
 APP_PORT ?= 3000
 ENV_FILE ?= .env
 
-include ${ENV_FILE}
+
+ifndef CI:
+	include ${ENV_FILE}
+endif
+
 
 define extract_endpoint
 $(shell echo ${1} | sed -E 's|^https?://[^/]*||' | tr -d ' ')
