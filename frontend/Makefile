@@ -2,7 +2,7 @@ APP_PORT ?= 3000
 ENV_FILE ?= .env
 
 
-ifndef CI:
+ifndef CI
 	include ${ENV_FILE}
 endif
 
