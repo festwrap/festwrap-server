@@ -1,7 +1,11 @@
 APP_PORT ?= 3000
 ENV_FILE ?= .env
 
-include ${ENV_FILE}
+
+ifndef CI
+	include ${ENV_FILE}
+endif
+
 
 define extract_endpoint
 $(shell echo ${1} | sed -E 's|^https?://[^/]*||' | tr -d ' ')
@@ -15,5 +19,11 @@ pre-commit-install:
 
 .PHONY: run-app
 run-app:
+	@echo "Starting the frontend app..."
 	@set -a; source ${ENV_FILE}; set +a; \
-	REDIRECT_ENDPOINT="$(call extract_endpoint,${REDIRECT_URI})" node index.js
+	npm run dev
+
+.PHONY: run-tests
+run-tests:
+	@echo "Running tests..."
+	npm run test
