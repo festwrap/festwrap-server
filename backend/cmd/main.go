@@ -34,6 +34,7 @@ func main() {
 		*setlistfmApiKey,
 		&httpSender,
 	)
+	setlistRepository.SetParser(&setlistFmParser)
 
 	songRepository := spotifySong.NewSpotifySongRepository(
 		*spotifyAccessToken,

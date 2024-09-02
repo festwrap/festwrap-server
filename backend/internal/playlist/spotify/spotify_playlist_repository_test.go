@@ -6,6 +6,7 @@ import (
 
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist"
+	"festwrap/internal/serialization"
 	"festwrap/internal/song"
 	"festwrap/internal/testtools"
 )
@@ -47,28 +48,28 @@ func defaultPlaylistBody() []byte {
 	return []byte("some playlist body")
 }
 
-func defaultSongsSerializer() *FakeSongsSerializer {
-	serializer := FakeSongsSerializer{}
+func defaultSongsSerializer() *serialization.FakeSerializer[SongList] {
+	serializer := serialization.FakeSerializer[SongList]{}
 	serializer.SetResponse(defaultSongsBody())
 	return &serializer
 }
 
-func errorSongsSerializer() SongsSerializer {
-	serializer := FakeSongsSerializer{}
+func errorSongsSerializer() *serialization.FakeSerializer[SongList] {
+	serializer := defaultSongsSerializer()
 	serializer.SetError(errors.New("test songs error"))
-	return &serializer
+	return serializer
 }
 
-func defaultPlaylistSerializer() *FakePlaylistSerializer {
-	serializer := FakePlaylistSerializer{}
+func defaultPlaylistSerializer() *serialization.FakeSerializer[playlist.Playlist] {
+	serializer := serialization.FakeSerializer[playlist.Playlist]{}
 	serializer.SetResponse(defaultPlaylistBody())
 	return &serializer
 }
 
-func errorPlaylistSerializer() PlaylistSerializer {
-	serializer := FakePlaylistSerializer{}
+func errorPlaylistSerializer() *serialization.FakeSerializer[playlist.Playlist] {
+	serializer := defaultPlaylistSerializer()
 	serializer.SetError(errors.New("test playlist error"))
-	return &serializer
+	return serializer
 }
 
 func expectedAddSongsHttpOptions() httpsender.HTTPRequestOptions {
