@@ -5,19 +5,20 @@ import (
 	"net/url"
 
 	httpsender "festwrap/internal/http/sender"
+	"festwrap/internal/serialization"
 	"festwrap/internal/setlist"
 	"festwrap/internal/setlist/errors"
 )
 
 type SetlistFMRepository struct {
-	host       string
-	apiKey     string
-	parser     SetlistParser
-	httpSender httpsender.HTTPRequestSender
+	host         string
+	apiKey       string
+	deserializer serialization.Deserializer[setlist.Setlist]
+	httpSender   httpsender.HTTPRequestSender
 }
 
-func (r *SetlistFMRepository) SetParser(parser SetlistParser) {
-	r.parser = parser
+func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deserializer[setlist.Setlist]) {
+	r.deserializer = deserializer
 }
 
 func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
@@ -28,13 +29,14 @@ func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
 
-	setlist, err := r.parser.Parse(*responseBody)
+	setlist, err := r.deserializer.Deserialize(*responseBody)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
 	if setlist == nil {
 		// TODO: if no valid setlist found, we should check for the next page
-		// TODO: probable a good idea to move the min songs filter to repository and keep parser simpler
+		// TODO: probable a good idea to move the min songs filter to repository
+		// TODO: By doing so, we keep deserializer logic simpler
 		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
 		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
 	}
@@ -61,6 +63,11 @@ func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
 }
 
 func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
-	parser := NewSetlistFMParser()
-	return &SetlistFMRepository{host: "api.setlist.fm", apiKey: apiKey, parser: &parser, httpSender: httpSender}
+	deserializer := NewSetlistFMDeserializer()
+	return &SetlistFMRepository{
+		host:         "api.setlist.fm",
+		apiKey:       apiKey,
+		deserializer: &deserializer,
+		httpSender:   httpSender,
+	}
 }
