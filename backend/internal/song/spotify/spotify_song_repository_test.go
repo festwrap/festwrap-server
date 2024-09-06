@@ -3,6 +3,7 @@ package spotify
 import (
 	"errors"
 	httpsender "festwrap/internal/http/sender"
+	"festwrap/internal/serialization"
 	"festwrap/internal/song"
 	"festwrap/internal/testtools"
 	"testing"
@@ -30,7 +31,7 @@ func defaultSenderResponse() *[]byte {
 	return &response
 }
 
-func defaultParsedSongs() []song.Song {
+func defaultSongs() []song.Song {
 	return []song.Song{song.NewSong("some uri"), song.NewSong("another uri")}
 }
 
@@ -40,15 +41,16 @@ func defaultSender() *httpsender.FakeHTTPSender {
 	return sender
 }
 
-func defaultParser() *FakeSongsParser {
-	parser := &FakeSongsParser{}
-	parser.SetResponse(defaultParsedSongs())
-	return parser
+func defaultDeserializer() *serialization.FakeDeserializer[[]song.Song] {
+	deserializer := &serialization.FakeDeserializer[[]song.Song]{}
+	response := defaultSongs()
+	deserializer.SetResponse(&response)
+	return deserializer
 }
 
 func spotifySongRepository(sender httpsender.HTTPRequestSender) SpotifySongRepository {
 	repository := NewSpotifySongRepository("some_token", sender)
-	repository.SetParser(defaultParser())
+	repository.SetDeserializer(defaultDeserializer())
 	return *repository
 }
 
@@ -72,44 +74,44 @@ func TestGetSongReturnsErrorOnSendError(t *testing.T) {
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
-func TestGetSongCallsParserWithSendResponseBody(t *testing.T) {
+func TestGetSongCallsDeserializeWithSendResponseBody(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
-	parser := defaultParser()
-	repository.SetParser(parser)
+	deserializer := defaultDeserializer()
+	repository.SetDeserializer(deserializer)
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
 	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, parser.GetParseArgs(), *defaultSenderResponse())
+	testtools.AssertEqual(t, deserializer.GetArgs(), *defaultSenderResponse())
 }
 
-func TestGetSongReturnsErrorOnResponseBodyParseError(t *testing.T) {
+func TestGetSongReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
-	parser := &FakeSongsParser{}
-	parser.SetError(errors.New("test error"))
-	repository.SetParser(parser)
+	deserializer := defaultDeserializer()
+	deserializer.SetError(errors.New("test error"))
+	repository.SetDeserializer(deserializer)
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
-func TestGetSongReturnsErrorIfNoSongsParsed(t *testing.T) {
+func TestGetSongReturnsErrorIfNoSongsFound(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
-	parser := &FakeSongsParser{}
-	parser.SetResponse([]song.Song{})
-	repository.SetParser(parser)
+	deserializer := defaultDeserializer()
+	deserializer.SetResponse(&[]song.Song{})
+	repository.SetDeserializer(deserializer)
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
-func TestGetSongReturnsFirstSongParsed(t *testing.T) {
+func TestGetSongReturnsFirstSongFound(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
 
 	song, err := repository.GetSong(defaultArtist(), defaultTitle())
 
 	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, *song, defaultParsedSongs()[0])
+	testtools.AssertEqual(t, *song, defaultSongs()[0])
 }

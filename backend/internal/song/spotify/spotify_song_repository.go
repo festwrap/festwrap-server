@@ -5,15 +5,16 @@ import (
 	"net/url"
 
 	httpsender "festwrap/internal/http/sender"
+	"festwrap/internal/serialization"
 	"festwrap/internal/song"
 	"festwrap/internal/song/errors"
 )
 
 type SpotifySongRepository struct {
-	accessToken string
-	host        string
-	httpSender  httpsender.HTTPRequestSender
-	parser      SongsParser
+	accessToken  string
+	host         string
+	httpSender   httpsender.HTTPRequestSender
+	deserializer serialization.Deserializer[[]song.Song]
 }
 
 func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
@@ -23,23 +24,24 @@ func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	songs, err := r.parser.Parse(*responseBody)
+	songs, err := r.deserializer.Deserialize(*responseBody)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	allSongs := songs
+	allSongs := *songs
 	if len(allSongs) == 0 {
 		errorMsg := fmt.Sprintf("No songs found for song %s (%s)", title, artist)
 		return nil, errors.NewCannotRetrieveSongError(errorMsg)
 	}
 
 	// We assume the first result is the most trusted one
-	return &allSongs[0], nil
+	result := allSongs[0]
+	return &result, nil
 }
 
-func (r *SpotifySongRepository) SetParser(parser SongsParser) {
-	r.parser = parser
+func (r *SpotifySongRepository) SetDeserializer(deserializer serialization.Deserializer[[]song.Song]) {
+	r.deserializer = deserializer
 }
 
 func (r *SpotifySongRepository) createSongHttpOptions(artist string, title string) httpsender.HTTPRequestOptions {
@@ -63,5 +65,5 @@ func NewSpotifySongRepository(
 	httpSender httpsender.HTTPRequestSender,
 ) *SpotifySongRepository {
 	return &SpotifySongRepository{
-		accessToken: accessToken, host: "api.spotify.com", httpSender: httpSender, parser: &SpotifySongsParser{}}
+		accessToken: accessToken, host: "api.spotify.com", httpSender: httpSender, deserializer: &SpotifySongsDeserializer{}}
 }

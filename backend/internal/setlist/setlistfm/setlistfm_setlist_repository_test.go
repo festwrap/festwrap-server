@@ -3,6 +3,7 @@ package setlistfm
 import (
 	"errors"
 	httpsender "festwrap/internal/http/sender"
+	"festwrap/internal/serialization"
 	"festwrap/internal/setlist"
 	"festwrap/internal/testtools"
 	"testing"
@@ -12,7 +13,7 @@ func defaultArtist() string {
 	return "Boysetsfire"
 }
 
-func defaultParsedSetlist() setlist.Setlist {
+func defaultSetlist() setlist.Setlist {
 	songs := []setlist.Song{
 		setlist.NewSong("Closure"),
 		setlist.NewSong("Rookie"),
@@ -34,11 +35,11 @@ func defaultSender() *httpsender.FakeHTTPSender {
 	return &sender
 }
 
-func defaultParser() FakeSetlistParser {
-	parser := FakeSetlistParser{}
-	response := defaultParsedSetlist()
-	parser.SetReponse(&response)
-	return parser
+func defaultDeserializer() serialization.FakeDeserializer[setlist.Setlist] {
+	result := serialization.FakeDeserializer[setlist.Setlist]{}
+	response := defaultSetlist()
+	result.SetResponse(&response)
+	return result
 }
 
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
@@ -55,8 +56,8 @@ func expectedHttpOptions() httpsender.HTTPRequestOptions {
 
 func setlistRepository(sender httpsender.HTTPRequestSender) SetlistFMRepository {
 	repository := *NewSetlistFMSetlistRepository("some_api_key", sender)
-	parser := defaultParser()
-	repository.SetParser(&parser)
+	deserializer := defaultDeserializer()
+	repository.SetDeserializer(&deserializer)
 	return repository
 }
 
@@ -79,42 +80,42 @@ func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
-func TestGetSetlistParserCalledWithSenderResponse(t *testing.T) {
+func TestGetSetlistDeserializerCalledWithSenderResponse(t *testing.T) {
 	repository := setlistRepository(defaultSender())
-	parser := defaultParser()
-	repository.SetParser(&parser)
+	deserializer := defaultDeserializer()
+	repository.SetDeserializer(&deserializer)
 
 	repository.GetSetlist(defaultArtist())
 
-	testtools.AssertEqual(t, parser.GetParseArgs(), senderResponse())
+	testtools.AssertEqual(t, deserializer.GetArgs(), senderResponse())
 }
 
-func TestGetSetlistReturnsErrorOnParserError(t *testing.T) {
+func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 	repository := setlistRepository(defaultSender())
-	parser := FakeSetlistParser{}
-	parser.SetError(errors.New("test parser error"))
-	repository.SetParser(&parser)
+	deserializer := defaultDeserializer()
+	deserializer.SetError(errors.New("test deserialization error"))
+	repository.SetDeserializer(&deserializer)
 
 	_, err := repository.GetSetlist(defaultArtist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
-func TestGetSetlistReturnsErrorOnEmptyParse(t *testing.T) {
+func TestGetSetlistReturnsErrorOnEmptySetlist(t *testing.T) {
 	repository := setlistRepository(defaultSender())
-	parser := FakeSetlistParser{}
-	parser.SetReponse(nil)
-	repository.SetParser(&parser)
+	deserializer := defaultDeserializer()
+	deserializer.SetResponse(nil)
+	repository.SetDeserializer(&deserializer)
 
 	_, err := repository.GetSetlist(defaultArtist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
-func TestGetSetlistReturnsParsedSetlist(t *testing.T) {
+func TestGetSetlistReturnsResponseSetlist(t *testing.T) {
 	repository := setlistRepository(defaultSender())
 
 	actual, _ := repository.GetSetlist(defaultArtist())
 
-	testtools.AssertEqual(t, *actual, defaultParsedSetlist())
+	testtools.AssertEqual(t, *actual, defaultSetlist())
 }

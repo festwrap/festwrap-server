@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"festwrap/internal/serialization/errors"
 	"festwrap/internal/setlist"
-	"festwrap/internal/setlist/errors"
 	"festwrap/internal/testtools"
 )
 
@@ -41,9 +41,9 @@ func expectedSetlist(t *testing.T) *setlist.Setlist {
 	return &setlist
 }
 
-func parseResponse(t *testing.T, parser SetlistFMParser) *setlist.Setlist {
+func deserializeResponse(t *testing.T, deserializer SetlistFMDeserializer) *setlist.Setlist {
 	response := loadResponse(t)
-	result, err := parser.Parse(response)
+	result, err := deserializer.Deserialize(response)
 	if err != nil {
 		t.Fatalf("Found error while parsing: %v", err)
 	}
@@ -51,19 +51,19 @@ func parseResponse(t *testing.T, parser SetlistFMParser) *setlist.Setlist {
 }
 
 func TestSetlistRetrieved(t *testing.T) {
-	parser := NewSetlistFMParser()
+	deserializer := NewSetlistFMDeserializer()
 
-	actual := parseResponse(t, parser)
+	actual := deserializeResponse(t, deserializer)
 
 	expected := expectedSetlist(t)
 	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestNoSetlistRetrievedWhenMinSongsNotReached(t *testing.T) {
-	parser := NewSetlistFMParser()
-	parser.SetMinimumSongs(25)
+	deserializer := NewSetlistFMDeserializer()
+	deserializer.SetMinimumSongs(25)
 
-	result := parseResponse(t, parser)
+	result := deserializeResponse(t, deserializer)
 
 	if result != nil {
 		t.Errorf("Expected nil, found %v", result)
@@ -71,12 +71,12 @@ func TestNoSetlistRetrievedWhenMinSongsNotReached(t *testing.T) {
 }
 
 func TestReturnsErrorWhenResponseIsNotJson(t *testing.T) {
-	parser := NewSetlistFMParser()
+	deserializer := NewSetlistFMDeserializer()
 
-	_, err := parser.Parse([]byte("{some: non_json}"))
+	_, err := deserializer.Deserialize([]byte("{some: non_json}"))
 
-	if _, ok := err.(*errors.CannotParseSetlistError); !ok {
-		t.Errorf("Expected parse setlist error, found %v", reflect.TypeOf(err))
+	if _, ok := err.(*errors.DeserializationError); !ok {
+		t.Errorf("Expected deserialization error, found %v", reflect.TypeOf(err))
 	}
 
 }

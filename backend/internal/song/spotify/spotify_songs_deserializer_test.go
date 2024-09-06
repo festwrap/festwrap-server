@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"festwrap/internal/serialization/errors"
 	"festwrap/internal/song"
-	"festwrap/internal/song/errors"
 	"festwrap/internal/testtools"
 )
 
@@ -36,31 +36,31 @@ func expectedSongs(t *testing.T) *[]song.Song {
 	return &songs
 }
 
-func parsedResponse(t *testing.T, parser SpotifySongsParser) []song.Song {
+func deserializeResponse(t *testing.T, deserializer SpotifySongsDeserializer) []song.Song {
 	response := loadResponse(t)
-	result, err := parser.Parse(response)
+	result, err := deserializer.Deserialize(response)
 	if err != nil {
 		t.Fatalf("Found error while parsing: %v", err)
 	}
-	return result
+	return *result
 }
 
 func TestSongRetrieved(t *testing.T) {
-	parser := NewSpotifySongsParser()
+	deserializer := NewSpotifySongsDeserializer()
 
-	result := parsedResponse(t, parser)
+	result := deserializeResponse(t, deserializer)
 
 	expected := expectedSongs(t)
 	testtools.AssertEqual(t, result, *expected)
 }
 
 func TestReturnsErrorWhenResponseIsNotJson(t *testing.T) {
-	parser := NewSpotifySongsParser()
+	deserializer := NewSpotifySongsDeserializer()
 
-	_, err := parser.Parse([]byte("{some: non_json}"))
+	_, err := deserializer.Deserialize([]byte("{some: non_json}"))
 
-	if _, ok := err.(*errors.CannotParseSongsError); !ok {
-		t.Errorf("Expected parse song error, found %v", reflect.TypeOf(err))
+	if _, ok := err.(*errors.DeserializationError); !ok {
+		t.Errorf("Expected deserialization error, found %v", reflect.TypeOf(err))
 	}
 
 }
