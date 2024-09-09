@@ -1,7 +1,6 @@
 package spotify
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -10,18 +9,6 @@ import (
 	"festwrap/internal/song"
 	"festwrap/internal/testtools"
 )
-
-func loadResponse(t *testing.T) []byte {
-	t.Helper()
-
-	dataPath := filepath.Join(testtools.GetParentDir(t), "testdata", "search_song_response.json")
-	data, err := os.ReadFile(dataPath)
-
-	if err != nil {
-		t.Fatalf("Could not load test response: %v", err)
-	}
-	return data
-}
 
 func expectedSongs(t *testing.T) *[]song.Song {
 	t.Helper()
@@ -37,7 +24,9 @@ func expectedSongs(t *testing.T) *[]song.Song {
 }
 
 func deserializeResponse(t *testing.T, deserializer SpotifySongsDeserializer) []song.Song {
-	response := loadResponse(t)
+	response := testtools.LoadTestDataOrError(
+		t, filepath.Join(testtools.GetParentDir(t), "testdata", "search_song_response.json"),
+	)
 	result, err := deserializer.Deserialize(response)
 	if err != nil {
 		t.Fatalf("Found error while parsing: %v", err)
