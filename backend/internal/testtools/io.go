@@ -2,10 +2,22 @@ package testtools
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 )
+
+func LoadTestDataOrError(t *testing.T, filePath string) []byte {
+	t.Helper()
+
+	data, err := os.ReadFile(filePath)
+
+	if err != nil {
+		t.Fatalf("Could not load data in %s: %v", filePath, err)
+	}
+	return data
+}
 
 func GetParentDir(t *testing.T) string {
 	// Get the file of the caller, not the current one

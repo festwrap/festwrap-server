@@ -1,7 +1,6 @@
 package setlistfm
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -10,18 +9,6 @@ import (
 	"festwrap/internal/setlist"
 	"festwrap/internal/testtools"
 )
-
-func loadResponse(t *testing.T) []byte {
-	t.Helper()
-
-	dataPath := filepath.Join(testtools.GetParentDir(t), "testdata", "response.json")
-	data, err := os.ReadFile(dataPath)
-
-	if err != nil {
-		t.Fatalf("Could not load test response: %v", err)
-	}
-	return data
-}
 
 func expectedSetlist(t *testing.T) *setlist.Setlist {
 	t.Helper()
@@ -42,7 +29,7 @@ func expectedSetlist(t *testing.T) *setlist.Setlist {
 }
 
 func deserializeResponse(t *testing.T, deserializer SetlistFMDeserializer) *setlist.Setlist {
-	response := loadResponse(t)
+	response := testtools.LoadTestDataOrError(t, filepath.Join(testtools.GetParentDir(t), "testdata", "response.json"))
 	result, err := deserializer.Deserialize(response)
 	if err != nil {
 		t.Fatalf("Found error while parsing: %v", err)
