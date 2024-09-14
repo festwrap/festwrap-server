@@ -1,7 +1,10 @@
 package spotify
 
 import (
+	"context"
 	"errors"
+
+	types "festwrap/internal"
 	"festwrap/internal/artist"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
@@ -15,6 +18,16 @@ func defaultSearchName() string {
 
 func defaultLimit() int {
 	return 2
+}
+
+func defaultTokenKey() types.ContextKey {
+	return "myKey"
+}
+
+func defaultContext() context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, defaultTokenKey(), "some_token")
+	return ctx
 }
 
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
@@ -52,8 +65,9 @@ func defaultDeserializer() *serialization.FakeDeserializer[[]artist.Artist] {
 }
 
 func spotifySongRepository(sender httpsender.HTTPRequestSender) SpotifyArtistRepository {
-	repository := NewSpotifyArtistRepository("some_token", sender)
+	repository := NewSpotifyArtistRepository(sender)
 	repository.SetDeserializer(defaultDeserializer())
+	repository.SetTokenKey(defaultTokenKey())
 	return *repository
 }
 
@@ -61,10 +75,20 @@ func TestSearchArtistSendsRequestWithProperOptions(t *testing.T) {
 	sender := defaultSender()
 	repository := spotifySongRepository(sender)
 
-	_, err := repository.SearchArtist(defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
 	testtools.AssertErrorIsNil(t, err)
 	testtools.AssertEqual(t, sender.GetSendArgs(), expectedHttpOptions())
+}
+
+func TestSearchArtistReturnsErrorOnWrongKeyType(t *testing.T) {
+	ctx := defaultContext()
+	ctx = context.WithValue(ctx, defaultTokenKey(), 42)
+	repository := spotifySongRepository(defaultSender())
+
+	_, err := repository.SearchArtist(ctx, defaultSearchName(), defaultLimit())
+
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestSearchArtistReturnsErrorOnSendError(t *testing.T) {
@@ -72,7 +96,7 @@ func TestSearchArtistReturnsErrorOnSendError(t *testing.T) {
 	sender.SetError(errors.New("test error"))
 	repository := spotifySongRepository(sender)
 
-	_, err := repository.SearchArtist(defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -82,7 +106,7 @@ func TestSearchArtistCallsDeserializeWithSendResponseBody(t *testing.T) {
 	deserializer := defaultDeserializer()
 	repository.SetDeserializer(deserializer)
 
-	_, err := repository.SearchArtist(defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
 	testtools.AssertErrorIsNil(t, err)
 	testtools.AssertEqual(t, deserializer.GetArgs(), *defaultSenderResponse())
@@ -94,7 +118,7 @@ func TestSearchArtistsReturnsErrorOnResponseBodyDeserializationError(t *testing.
 	deserializer.SetError(errors.New("test error"))
 	repository.SetDeserializer(deserializer)
 
-	_, err := repository.SearchArtist(defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -102,9 +126,9 @@ func TestSearchArtistsReturnsErrorOnResponseBodyDeserializationError(t *testing.
 func TestSearchArtistReturnsDeserializedArtists(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
 
-	artists, _ := repository.SearchArtist(defaultSearchName(), defaultLimit())
+	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertEqual(t, *artists, defaultArtists())
+	testtools.AssertEqual(t, artists, defaultArtists())
 }
 
 func TestSearchArtistReturnsEmptyIfNoneFound(t *testing.T) {
@@ -113,7 +137,7 @@ func TestSearchArtistReturnsEmptyIfNoneFound(t *testing.T) {
 	deserializer.SetResponse(&[]artist.Artist{})
 	repository.SetDeserializer(deserializer)
 
-	artists, _ := repository.SearchArtist(defaultSearchName(), defaultLimit())
+	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertEqual(t, *artists, []artist.Artist{})
+	testtools.AssertEqual(t, artists, []artist.Artist{})
 }

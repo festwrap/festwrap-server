@@ -1,5 +1,7 @@
 package artist
 
+import "context"
+
 type ArtistRepository interface {
-	SearchArtist(name string, limit int) (*[]Artist, error)
+	SearchArtist(ctx context.Context, name string, limit int) ([]Artist, error)
 }
