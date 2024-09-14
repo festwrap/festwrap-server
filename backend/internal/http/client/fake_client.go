@@ -10,6 +10,10 @@ type FakeHTTPClient struct {
 	err        error
 }
 
+func NewFakeHTTPClient() FakeHTTPClient {
+	return FakeHTTPClient{}
+}
+
 func (c *FakeHTTPClient) Send(request *http.Request) (*http.Response, error) {
 	c.requestArg = request
 
@@ -30,8 +34,4 @@ func (c *FakeHTTPClient) SetResponse(response *http.Response) {
 
 func (c *FakeHTTPClient) SetError(err error) {
 	c.err = err
-}
-
-func NewFakeHTTPClient() FakeHTTPClient {
-	return FakeHTTPClient{}
 }

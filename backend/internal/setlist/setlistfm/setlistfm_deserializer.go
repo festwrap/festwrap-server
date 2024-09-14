@@ -10,6 +10,10 @@ type SetlistFMDeserializer struct {
 	minimumSongs int
 }
 
+func NewSetlistFMDeserializer() SetlistFMDeserializer {
+	return SetlistFMDeserializer{minimumSongs: 1}
+}
+
 func (s *SetlistFMDeserializer) SetMinimumSongs(minimumSongs int) {
 	s.minimumSongs = minimumSongs
 }
@@ -35,8 +39,4 @@ func (s *SetlistFMDeserializer) findSetlistWithMinSongs(response SetlistFMRespon
 	}
 
 	return result
-}
-
-func NewSetlistFMDeserializer() SetlistFMDeserializer {
-	return SetlistFMDeserializer{minimumSongs: 1}
 }

@@ -30,14 +30,14 @@ func GetParentDir(t *testing.T) string {
 
 type ErrorReader struct{}
 
+func NewErrorReader() ErrorReader {
+	return ErrorReader{}
+}
+
 func (ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, errors.New("test error")
 }
 
 func (ErrorReader) Close() error {
 	return nil
-}
-
-func NewErrorReader() ErrorReader {
-	return ErrorReader{}
 }

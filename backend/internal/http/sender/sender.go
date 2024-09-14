@@ -19,6 +19,10 @@ type HTTPRequestOptions struct {
 	expectedStatusCode int
 }
 
+func NewHTTPRequestOptions(url string, method Method, expectedStatusCode int) HTTPRequestOptions {
+	return HTTPRequestOptions{url: url, body: nil, method: method, expectedStatusCode: expectedStatusCode}
+}
+
 func (o *HTTPRequestOptions) GetBody() []byte {
 	return o.body
 }
@@ -49,8 +53,4 @@ func (o *HTTPRequestOptions) SetBody(body []byte) {
 
 func (o *HTTPRequestOptions) SetHeaders(headers map[string]string) {
 	o.headers = headers
-}
-
-func NewHTTPRequestOptions(url string, method Method, expectedStatusCode int) HTTPRequestOptions {
-	return HTTPRequestOptions{url: url, body: nil, method: method, expectedStatusCode: expectedStatusCode}
 }

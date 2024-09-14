@@ -9,6 +9,10 @@ import (
 
 type SpotifySongsDeserializer struct{}
 
+func NewSpotifySongsDeserializer() SpotifySongsDeserializer {
+	return SpotifySongsDeserializer{}
+}
+
 func (s *SpotifySongsDeserializer) Deserialize(setlist []byte) (*[]song.Song, error) {
 	var response SpotifyResponse
 	err := json.Unmarshal(setlist, &response)
@@ -21,8 +25,4 @@ func (s *SpotifySongsDeserializer) Deserialize(setlist []byte) (*[]song.Song, er
 		result = append(result, song.NewSong(currentSong.Uri))
 	}
 	return &result, nil
-}
-
-func NewSpotifySongsDeserializer() SpotifySongsDeserializer {
-	return SpotifySongsDeserializer{}
 }

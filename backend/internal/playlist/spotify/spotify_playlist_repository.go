@@ -18,6 +18,17 @@ type SpotifyPlaylistRepository struct {
 	httpSender         httpsender.HTTPRequestSender
 }
 
+func NewSpotifyPlaylistRepository(
+	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
+	return SpotifyPlaylistRepository{
+		accessToken:        accessToken,
+		host:               "api.spotify.com",
+		httpSender:         httpSender,
+		songsSerializer:    &SpotifySongsSerializer{},
+		playlistSerializer: &SpotifyPlaylistSerializer{},
+	}
+}
+
 func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Song) error {
 	if len(songs) == 0 {
 		return errors.NewCannotAddSongsToPlaylistError("no songs provided")
@@ -86,16 +97,5 @@ func (r *SpotifyPlaylistRepository) GetSpotifyBaseHeaders() map[string]string {
 	return map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", r.accessToken),
 		"Content-Type":  "application/json",
-	}
-}
-
-func NewSpotifyPlaylistRepository(
-	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
-	return SpotifyPlaylistRepository{
-		accessToken:        accessToken,
-		host:               "api.spotify.com",
-		httpSender:         httpSender,
-		songsSerializer:    &SpotifySongsSerializer{},
-		playlistSerializer: &SpotifyPlaylistSerializer{},
 	}
 }

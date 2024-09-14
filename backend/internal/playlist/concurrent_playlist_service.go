@@ -18,6 +18,18 @@ type ConcurrentPlaylistService struct {
 	songRepository     song.SongRepository
 }
 
+func NewConcurrentPlaylistService(
+	playlistRepository PlaylistRepository,
+	setlistRepository setlist.SetlistRepository,
+	songRepository song.SongRepository,
+) ConcurrentPlaylistService {
+	return ConcurrentPlaylistService{
+		playlistRepository: playlistRepository,
+		setlistRepository:  setlistRepository,
+		songRepository:     songRepository,
+	}
+}
+
 func (s *ConcurrentPlaylistService) AddSetlist(playlistId string, artist string) error {
 	setlist, err := s.setlistRepository.GetSetlist(artist)
 	if err != nil {
@@ -53,16 +65,4 @@ func (s *ConcurrentPlaylistService) AddSetlist(playlistId string, artist string)
 func (s *ConcurrentPlaylistService) fetchSong(artist string, song setlist.Song, ch chan<- FetchSongResult) {
 	songDetails, err := s.songRepository.GetSong(artist, song.GetTitle())
 	ch <- FetchSongResult{Song: songDetails, Err: err}
-}
-
-func NewConcurrentPlaylistService(
-	playlistRepository PlaylistRepository,
-	setlistRepository setlist.SetlistRepository,
-	songRepository song.SongRepository,
-) ConcurrentPlaylistService {
-	return ConcurrentPlaylistService{
-		playlistRepository: playlistRepository,
-		setlistRepository:  setlistRepository,
-		songRepository:     songRepository,
-	}
 }
