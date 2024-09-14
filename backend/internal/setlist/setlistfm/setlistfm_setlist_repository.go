@@ -17,6 +17,16 @@ type SetlistFMRepository struct {
 	httpSender   httpsender.HTTPRequestSender
 }
 
+func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
+	deserializer := NewSetlistFMDeserializer()
+	return &SetlistFMRepository{
+		host:         "api.setlist.fm",
+		apiKey:       apiKey,
+		deserializer: &deserializer,
+		httpSender:   httpSender,
+	}
+}
+
 func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deserializer[setlist.Setlist]) {
 	r.deserializer = deserializer
 }
@@ -60,14 +70,4 @@ func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
 	queryParams.Set("artistName", artist)
 	setlistPath := "rest/1.0/search/setlists"
 	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
-}
-
-func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
-	deserializer := NewSetlistFMDeserializer()
-	return &SetlistFMRepository{
-		host:         "api.setlist.fm",
-		apiKey:       apiKey,
-		deserializer: &deserializer,
-		httpSender:   httpSender,
-	}
 }

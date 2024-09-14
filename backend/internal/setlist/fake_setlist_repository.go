@@ -6,6 +6,10 @@ type FakeSetlistRepository struct {
 	err         error
 }
 
+func NewFakeSetlistRepository() FakeSetlistRepository {
+	return FakeSetlistRepository{}
+}
+
 func (s *FakeSetlistRepository) GetSetlist(artist string) (*Setlist, error) {
 	s.artist = artist
 	return s.returnValue, s.err
@@ -21,8 +25,4 @@ func (s *FakeSetlistRepository) SetReturnValue(setlist *Setlist) {
 
 func (s *FakeSetlistRepository) SetError(err error) {
 	s.err = err
-}
-
-func NewFakeSetlistRepository() FakeSetlistRepository {
-	return FakeSetlistRepository{}
 }

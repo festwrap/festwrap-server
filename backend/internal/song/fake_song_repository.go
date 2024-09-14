@@ -16,6 +16,12 @@ type FakeSongRepository struct {
 	repository *WrappedFakeSongRepository
 }
 
+func NewFakeSongRepository() FakeSongRepository {
+	return FakeSongRepository{
+		repository: &WrappedFakeSongRepository{getSongArgs: []GetSongArgs{}, songs: []interface{}{}},
+	}
+}
+
 func (r *FakeSongRepository) GetSong(artist string, title string) (*Song, error) {
 	return r.repository.GetSong(artist, title)
 }
@@ -26,12 +32,6 @@ func (r *FakeSongRepository) GetGetSongArgs() []GetSongArgs {
 
 func (r *FakeSongRepository) SetSongs(songs []interface{}) {
 	r.repository.songs = songs
-}
-
-func NewFakeSongRepository() FakeSongRepository {
-	return FakeSongRepository{
-		repository: &WrappedFakeSongRepository{getSongArgs: []GetSongArgs{}, songs: []interface{}{}},
-	}
 }
 
 type WrappedFakeSongRepository struct {

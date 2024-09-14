@@ -18,6 +18,10 @@ type FakePlaylistRepository struct {
 	err                error
 }
 
+func NewFakePlaylistRepository() FakePlaylistRepository {
+	return FakePlaylistRepository{}
+}
+
 func (s *FakePlaylistRepository) CreatePlaylist(userId string, playlist Playlist) error {
 	s.createPlaylistArgs = CreatePlaylistArgs{UserId: userId, Playlist: playlist}
 	return s.err
@@ -38,8 +42,4 @@ func (s *FakePlaylistRepository) GetAddSongArgs() AddSongsArgs {
 
 func (s *FakePlaylistRepository) GetCreatePlaylistSongArgs() CreatePlaylistArgs {
 	return s.createPlaylistArgs
-}
-
-func NewFakePlaylistRepository() FakePlaylistRepository {
-	return FakePlaylistRepository{}
 }

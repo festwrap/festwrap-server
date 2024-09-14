@@ -17,6 +17,14 @@ type SpotifySongRepository struct {
 	deserializer serialization.Deserializer[[]song.Song]
 }
 
+func NewSpotifySongRepository(
+	accessToken string,
+	httpSender httpsender.HTTPRequestSender,
+) *SpotifySongRepository {
+	return &SpotifySongRepository{
+		accessToken: accessToken, host: "api.spotify.com", httpSender: httpSender, deserializer: &SpotifySongsDeserializer{}}
+}
+
 func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
 	httpOptions := r.createSongHttpOptions(artist, title)
 	responseBody, err := r.httpSender.Send(httpOptions)
@@ -58,12 +66,4 @@ func (r *SpotifySongRepository) getSetlistFullUrl(artist string, title string) s
 	queryParams.Set("type", "track")
 	setlistPath := "v1/search"
 	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
-}
-
-func NewSpotifySongRepository(
-	accessToken string,
-	httpSender httpsender.HTTPRequestSender,
-) *SpotifySongRepository {
-	return &SpotifySongRepository{
-		accessToken: accessToken, host: "api.spotify.com", httpSender: httpSender, deserializer: &SpotifySongsDeserializer{}}
 }

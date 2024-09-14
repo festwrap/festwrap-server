@@ -13,6 +13,10 @@ type BaseHTTPRequestSender struct {
 	client httpclient.HTTPClient
 }
 
+func NewBaseHTTPRequestSender(client httpclient.HTTPClient) BaseHTTPRequestSender {
+	return BaseHTTPRequestSender{client: client}
+}
+
 func (c *BaseHTTPRequestSender) Send(options HTTPRequestOptions) (*[]byte, error) {
 	var body io.Reader = nil
 	if options.body != nil {
@@ -47,10 +51,6 @@ func (c *BaseHTTPRequestSender) Send(options HTTPRequestOptions) (*[]byte, error
 	}
 
 	return &responseBody, nil
-}
-
-func NewBaseHTTPRequestSender(client httpclient.HTTPClient) BaseHTTPRequestSender {
-	return BaseHTTPRequestSender{client: client}
 }
 
 func addHeadersToRequest(headers map[string]string, request *http.Request) {
