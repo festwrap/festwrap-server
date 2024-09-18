@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
 
+	types "festwrap/internal"
 	spotifyArtist "festwrap/internal/artist/spotify"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
@@ -23,17 +25,18 @@ func main() {
 
 	fmt.Printf("Searching for artist %s into Spotify API, retrieving %d results at most\n", *artist, *limit)
 
-	artistRepository := spotifyArtist.NewSpotifyArtistRepository(
-		*spotifyAccessToken,
-		&httpSender,
-	)
+	tokenKey := types.ContextKey("myToken")
+	artistRepository := spotifyArtist.NewSpotifyArtistRepository(&httpSender)
+	artistRepository.SetTokenKey(tokenKey)
 
-	artists, err := artistRepository.SearchArtist(*artist, *limit)
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, tokenKey, *spotifyAccessToken)
+	artists, err := artistRepository.SearchArtist(ctx, *artist, *limit)
 	if err != nil {
 		message := fmt.Sprintf("Error searching artist: %v", err)
 		fmt.Println(message)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Found %v\n", *artists)
+	fmt.Printf("Found %v\n", artists)
 }

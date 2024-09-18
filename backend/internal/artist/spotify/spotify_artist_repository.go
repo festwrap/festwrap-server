@@ -1,6 +1,8 @@
 package spotify
 
 import (
+	"context"
+	types "festwrap/internal"
 	"festwrap/internal/artist"
 	"festwrap/internal/artist/errors"
 	httpsender "festwrap/internal/http/sender"
@@ -10,29 +12,37 @@ import (
 )
 
 type SpotifyArtistRepository struct {
-	accessToken  string
+	tokenKey     types.ContextKey
 	host         string
 	deserializer serialization.Deserializer[[]artist.Artist]
 	httpSender   httpsender.HTTPRequestSender
 }
 
-func NewSpotifyArtistRepository(accessToken string, httpSender httpsender.HTTPRequestSender) *SpotifyArtistRepository {
+func NewSpotifyArtistRepository(httpSender httpsender.HTTPRequestSender) *SpotifyArtistRepository {
 	deserializer := NewSpotifyArtistDeserializer()
 	return &SpotifyArtistRepository{
-		accessToken:  accessToken,
+		tokenKey:     "token",
 		host:         "api.spotify.com",
 		deserializer: &deserializer,
 		httpSender:   httpSender,
 	}
 }
 
+func (r *SpotifyArtistRepository) SetTokenKey(key types.ContextKey) {
+	r.tokenKey = key
+}
+
 func (r *SpotifyArtistRepository) SetDeserializer(deserializer serialization.Deserializer[[]artist.Artist]) {
 	r.deserializer = deserializer
 }
 
-func (r *SpotifyArtistRepository) SearchArtist(name string, limit int) (*[]artist.Artist, error) {
+func (r *SpotifyArtistRepository) SearchArtist(ctx context.Context, name string, limit int) ([]artist.Artist, error) {
+	token, ok := ctx.Value(r.tokenKey).(string)
+	if !ok {
+		return nil, errors.NewCannotRetrieveArtistsError("Could not retrieve token from context")
+	}
 
-	httpOptions := r.createSetlistHttpOptions(name, limit)
+	httpOptions := r.createSetlistHttpOptions(name, limit, token)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
@@ -43,13 +53,17 @@ func (r *SpotifyArtistRepository) SearchArtist(name string, limit int) (*[]artis
 		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
 	}
 
-	return artists, nil
+	return *artists, nil
 }
 
-func (r *SpotifyArtistRepository) createSetlistHttpOptions(artist string, limit int) httpsender.HTTPRequestOptions {
+func (r *SpotifyArtistRepository) createSetlistHttpOptions(
+	artist string,
+	limit int,
+	token string,
+) httpsender.HTTPRequestOptions {
 	httpOptions := httpsender.NewHTTPRequestOptions(r.getSearchUrl(artist, limit), httpsender.GET, 200)
 	httpOptions.SetHeaders(
-		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", r.accessToken)},
+		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)},
 	)
 	return httpOptions
 }
