@@ -24,7 +24,7 @@ func defaultTokenKey() types.ContextKey {
 }
 
 func testSetup() (AuthTokenMiddleware, *http.Request, *httptest.ResponseRecorder) {
-	middleware := NewAuthTokenMiddleware(defaultTokenKey(), GetTokenHandler{})
+	middleware := NewAuthTokenMiddleware(GetTokenHandler{})
 	request := httptest.NewRequest("GET", "http://example.com", nil)
 	writer := httptest.NewRecorder()
 	return middleware, request, writer
