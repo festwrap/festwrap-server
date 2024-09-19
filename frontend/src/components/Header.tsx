@@ -1,5 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
+import NavLink from "@components/NavLink"
 
 const Header = () => {
   return (
@@ -19,9 +20,9 @@ const Header = () => {
             </Link>
           </div>
           <nav className="hidden md:flex gap-10">
-            <Link href="/get-started">Get started</Link>
-            <Link href="/how-it-works">How does it works?</Link>
-            <Link href="/about-us">About us</Link>
+            <NavLink href="/get-started">Get started</NavLink>
+            <NavLink href="/how-it-works">How does it works?</NavLink>
+            <NavLink href="/about-us">About us</NavLink>
           </nav>
         </div>
       </div>
