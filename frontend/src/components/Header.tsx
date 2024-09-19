@@ -3,32 +3,28 @@ import Link from "next/link"
 
 const Header = () => {
   return (
-    <header className="flex items-center justify-between text-dark px-10 h-28">
-      <h1 className="text-xl font-bold">
-        <Link href="/">
-          <Image
-            src="/logo.svg"
-            alt="Festwrap logo"
-            width={150}
-            height={150}
-            className="h-auto"
-            priority
-          />
-        </Link>
-      </h1>
-      <nav>
-        <ul className="flex gap-6 font-medium">
-          <li>
+    <header className="text-dark">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between py-8">
+          <div className="flex justify-start">
+            <Link href="/">
+              <Image
+                src="/logo.svg"
+                alt="Festwrap logo"
+                width={150}
+                height={150}
+                className="h-auto"
+                priority
+              />
+            </Link>
+          </div>
+          <nav className="hidden md:flex gap-10">
             <Link href="/get-started">Get started</Link>
-          </li>
-          <li>
             <Link href="/how-it-works">How does it works?</Link>
-          </li>
-          <li>
             <Link href="/about-us">About us</Link>
-          </li>
-        </ul>
-      </nav>
+          </nav>
+        </div>
+      </div>
     </header>
   )
 }
