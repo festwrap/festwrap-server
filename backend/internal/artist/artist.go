@@ -1,18 +1,18 @@
 package artist
 
 type Artist struct {
-	name     string
-	imageUri string
+	Name     string `json:"name"`
+	ImageUri string `json:"imageUri,omitempty"`
 }
 
 func NewArtist(name string) Artist {
-	return Artist{name: name}
+	return Artist{Name: name}
 }
 
 func NewArtistWithImageUri(name string, imageUri string) Artist {
-	return Artist{name: name, imageUri: imageUri}
+	return Artist{Name: name, ImageUri: imageUri}
 }
 
 func (a *Artist) SetImageUri(imageUri string) {
-	a.imageUri = imageUri
+	a.ImageUri = imageUri
 }
