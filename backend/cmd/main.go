@@ -1,57 +1,52 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
+	"time"
 
+	"festwrap/cmd/handler"
+	"festwrap/cmd/middleware"
+	"festwrap/internal/artist/spotify"
+	"festwrap/internal/env"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
-	"festwrap/internal/playlist"
-	spotifyPlaylist "festwrap/internal/playlist/spotify"
-	"festwrap/internal/setlist/setlistfm"
-	spotifySong "festwrap/internal/song/spotify"
 )
 
-func main() {
-	spotifyAccessToken := flag.String("spotify-token", "", "Spotify access token")
-	setlistfmApiKey := flag.String("setlistfm-key", "", "Setlistfm API Key")
-	artist := flag.String("artist", "", "Artist to add to the playlist")
-	playlistId := flag.String("playlist-id", "", "Spotify playlist identifier where to add songs")
-	minSongsPerSetlist := flag.Int("min-setlist-songs", 5, "Minimum number of songs to include")
-	flag.Parse()
+func GetEnvWithDefaultOrFail[T env.EnvValue](key string, defaultValue T) T {
+	variable, err := env.GetEnvWithDefault[T](key, defaultValue)
+	if err != nil {
+		log.Fatalf("Could not read variable %s", key)
+	}
+	return variable
+}
 
-	httpClient := &http.Client{}
+func main() {
+
+	port := GetEnvWithDefaultOrFail[string]("FESTWRAP_PORT", "8080")
+	maxConnsPerHost := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_CONNS_PER_HOST", 10)
+	timeoutSeconds := GetEnvWithDefaultOrFail[int]("FESTWRAP_TIMEOUT_SECONDS", 5)
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{MaxConnsPerHost: maxConnsPerHost},
+		Timeout:   time.Duration(timeoutSeconds) * time.Second,
+	}
 	baseHttpClient := httpclient.NewBaseHTTPClient(httpClient)
 	httpSender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
 
-	fmt.Printf("Adding latest setlist songs for %s into Spotify playlist with id %s \n", *artist, *playlistId)
+	mux := http.NewServeMux()
 
-	setlistFmDeserializer := setlistfm.NewSetlistFMDeserializer()
-	setlistFmDeserializer.SetMinimumSongs(*minSongsPerSetlist)
-	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
-		*setlistfmApiKey,
-		&httpSender,
-	)
-	setlistRepository.SetDeserializer(&setlistFmDeserializer)
+	repository := spotify.NewSpotifyArtistRepository(&httpSender)
+	searchArtistsHandler := handler.NewSearchArtistHandler(repository)
+	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP)
 
-	songRepository := spotifySong.NewSpotifySongRepository(
-		*spotifyAccessToken,
-		&httpSender,
-	)
+	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 
-	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(&httpSender, *spotifyAccessToken)
-	playlistService := playlist.NewConcurrentPlaylistService(
-		&playlistRepository,
-		setlistRepository,
-		songRepository,
-	)
-
-	err := playlistService.AddSetlist(*playlistId, *artist)
-	if err != nil {
-		message := fmt.Sprintf("Could not add songs to setlist: %v", err)
-		fmt.Println(message)
-		os.Exit(1)
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", port),
+		Handler: wrappedMux,
 	}
+
+	server.ListenAndServe()
 }
