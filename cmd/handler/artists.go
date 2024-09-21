@@ -54,8 +54,6 @@ func (h *SearchArtistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		h.writeUnexpectedError(w)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *SearchArtistHandler) readLimit(r *http.Request) (int, error) {
