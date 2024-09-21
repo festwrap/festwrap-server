@@ -14,8 +14,8 @@ type AuthTokenMiddleware struct {
 	handler  http.Handler
 }
 
-func NewAuthTokenMiddleware(tokenKey types.ContextKey, handler http.Handler) AuthTokenMiddleware {
-	return AuthTokenMiddleware{tokenKey: tokenKey, handler: handler}
+func NewAuthTokenMiddleware(handler http.Handler) AuthTokenMiddleware {
+	return AuthTokenMiddleware{tokenKey: types.ContextKey("token"), handler: handler}
 }
 
 func (m AuthTokenMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,4 +32,8 @@ func (m AuthTokenMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctxWithToken := context.WithValue(r.Context(), m.tokenKey, token)
 	requestWithToken := r.WithContext(ctxWithToken)
 	m.handler.ServeHTTP(w, requestWithToken)
+}
+
+func (m *AuthTokenMiddleware) SetTokenKey(key types.ContextKey) {
+	m.tokenKey = key
 }
