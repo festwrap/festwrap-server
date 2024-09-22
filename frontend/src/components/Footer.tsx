@@ -12,6 +12,7 @@ const Footer = () => {
             <Link href="/about-us">About us</Link>
             <Link href="/terms-of-service">Terms of Service</Link>
             <Link href="/privacy-policy">Privacy Policy</Link>
+            <Link href="/contact-us">Contact us</Link>
           </nav>
         </div>
         <div className="mt-8 text-center text-sm">
