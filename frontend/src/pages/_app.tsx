@@ -13,7 +13,7 @@ const poppins = Poppins({
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <SessionWrapper>
-      <main className={twMerge(poppins.className, "h-full")}>
+      <main className={poppins.className}>
         <RootLayout>
           <Component {...pageProps} />
         </RootLayout>

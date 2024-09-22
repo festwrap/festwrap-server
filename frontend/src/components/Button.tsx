@@ -9,7 +9,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const accentClasses = {
   primary: "bg-primary text-white hover:bg-primary hover:bg-opacity-90",
-  secondary: "bg-secondary text-white hover:bg-gray-800",
+  secondary: "bg-secondary text-dark hover:bg-opacity-90",
   tertiary:
     "bg-gray-100 text-gray-800 hover:bg-gray-100 border border-gray-100",
 }
