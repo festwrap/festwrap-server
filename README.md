@@ -1,13 +1,14 @@
 # Overview
 
-This repository is serving two purposes:
-
-- Practise Golang skills and improve familiarity.
-- Facilitate the creation of custom playlists for the musical events I attend.
+The purpose of this application is to facilitate the creation of customized playlist using Golang.
 
 We are relying on Spotify for storing the playlists and Setlistfm for retrieving the top songs from each artist, though we can support other services in the future.
 
+The UI is located in [this other repository](https://github.com/DanielMoraDC/festwrap-ui).
+
 # Local development
+
+Make sure Go 1.22+ and Make are available in your system.
 
 We use pre-commit for static code analysis. Make sure hooks are installed (i.e. `brew install pre-commit` in MacOS) before contributing:
 
@@ -15,11 +16,51 @@ We use pre-commit for static code analysis. Make sure hooks are installed (i.e. 
 make pre-commit-install
 ```
 
-# Components
+# Testing the code
 
-This application has two main components:
+You can run the tests by typing:
 
-- [Frontend](./frontend). For now it is an auxilar web application we use to retrieve the Spotify access token. In the future, we want this to be an interface that supports the customization of the playlist to create.
-- [Backend](./backend). At this moment, it contains a set of classes that implement the basic logic for setlist retrieval and playlist modification. In the future, we want the backend to be an API that provides those features to the frontend.
+```shell
+make run-tests
+```
 
-See further details in each of the components folder.
+# Running the code
+
+## Running the API
+
+To run the API, you can type:
+
+```shell
+go run cmd/main.go
+```
+
+Then you can query it locally by typing:
+
+```shell
+curl --location 'http://localhost:8080/artists/search?name=<artist>' \
+      --header 'Authorization: Bearer <token>'
+```
+
+And you will need to fill for the following variables:
+- `<artist>`: the artist to search for.
+- `<token>`: Spotify token to access the API. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
+
+
+## Add songs to playlist
+
+We can add recent setlist songs from an artist using the `main` file:
+
+```shell
+go \
+    run cmd/scripts/add_songs_to_playlist.go \
+    --spotify-token <spotify_token> \
+    --setlistfm-key <setlistfm_key> \
+    --artist <artist> \
+    --playlist-id <playlist_id>
+```
+
+Here we explain the parameters to provide and how to get them:
+- `<spotify_token>`: See above.
+- `<setlistfm_key>`: Setlistfm API token to obtain the latest setlist for an artist. It can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
+- `<artist>`: The artist to request songs from.
+- `<playlist_id>`: Identifier of the playlist to add songs to. To obtain that, go to your playlist and click the "..." button. Then go to `Share -> Copy link to playlist`. The copied content will look like this: `https://open.spotify.com/playlist/<playlist_id>?<params>`.
