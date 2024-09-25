@@ -7,9 +7,21 @@ pre-commit-install:
 	pre-commit install
 	pre-commit install --hook-type commit-msg
 
+.PHONY: run-unit-tests
+run-unit-tests:
+	@echo "Running unit tests..."
+	go test $(ROOT)/... -v -short
+
+
+.PHONY: run-integration-tests
+run-integration-tests:
+	@echo "Running integration tests..."
+	go test $(ROOT)/... -v -run Integration
+
+
 .PHONY: run-tests
-run-tests:
-	go test $(ROOT)/...
+run-tests: run-unit-tests run-integration-tests
+
 
 .PHONE: build-image
 build-image:
