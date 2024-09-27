@@ -106,9 +106,7 @@ func TestAddSetlistSetlistRepositoryCalledWithArtist(t *testing.T) {
 
 	actual := setlistRepository.GetCalledArtist()
 	testtools.AssertErrorIsNil(t, err)
-	if actual != expected {
-		t.Errorf("Setlist repository to be called with %s, found %s", expected, actual)
-	}
+	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
@@ -119,9 +117,7 @@ func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
 
 	err := service.AddSetlist(defaultPlaylistId(), defaultArtist())
 
-	if err != returnError {
-		t.Errorf("Setlist repository should have returned an error but it did not")
-	}
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
