@@ -5,30 +5,21 @@ import (
 	"testing"
 )
 
-type Object struct {
-	Name  string `json:"name"`
-	Value int    `json:"value"`
-}
-
-type NonSerializableObject struct {
-	Function func() string
-}
-
 func TestBaseSerializerReturnsExpectedOutput(t *testing.T) {
-	serializer := NewBaseSerializer[Object]()
+	serializer := NewJsonSerializer[Object]()
 
-	object := Object{Name: "myname", Value: 10}
+	object := serializableObject()
 	actual, err := serializer.Serialize(object)
 
-	expected := []byte(`{"name":"myname","value":10}`)
+	expected := serializableObjectBytes()
 	testtools.AssertErrorIsNil(t, err)
 	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestBaseSerializerReturnsErrorOnNonSerializableObject(t *testing.T) {
-	serializer := NewBaseSerializer[NonSerializableObject]()
+	serializer := NewJsonSerializer[NonSerializableObject]()
 
-	object := NonSerializableObject{Function: func() string { return "hello" }}
+	object := nonSerializableObject()
 	_, err := serializer.Serialize(object)
 
 	testtools.AssertErrorIsNotNil(t, err)

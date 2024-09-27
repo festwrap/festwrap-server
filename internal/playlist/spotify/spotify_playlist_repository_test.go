@@ -194,7 +194,7 @@ func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
 
 func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	sender := fakeSender()
-	serializer := serialization.NewBaseSerializer[SpotifySongs]()
+	serializer := serialization.NewJsonSerializer[SpotifySongs]()
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(sender)
 	repository.SetSongSerializer(&serializer)
@@ -209,7 +209,7 @@ func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	testtools.SkipOnShortRun(t)
 
 	sender := fakeSender()
-	serializer := serialization.NewBaseSerializer[SpotifyPlaylist]()
+	serializer := serialization.NewJsonSerializer[SpotifyPlaylist]()
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistSerializer(&serializer)
 	repository.SetHTTPSender(sender)
