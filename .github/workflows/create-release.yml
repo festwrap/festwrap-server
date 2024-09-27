@@ -1,8 +1,7 @@
-name: prepare release
+name: create release
 
 on:
-  push:
-    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
   prepare-release:
