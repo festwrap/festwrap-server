@@ -41,32 +41,32 @@ func defaultPlaylist() playlist.Playlist {
 }
 
 func defaultSongsBody() []byte {
-	return []byte("some songs body")
+	return []byte(`{"uris":["uri1","uri2"]}`)
 }
 
 func defaultPlaylistBody() []byte {
-	return []byte("some playlist body")
+	return []byte(`{"name":"my-playlist","description":"some playlist","is_public":false}`)
 }
 
-func defaultSongsSerializer() *serialization.FakeSerializer[SongList] {
-	serializer := serialization.FakeSerializer[SongList]{}
+func defaultSongsSerializer() *serialization.FakeSerializer[SpotifySongs] {
+	serializer := serialization.FakeSerializer[SpotifySongs]{}
 	serializer.SetResponse(defaultSongsBody())
 	return &serializer
 }
 
-func errorSongsSerializer() *serialization.FakeSerializer[SongList] {
+func errorSongsSerializer() *serialization.FakeSerializer[SpotifySongs] {
 	serializer := defaultSongsSerializer()
 	serializer.SetError(errors.New("test songs error"))
 	return serializer
 }
 
-func defaultPlaylistSerializer() *serialization.FakeSerializer[playlist.Playlist] {
-	serializer := serialization.FakeSerializer[playlist.Playlist]{}
+func defaultPlaylistSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
+	serializer := serialization.FakeSerializer[SpotifyPlaylist]{}
 	serializer.SetResponse(defaultPlaylistBody())
 	return &serializer
 }
 
-func errorPlaylistSerializer() *serialization.FakeSerializer[playlist.Playlist] {
+func errorPlaylistSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
 	serializer := defaultPlaylistSerializer()
 	serializer.SetError(errors.New("test playlist error"))
 	return serializer
@@ -108,6 +108,18 @@ func TestAddSongsReturnsErrorWhenNoSongsProvided(t *testing.T) {
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
+func TestAddSongsSerializesInputSongs(t *testing.T) {
+	repository := spotifyPlaylistRepository()
+	serializer := defaultSongsSerializer()
+	repository.SetSongSerializer(serializer)
+
+	repository.AddSongs(defaultPlaylistId(), defaultSongs())
+
+	expected := SpotifySongs{Uris: []string{"uri1", "uri2"}}
+	actual := serializer.GetArgs()
+	testtools.AssertEqual(t, actual, expected)
+}
+
 func TestAddSongsReturnsErrorOnNonSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetSongSerializer(errorSongsSerializer())
@@ -138,6 +150,18 @@ func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
 	testtools.AssertErrorIsNotNil(t, err)
 }
 
+func TestAddSongsSerializesInputPlaylist(t *testing.T) {
+	repository := spotifyPlaylistRepository()
+	serializer := defaultPlaylistSerializer()
+	repository.SetPlaylistSerializer(serializer)
+
+	repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+
+	expected := SpotifyPlaylist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
+	actual := serializer.GetArgs()
+	testtools.AssertEqual(t, actual, expected)
+}
+
 func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistSerializer(errorPlaylistSerializer())
@@ -166,4 +190,32 @@ func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
 	err := repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
 
 	testtools.AssertErrorIsNotNil(t, err)
+}
+
+func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
+	sender := fakeSender()
+	serializer := serialization.NewBaseSerializer[SpotifySongs]()
+	repository := spotifyPlaylistRepository()
+	repository.SetHTTPSender(sender)
+	repository.SetSongSerializer(&serializer)
+
+	repository.AddSongs(defaultPlaylistId(), defaultSongs())
+
+	actual := sender.GetSendArgs()
+	testtools.AssertEqual(t, actual, expectedAddSongsHttpOptions())
+}
+
+func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
+	testtools.SkipOnShortRun(t)
+
+	sender := fakeSender()
+	serializer := serialization.NewBaseSerializer[SpotifyPlaylist]()
+	repository := spotifyPlaylistRepository()
+	repository.SetPlaylistSerializer(&serializer)
+	repository.SetHTTPSender(sender)
+
+	repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+
+	actual := sender.GetSendArgs()
+	testtools.AssertEqual(t, actual, expectedCreatePlaylistHttpOptions())
 }

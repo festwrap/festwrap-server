@@ -11,8 +11,8 @@ import (
 )
 
 type SpotifyPlaylistRepository struct {
-	songsSerializer    serialization.Serializer[SongList]
-	playlistSerializer serialization.Serializer[playlist.Playlist]
+	songsSerializer    serialization.Serializer[SpotifySongs]
+	playlistSerializer serialization.Serializer[SpotifyPlaylist]
 	accessToken        string
 	host               string
 	httpSender         httpsender.HTTPRequestSender
@@ -20,12 +20,14 @@ type SpotifyPlaylistRepository struct {
 
 func NewSpotifyPlaylistRepository(
 	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
+	playlistSerializer := serialization.NewBaseSerializer[SpotifyPlaylist]()
+	songSerializer := serialization.NewBaseSerializer[SpotifySongs]()
 	return SpotifyPlaylistRepository{
 		accessToken:        accessToken,
 		host:               "api.spotify.com",
 		httpSender:         httpSender,
-		songsSerializer:    &SpotifySongsSerializer{},
-		playlistSerializer: &SpotifyPlaylistSerializer{},
+		songsSerializer:    &songSerializer,
+		playlistSerializer: &playlistSerializer,
 	}
 }
 
@@ -34,7 +36,7 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 		return errors.NewCannotAddSongsToPlaylistError("no songs provided")
 	}
 
-	body, err := r.songsSerializer.Serialize(SongList{songs: songs})
+	body, err := r.songsSerializer.Serialize(NewSpotifySongs(songs))
 	if err != nil {
 		errorMsg := fmt.Sprintf("could not serialize songs: %v", err.Error())
 		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
@@ -50,7 +52,13 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 }
 
 func (r *SpotifyPlaylistRepository) CreatePlaylist(userId string, playlist playlist.Playlist) error {
-	body, err := r.playlistSerializer.Serialize(playlist)
+	body, err := r.playlistSerializer.Serialize(
+		SpotifyPlaylist{
+			Name:        playlist.Name,
+			Description: playlist.Description,
+			IsPublic:    playlist.IsPublic,
+		},
+	)
 	if err != nil {
 		errorMsg := fmt.Sprintf("could not serialize playlist: %v", err.Error())
 		return errors.NewCannotCreatePlaylistError(errorMsg)
@@ -69,11 +77,11 @@ func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequ
 	r.httpSender = httpSender
 }
 
-func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer serialization.Serializer[SongList]) {
+func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer serialization.Serializer[SpotifySongs]) {
 	r.songsSerializer = serializer
 }
 
-func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serialization.Serializer[playlist.Playlist]) {
+func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
 	r.playlistSerializer = serializer
 }
 
