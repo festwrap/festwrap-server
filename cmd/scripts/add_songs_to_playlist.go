@@ -28,25 +28,21 @@ func main() {
 
 	fmt.Printf("Adding latest setlist songs for %s into Spotify playlist with id %s \n", *artist, *playlistId)
 
-	setlistFmDeserializer := setlistfm.NewSetlistFMDeserializer()
-	setlistFmDeserializer.SetMinimumSongs(*minSongsPerSetlist)
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
 		*setlistfmApiKey,
 		&httpSender,
 	)
-	setlistRepository.SetDeserializer(&setlistFmDeserializer)
-
 	songRepository := spotifySong.NewSpotifySongRepository(
 		*spotifyAccessToken,
 		&httpSender,
 	)
-
 	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(&httpSender, *spotifyAccessToken)
 	playlistService := playlist.NewConcurrentPlaylistService(
 		&playlistRepository,
 		setlistRepository,
 		songRepository,
 	)
+	playlistService.SetMinSongs(*minSongsPerSetlist)
 
 	err := playlistService.AddSetlist(*playlistId, *artist)
 	if err != nil {

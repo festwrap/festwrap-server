@@ -13,7 +13,7 @@ import (
 type SetlistFMRepository struct {
 	host         string
 	apiKey       string
-	deserializer serialization.Deserializer[setlist.Setlist]
+	deserializer serialization.Deserializer[setlistFMResponse]
 	httpSender   httpsender.HTTPRequestSender
 }
 
@@ -27,11 +27,11 @@ func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequ
 	}
 }
 
-func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deserializer[setlist.Setlist]) {
+func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deserializer[setlistFMResponse]) {
 	r.deserializer = deserializer
 }
 
-func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error) {
+func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.Setlist, error) {
 
 	httpOptions := r.createSetlistHttpOptions(artist)
 	responseBody, err := r.httpSender.Send(httpOptions)
@@ -39,10 +39,12 @@ func (r *SetlistFMRepository) GetSetlist(artist string) (*setlist.Setlist, error
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
 
-	setlist, err := r.deserializer.Deserialize(*responseBody)
+	response, err := r.deserializer.Deserialize(*responseBody)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
+
+	setlist := response.findSetlistWithMinSongs(minSongs)
 	if setlist == nil {
 		// TODO: if no valid setlist found, we should check for the next page
 		// TODO: probable a good idea to move the min songs filter to repository
