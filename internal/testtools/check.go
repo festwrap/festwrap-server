@@ -12,24 +12,32 @@ func HaveSameElements[T comparable](set1 []T, set2 []T) bool {
 }
 
 func AssertIsNil(t *testing.T, value interface{}) {
+	t.Helper()
+
 	if value != nil {
 		t.Errorf("Value should be nil, but found %v", value)
 	}
 }
 
 func AssertErrorIsNil(t *testing.T, err error) {
+	t.Helper()
+
 	if err != nil {
 		t.Errorf("Error should be nil, but found %v", err)
 	}
 }
 
 func AssertErrorIsNotNil(t *testing.T, err error) {
+	t.Helper()
+
 	if err == nil {
 		t.Errorf("Expected error, found nil")
 	}
 }
 
 func AssertEqual(t *testing.T, actual interface{}, expected interface{}) {
+	t.Helper()
+
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Expected %v, found %v", expected, actual)
 	}

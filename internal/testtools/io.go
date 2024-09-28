@@ -20,6 +20,8 @@ func LoadTestDataOrError(t *testing.T, filePath string) []byte {
 }
 
 func GetParentDir(t *testing.T) string {
+	t.Helper()
+
 	// Get the file of the caller, not the current one
 	_, filename, _, ok := runtime.Caller(1)
 	if !ok {
