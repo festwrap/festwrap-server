@@ -18,7 +18,7 @@ type SetlistFMRepository struct {
 }
 
 func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
-	deserializer := NewSetlistFMDeserializer()
+	deserializer := serialization.NewJsonDeserializer[setlistFMResponse]()
 	return &SetlistFMRepository{
 		host:         "api.setlist.fm",
 		apiKey:       apiKey,
