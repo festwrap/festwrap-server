@@ -48,7 +48,8 @@ func (r *SpotifyArtistRepository) SearchArtist(ctx context.Context, name string,
 		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
 	}
 
-	response, err := r.deserializer.Deserialize(*responseBody)
+	var response spotifyResponse
+	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
 	}

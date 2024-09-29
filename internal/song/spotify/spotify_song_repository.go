@@ -36,7 +36,8 @@ func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	response, err := r.deserializer.Deserialize(*responseBody)
+	var response spotifyResponse
+	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}

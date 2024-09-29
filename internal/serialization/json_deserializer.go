@@ -6,10 +6,8 @@ import (
 
 type JsonDeserializer[T any] struct{}
 
-func (s JsonDeserializer[T]) Deserialize(bytes []byte) (*T, error) {
-	var dest T
-	err := json.Unmarshal(bytes, &dest)
-	return &dest, err
+func (s JsonDeserializer[T]) Deserialize(bytes []byte, dest *T) error {
+	return json.Unmarshal(bytes, dest)
 }
 
 func NewJsonDeserializer[T any]() JsonDeserializer[T] {

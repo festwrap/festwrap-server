@@ -1,27 +1,28 @@
 package serialization
 
 type FakeDeserializer[T any] struct {
-	args     []byte
-	response *T
-	err      error
+	bytes  []byte
+	result *T
+	err    error
 }
 
-func (s *FakeDeserializer[T]) GetArgs() []byte {
-	return s.args
+func (d *FakeDeserializer[T]) GetArgs() []byte {
+	return d.bytes
 }
 
-func (s *FakeDeserializer[T]) SetResponse(response *T) {
-	s.response = response
+func (d *FakeDeserializer[T]) SetResponse(result *T) {
+	d.result = result
 }
 
-func (s *FakeDeserializer[T]) SetError(err error) {
-	s.err = err
+func (d *FakeDeserializer[T]) SetError(err error) {
+	d.err = err
 }
 
-func (s *FakeDeserializer[T]) Deserialize(bytes []byte) (*T, error) {
-	s.args = bytes
-	if s.err != nil {
-		return nil, s.err
+func (d *FakeDeserializer[T]) Deserialize(bytes []byte, dest *T) error {
+	d.bytes = bytes
+	*dest = *d.result
+	if d.err != nil {
+		return d.err
 	}
-	return s.response, nil
+	return nil
 }

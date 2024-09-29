@@ -8,18 +8,20 @@ import (
 func TestJsonDeserializerProducesExpectedResult(t *testing.T) {
 	deserializer := NewJsonDeserializer[Object]()
 
-	actual, err := deserializer.Deserialize(serializableObjectBytes())
+	var actual Object
+	err := deserializer.Deserialize(serializableObjectBytes(), &actual)
 
 	expected := serializableObject()
 	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, *actual, expected)
+	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestJsonDeserializerReturnsErrorOnNonJsonInput(t *testing.T) {
 	deserializer := NewJsonDeserializer[Object]()
 
+	var object Object
 	nonJsonBytes := []byte(`"something": "something"`)
-	_, err := deserializer.Deserialize(nonJsonBytes)
+	err := deserializer.Deserialize(nonJsonBytes, &object)
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
