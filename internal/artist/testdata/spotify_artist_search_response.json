@@ -87,23 +87,6 @@
           ],
           "href": "https://api.spotify.com/v1/artists/3cBV24PM5nZsXqopSHvdtS",
           "id": "3cBV24PM5nZsXqopSHvdtS",
-          "images": [
-            {
-              "height": 640,
-              "url": "https://i.scdn.co/image/ab67616d0000b2738439bc625fdf63ed50bbb594",
-              "width": 640
-            },
-            {
-              "height": 300,
-              "url": "https://i.scdn.co/image/ab67616d00001e028439bc625fdf63ed50bbb594",
-              "width": 300
-            },
-            {
-              "height": 64,
-              "url": "https://i.scdn.co/image/ab67616d000048518439bc625fdf63ed50bbb594",
-              "width": 64
-            }
-          ],
           "name": "The Beatles Recovered Band",
           "popularity": 27,
           "type": "artist",
@@ -157,23 +140,6 @@
           ],
           "href": "https://api.spotify.com/v1/artists/0zRgwHorAZPeYVdTW9F5OX",
           "id": "0zRgwHorAZPeYVdTW9F5OX",
-          "images": [
-            {
-              "height": 640,
-              "url": "https://i.scdn.co/image/ab67616d0000b27328cc0b64d05bf392b52a46d3",
-              "width": 640
-            },
-            {
-              "height": 300,
-              "url": "https://i.scdn.co/image/ab67616d00001e0228cc0b64d05bf392b52a46d3",
-              "width": 300
-            },
-            {
-              "height": 64,
-              "url": "https://i.scdn.co/image/ab67616d0000485128cc0b64d05bf392b52a46d3",
-              "width": 64
-            }
-          ],
           "name": "The Beatles Revival Band",
           "popularity": 33,
           "type": "artist",
