@@ -1,28 +1,37 @@
 package setlist
 
 type FakeSetlistRepository struct {
-	artist      string
-	returnValue *Setlist
-	err         error
+	getArgs  GetSetlistArgs
+	getValue getSetlistValue
+}
+
+type GetSetlistArgs struct {
+	Artist   string
+	MinSongs int
+}
+
+type getSetlistValue struct {
+	response Setlist
+	err      error
 }
 
 func NewFakeSetlistRepository() FakeSetlistRepository {
 	return FakeSetlistRepository{}
 }
 
-func (s *FakeSetlistRepository) GetSetlist(artist string) (*Setlist, error) {
-	s.artist = artist
-	return s.returnValue, s.err
+func (s *FakeSetlistRepository) GetSetlist(artist string, minSongs int) (*Setlist, error) {
+	s.getArgs = GetSetlistArgs{Artist: artist, MinSongs: minSongs}
+	return &s.getValue.response, s.getValue.err
 }
 
-func (s *FakeSetlistRepository) GetCalledArtist() string {
-	return s.artist
+func (s *FakeSetlistRepository) GetGetSetlistArgs() GetSetlistArgs {
+	return s.getArgs
 }
 
-func (s *FakeSetlistRepository) SetReturnValue(setlist *Setlist) {
-	s.returnValue = setlist
+func (s *FakeSetlistRepository) SetReturnValue(setlist Setlist) {
+	s.getValue.response = setlist
 }
 
 func (s *FakeSetlistRepository) SetError(err error) {
-	s.err = err
+	s.getValue.err = err
 }

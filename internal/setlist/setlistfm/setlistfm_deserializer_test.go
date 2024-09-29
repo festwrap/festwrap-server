@@ -6,29 +6,47 @@ import (
 	"testing"
 
 	"festwrap/internal/serialization/errors"
-	"festwrap/internal/setlist"
 	"festwrap/internal/testtools"
 )
 
-func expectedSetlist(t *testing.T) *setlist.Setlist {
-	t.Helper()
-
-	songs := []setlist.Song{
-		setlist.NewSong("Walk of Life"),
-		setlist.NewSong("Anna"),
-		setlist.NewSong("Nice Things"),
-		setlist.NewSong("America (You're Freaking Me Out)"),
-		setlist.NewSong("The Obituaries"),
-		setlist.NewSong("After the Party"),
-		setlist.NewSong("Irish Goodbyes"),
-		setlist.NewSong("Casey"),
-		setlist.NewSong("Layla"),
+func expectedResponse() *setlistFMResponse {
+	set := setlistfmSet{
+		[]setlistfmSong{
+			{"Walk of Life"},
+			{"Anna"},
+			{"Nice Things"},
+			{"America (You're Freaking Me Out)"},
+			{"The Obituaries"},
+			{"After the Party"},
+		},
 	}
-	setlist := setlist.NewSetlist("The Menzingers", songs)
-	return &setlist
+	encore := setlistfmSet{
+		[]setlistfmSong{
+			{"Irish Goodbyes"},
+			{"Casey"},
+			{"Layla"},
+		},
+	}
+	artist := setlistfmArtist{Name: "The Menzingers"}
+	return &setlistFMResponse{
+		Body: []setlistFMSetlist{
+			{
+				Artist: artist,
+				Sets:   setlistFMSets{Sets: []setlistfmSet{}},
+			},
+			{
+				Artist: artist,
+				Sets:   setlistFMSets{Sets: []setlistfmSet{}},
+			},
+			{
+				Artist: artist,
+				Sets:   setlistFMSets{Sets: []setlistfmSet{set, encore}},
+			},
+		},
+	}
 }
 
-func deserializeResponse(t *testing.T, deserializer SetlistFMDeserializer) *setlist.Setlist {
+func deserializeResponse(t *testing.T, deserializer SetlistFMDeserializer) *setlistFMResponse {
 	response := testtools.LoadTestDataOrError(t, filepath.Join(testtools.GetParentDir(t), "testdata", "response.json"))
 	result, err := deserializer.Deserialize(response)
 	if err != nil {
@@ -42,19 +60,8 @@ func TestSetlistRetrieved(t *testing.T) {
 
 	actual := deserializeResponse(t, deserializer)
 
-	expected := expectedSetlist(t)
-	testtools.AssertEqual(t, actual, expected)
-}
-
-func TestNoSetlistRetrievedWhenMinSongsNotReached(t *testing.T) {
-	deserializer := NewSetlistFMDeserializer()
-	deserializer.SetMinimumSongs(25)
-
-	result := deserializeResponse(t, deserializer)
-
-	if result != nil {
-		t.Errorf("Expected nil, found %v", result)
-	}
+	expected := expectedResponse()
+	testtools.AssertEqual(t, *actual, *expected)
 }
 
 func TestReturnsErrorWhenResponseIsNotJson(t *testing.T) {

@@ -20,8 +20,8 @@ type SpotifyPlaylistRepository struct {
 
 func NewSpotifyPlaylistRepository(
 	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
-	playlistSerializer := serialization.NewBaseSerializer[SpotifyPlaylist]()
-	songSerializer := serialization.NewBaseSerializer[SpotifySongs]()
+	playlistSerializer := serialization.NewJsonSerializer[SpotifyPlaylist]()
+	songSerializer := serialization.NewJsonSerializer[SpotifySongs]()
 	return SpotifyPlaylistRepository{
 		accessToken:        accessToken,
 		host:               "api.spotify.com",

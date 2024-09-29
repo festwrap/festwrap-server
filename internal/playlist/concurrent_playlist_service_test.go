@@ -78,8 +78,7 @@ func addSongsArgsWithErrors() AddSongsArgs {
 
 func newFakeSetlistRepository() setlist.FakeSetlistRepository {
 	repository := setlist.NewFakeSetlistRepository()
-	returnSetlist := defaultSetlist()
-	repository.SetReturnValue(&returnSetlist)
+	repository.SetReturnValue(defaultSetlist())
 	return repository
 }
 
@@ -96,19 +95,20 @@ func testSetup() (FakePlaylistRepository, setlist.FakeSetlistRepository, song.Fa
 	return playlistRepository, setlistRepository, songRepository
 }
 
-func TestAddSetlistSetlistRepositoryCalledWithArtist(t *testing.T) {
-	expected := defaultArtist()
+func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
+	artist := defaultArtist()
+	minSongs := 6
 	playlistRepository, setlistRepository, songRepository := testSetup()
 
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service.SetMinSongs(minSongs)
 
-	err := service.AddSetlist(defaultPlaylistId(), expected)
+	err := service.AddSetlist(defaultPlaylistId(), artist)
 
-	actual := setlistRepository.GetCalledArtist()
+	actual := setlistRepository.GetGetSetlistArgs()
+	expected := setlist.GetSetlistArgs{Artist: artist, MinSongs: minSongs}
 	testtools.AssertErrorIsNil(t, err)
-	if actual != expected {
-		t.Errorf("Setlist repository to be called with %s, found %s", expected, actual)
-	}
+	testtools.AssertEqual(t, actual, expected)
 }
 
 func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
@@ -119,9 +119,7 @@ func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
 
 	err := service.AddSetlist(defaultPlaylistId(), defaultArtist())
 
-	if err != returnError {
-		t.Errorf("Setlist repository should have returned an error but it did not")
-	}
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
@@ -176,8 +174,7 @@ func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
 
 func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
-	setlist := emptySetlist()
-	setlistRepository.SetReturnValue(&setlist)
+	setlistRepository.SetReturnValue(emptySetlist())
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultPlaylistId(), defaultArtist())

@@ -1,5 +1,5 @@
 package setlist
 
 type SetlistRepository interface {
-	GetSetlist(artist string) (*Setlist, error)
+	GetSetlist(artist string, minSongs int) (*Setlist, error)
 }
