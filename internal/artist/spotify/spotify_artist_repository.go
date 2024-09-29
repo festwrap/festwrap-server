@@ -14,16 +14,16 @@ import (
 type SpotifyArtistRepository struct {
 	tokenKey     types.ContextKey
 	host         string
-	deserializer serialization.Deserializer[[]artist.Artist]
+	deserializer serialization.Deserializer[spotifyResponse]
 	httpSender   httpsender.HTTPRequestSender
 }
 
 func NewSpotifyArtistRepository(httpSender httpsender.HTTPRequestSender) *SpotifyArtistRepository {
-	deserializer := NewSpotifyArtistDeserializer()
+	deserializer := serialization.NewJsonDeserializer[spotifyResponse]()
 	return &SpotifyArtistRepository{
 		tokenKey:     "token",
 		host:         "api.spotify.com",
-		deserializer: &deserializer,
+		deserializer: deserializer,
 		httpSender:   httpSender,
 	}
 }
@@ -32,7 +32,7 @@ func (r *SpotifyArtistRepository) SetTokenKey(key types.ContextKey) {
 	r.tokenKey = key
 }
 
-func (r *SpotifyArtistRepository) SetDeserializer(deserializer serialization.Deserializer[[]artist.Artist]) {
+func (r *SpotifyArtistRepository) SetDeserializer(deserializer serialization.Deserializer[spotifyResponse]) {
 	r.deserializer = deserializer
 }
 
@@ -48,12 +48,13 @@ func (r *SpotifyArtistRepository) SearchArtist(ctx context.Context, name string,
 		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
 	}
 
-	artists, err := r.deserializer.Deserialize(*responseBody)
+	var response spotifyResponse
+	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
 	}
 
-	return *artists, nil
+	return response.GetArtists(), nil
 }
 
 func (r *SpotifyArtistRepository) createSetlistHttpOptions(

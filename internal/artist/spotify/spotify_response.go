@@ -1,20 +1,21 @@
 package spotify
 
 import (
+	"festwrap/internal/artist"
 	"festwrap/internal/artist/errors"
 	"fmt"
 )
 
-type SpotifyImage struct {
+type spotifyImage struct {
 	Url string `json:"url"`
 }
 
-type SpotifyArtist struct {
+type spotifyArtist struct {
 	Name   string         `json:"name"`
-	Images []SpotifyImage `json:"images"`
+	Images []spotifyImage `json:"images"`
 }
 
-func (a SpotifyArtist) GetSmallestImageUri() (string, error) {
+func (a spotifyArtist) GetSmallestImageUri() (string, error) {
 	nImages := len(a.Images)
 	if nImages == 0 {
 		return "", errors.NewImageNotFoundError(fmt.Sprintf("Could not find image for artist %s", a.Name))
@@ -22,10 +23,23 @@ func (a SpotifyArtist) GetSmallestImageUri() (string, error) {
 	return a.Images[nImages-1].Url, nil
 }
 
-type SpotifyArtists struct {
-	ArtistItems []SpotifyArtist `json:"items"`
+type spotifyArtists struct {
+	ArtistItems []spotifyArtist `json:"items"`
 }
 
-type SpotifyResponse struct {
-	Artists SpotifyArtists `json:"artists"`
+type spotifyResponse struct {
+	Artists spotifyArtists `json:"artists"`
+}
+
+func (s *spotifyResponse) GetArtists() []artist.Artist {
+	result := []artist.Artist{}
+	for _, currentArtist := range s.Artists.ArtistItems {
+		imageUri, err := currentArtist.GetSmallestImageUri()
+		resultArtist := artist.NewArtist(currentArtist.Name)
+		if err == nil {
+			resultArtist.SetImageUri(imageUri)
+		}
+		result = append(result, resultArtist)
+	}
+	return result
 }

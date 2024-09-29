@@ -18,7 +18,7 @@ type SetlistFMRepository struct {
 }
 
 func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
-	deserializer := NewSetlistFMDeserializer()
+	deserializer := serialization.NewJsonDeserializer[setlistFMResponse]()
 	return &SetlistFMRepository{
 		host:         "api.setlist.fm",
 		apiKey:       apiKey,
@@ -39,7 +39,8 @@ func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}
 
-	response, err := r.deserializer.Deserialize(*responseBody)
+	var response setlistFMResponse
+	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
 	}

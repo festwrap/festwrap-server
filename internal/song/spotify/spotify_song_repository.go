@@ -14,7 +14,7 @@ type SpotifySongRepository struct {
 	accessToken  string
 	host         string
 	httpSender   httpsender.HTTPRequestSender
-	deserializer serialization.Deserializer[[]song.Song]
+	deserializer serialization.Deserializer[spotifyResponse]
 }
 
 func NewSpotifySongRepository(
@@ -22,7 +22,11 @@ func NewSpotifySongRepository(
 	httpSender httpsender.HTTPRequestSender,
 ) *SpotifySongRepository {
 	return &SpotifySongRepository{
-		accessToken: accessToken, host: "api.spotify.com", httpSender: httpSender, deserializer: &SpotifySongsDeserializer{}}
+		accessToken:  accessToken,
+		host:         "api.spotify.com",
+		httpSender:   httpSender,
+		deserializer: serialization.NewJsonDeserializer[spotifyResponse](),
+	}
 }
 
 func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
@@ -32,23 +36,23 @@ func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	songs, err := r.deserializer.Deserialize(*responseBody)
+	var response spotifyResponse
+	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
 	}
 
-	allSongs := *songs
-	if len(allSongs) == 0 {
+	if len(response.Tracks.Songs) == 0 {
 		errorMsg := fmt.Sprintf("No songs found for song %s (%s)", title, artist)
 		return nil, errors.NewCannotRetrieveSongError(errorMsg)
 	}
 
 	// We assume the first result is the most trusted one
-	result := allSongs[0]
+	result := song.NewSong(response.Tracks.Songs[0].Uri)
 	return &result, nil
 }
 
-func (r *SpotifySongRepository) SetDeserializer(deserializer serialization.Deserializer[[]song.Song]) {
+func (r *SpotifySongRepository) SetDeserializer(deserializer serialization.Deserializer[spotifyResponse]) {
 	r.deserializer = deserializer
 }
 

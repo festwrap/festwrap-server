@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"errors"
+	"path/filepath"
 
 	types "festwrap/internal"
 	"festwrap/internal/artist"
@@ -39,27 +40,78 @@ func expectedHttpOptions() httpsender.HTTPRequestOptions {
 	return options
 }
 
-func defaultSenderResponse() *[]byte {
-	response := []byte("some body")
-	return &response
+func defaultResponse() []byte {
+	return []byte(`
+		{
+			"artists":
+			{
+				"items":[
+					{"name":"Movements"},
+					{"name":"The Movement","images":[{"url":"https://some.url1"}, {"url":https://some.url2"}]}
+				]
+			}
+		}
+	`)
+}
+
+func integrationResponse(t *testing.T) []byte {
+	path := filepath.Join(testtools.GetParentDir(t), "testdata", "spotify_artist_search_response.json")
+	return testtools.LoadTestDataOrError(t, path)
+}
+
+func defaultDeserializedResponse() spotifyResponse {
+	return spotifyResponse{
+		Artists: spotifyArtists{
+			ArtistItems: []spotifyArtist{
+				{Name: "Movements"},
+				{
+					Name: "The Movement",
+					Images: []spotifyImage{
+						{Url: "https://some.url1"},
+						{Url: "https://some.url2"},
+					},
+				},
+			},
+		},
+	}
 }
 
 func defaultArtists() []artist.Artist {
 	return []artist.Artist{
 		artist.NewArtist("Movements"),
-		artist.NewArtistWithImageUri("The Movement", "https://some.url"),
+		artist.NewArtistWithImageUri("The Movement", "https://some.url2"),
+	}
+}
+
+func integrationArtists() []artist.Artist {
+	return []artist.Artist{
+		artist.NewArtistWithImageUri(
+			"The Beatles",
+			"https://i.scdn.co/image/ab6761610000f178e9348cc01ff5d55971b22433",
+		),
+		artist.NewArtistWithImageUri(
+			"The Beatles Tribute Band",
+			"https://i.scdn.co/image/ab67616d00004851a53d58fac4e46d5264adc122",
+		),
+		artist.NewArtist("The Beatles Recovered Band"),
+		artist.NewArtistWithImageUri(
+			"The Beatles Greatest Hits Performed By The Frank Berman Band",
+			"https://i.scdn.co/image/ab67616d00004851f903d75acdce7727b3c4aa2c",
+		),
+		artist.NewArtist("The Beatles Revival Band"),
 	}
 }
 
 func defaultSender() *httpsender.FakeHTTPSender {
 	sender := &httpsender.FakeHTTPSender{}
-	sender.SetResponse(defaultSenderResponse())
+	response := defaultResponse()
+	sender.SetResponse(&response)
 	return sender
 }
 
-func defaultDeserializer() *serialization.FakeDeserializer[[]artist.Artist] {
-	deserializer := &serialization.FakeDeserializer[[]artist.Artist]{}
-	response := defaultArtists()
+func defaultDeserializer() *serialization.FakeDeserializer[spotifyResponse] {
+	deserializer := &serialization.FakeDeserializer[spotifyResponse]{}
+	response := defaultDeserializedResponse()
 	deserializer.SetResponse(&response)
 	return deserializer
 }
@@ -109,7 +161,7 @@ func TestSearchArtistCallsDeserializeWithSendResponseBody(t *testing.T) {
 	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
 	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, deserializer.GetArgs(), *defaultSenderResponse())
+	testtools.AssertEqual(t, deserializer.GetArgs(), defaultResponse())
 }
 
 func TestSearchArtistsReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
@@ -134,10 +186,25 @@ func TestSearchArtistReturnsDeserializedArtists(t *testing.T) {
 func TestSearchArtistReturnsEmptyIfNoneFound(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
 	deserializer := defaultDeserializer()
-	deserializer.SetResponse(&[]artist.Artist{})
+	emptyResponse := spotifyResponse{Artists: spotifyArtists{ArtistItems: []spotifyArtist{}}}
+	deserializer.SetResponse(&emptyResponse)
 	repository.SetDeserializer(deserializer)
 
 	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
 	testtools.AssertEqual(t, artists, []artist.Artist{})
+}
+
+func TestSearchArtistReturnsDeserializedArtistsIntegration(t *testing.T) {
+	testtools.SkipOnShortRun(t)
+
+	sender := defaultSender()
+	response := integrationResponse(t)
+	sender.SetResponse(&response)
+	repository := NewSpotifyArtistRepository(sender)
+	repository.SetTokenKey(defaultTokenKey())
+
+	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
+
+	testtools.AssertEqual(t, artists, integrationArtists())
 }
