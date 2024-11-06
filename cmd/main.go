@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"festwrap/cmd/handler"
@@ -12,6 +14,7 @@ import (
 	"festwrap/internal/env"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
+	"festwrap/internal/logging"
 )
 
 func GetEnvWithDefaultOrFail[T env.EnvValue](key string, defaultValue T) T {
@@ -28,6 +31,9 @@ func main() {
 	maxConnsPerHost := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_CONNS_PER_HOST", 10)
 	timeoutSeconds := GetEnvWithDefaultOrFail[int]("FESTWRAP_TIMEOUT_SECONDS", 5)
 
+	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := logging.NewBaseLogger(slogLogger)
+
 	httpClient := &http.Client{
 		Transport: &http.Transport{MaxConnsPerHost: maxConnsPerHost},
 		Timeout:   time.Duration(timeoutSeconds) * time.Second,
@@ -38,7 +44,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	repository := spotify.NewSpotifyArtistRepository(&httpSender)
-	searchArtistsHandler := handler.NewSearchArtistHandler(repository)
+	searchArtistsHandler := handler.NewSearchArtistHandler(repository, logger)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP)
 
 	wrappedMux := middleware.NewAuthTokenMiddleware(mux)

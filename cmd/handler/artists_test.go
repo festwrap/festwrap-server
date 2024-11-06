@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"festwrap/internal/artist"
+	"festwrap/internal/logging"
 	"festwrap/internal/serialization"
 	"festwrap/internal/testtools"
 )
@@ -47,7 +48,7 @@ func buildRequestWithParams(t *testing.T, params map[string]string) *http.Reques
 func createSearchArtistHandler() SearchArtistHandler {
 	repository := artist.FakeArtistRepository{}
 	repository.SetSearchReturnValue(defaultArtists())
-	return NewSearchArtistHandler(&repository)
+	return NewSearchArtistHandler(&repository, logging.NoopLogger{})
 }
 
 func unmarshalSearchArtistResponse(t *testing.T, bytes []byte) []artist.Artist {
@@ -124,7 +125,7 @@ func TestLimitStatusCodeDependingOnValue(t *testing.T) {
 func TestSearchArtistRepositoryCalledWithParams(t *testing.T) {
 	repository := artist.FakeArtistRepository{}
 	repository.SetSearchReturnValue(defaultArtists())
-	handler := NewSearchArtistHandler(&repository)
+	handler := NewSearchArtistHandler(&repository, logging.NoopLogger{})
 	request := buildRequestWithParams(t, defaultQueryParams())
 
 	handler.ServeHTTP(httptest.NewRecorder(), request)

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"festwrap/internal/artist"
+	"festwrap/internal/logging"
 	"festwrap/internal/serialization"
 )
 
@@ -14,43 +15,52 @@ type SearchArtistHandler struct {
 	defaultLimit int
 	maxLimit     int
 	repository   artist.ArtistRepository
+	logger       logging.Logger
 }
 
-func NewSearchArtistHandler(repository artist.ArtistRepository) SearchArtistHandler {
+func NewSearchArtistHandler(repository artist.ArtistRepository, logger logging.Logger) SearchArtistHandler {
 	return SearchArtistHandler{
 		encoder:      serialization.NewJsonEncoder[[]artist.Artist](),
 		repository:   repository,
 		maxLimit:     10,
 		defaultLimit: 5,
+		logger:       logger,
 	}
 }
 
 func (h *SearchArtistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		http.Error(w, "Validation error: artist name must be provided", http.StatusBadRequest)
+		message := "Validation error: artist name was not provided"
+		h.logger.Warn(message)
+		http.Error(w, message, http.StatusBadRequest)
 		return
 	}
 
 	limit, err := h.readLimit(r)
 	if err != nil {
+		h.logger.Warn(fmt.Sprintf("Invalid limit for request: %v", err.Error()))
 		http.Error(
 			w,
-			fmt.Sprintf("Validation error: %v", err.Error()),
+			fmt.Sprintf("Validation error: invalid limit. It should be an integer in interval [1, %d]", h.maxLimit),
 			http.StatusUnprocessableEntity,
 		)
 		return
 	}
+	h.logger.Info(fmt.Sprintf("Received new request for %s, using limit %d", name, limit))
 
 	artists, err := h.repository.SearchArtist(r.Context(), name, limit)
 	if err != nil {
+		h.logger.Error(fmt.Sprintf("Error searching for artist: %v", err.Error()))
 		h.writeUnexpectedError(w)
 		return
 	}
+	h.logger.Info(fmt.Sprintf("Found artist %v for %s, using limit %d", artists, name, limit))
 
 	w.Header().Set("Content-Type", "application/json")
 	err = h.encoder.Encode(w, artists)
 	if err != nil {
+		h.logger.Error(fmt.Sprintf("Error encoding searched artists %v: %v", artists, err.Error()))
 		h.writeUnexpectedError(w)
 		return
 	}
