@@ -1,4 +1,4 @@
-package handler
+package search
 
 import (
 	"encoding/json"
@@ -9,23 +9,29 @@ import (
 	"net/url"
 	"testing"
 
-	"festwrap/internal/artist"
 	"festwrap/internal/logging"
 	"festwrap/internal/serialization"
 	"festwrap/internal/testtools"
 )
 
-func defaultArtists() []artist.Artist {
-	return []artist.Artist{
-		artist.NewArtist("Brutus"),
-		artist.NewArtistWithImageUri("Boysetsfire", "http://some/image.jpg"),
+type Result struct {
+	Id    string `json:"id"`
+	Value int    `json:"value"`
+}
+
+func defaultResults() []Result {
+	return []Result{
+		{Id: "1", Value: 1},
+		{Id: "2", Value: 2},
+		{Id: "3", Value: 3},
+		{Id: "4", Value: 4},
 	}
 }
 
 func defaultQueryParams() map[string]string {
 	return map[string]string{
-		"name":  "Brutus",
-		"limit": "8",
+		"name":  "someName",
+		"limit": "5",
 	}
 }
 
@@ -45,15 +51,15 @@ func buildRequestWithParams(t *testing.T, params map[string]string) *http.Reques
 	return httptest.NewRequest("GET", requestUrl.String(), nil)
 }
 
-func createSearchArtistHandler() SearchArtistHandler {
-	repository := artist.FakeArtistRepository{}
-	repository.SetSearchReturnValue(defaultArtists())
-	return NewSearchArtistHandler(&repository, logging.NoopLogger{})
+func defaultSearcher() Searcher[Result] {
+	searcher := NewFakeSearcher[Result]()
+	searcher.SetSearchResult(defaultResults())
+	return searcher
 }
 
-func unmarshalSearchArtistResponse(t *testing.T, bytes []byte) []artist.Artist {
+func unmarshalSearchResponse(t *testing.T, bytes []byte) []Result {
 	t.Helper()
-	var response []artist.Artist
+	var response []Result
 	err := json.Unmarshal(bytes, &response)
 	if err != nil {
 		t.Errorf("Error unmarshalling body: %v", err)
@@ -61,9 +67,9 @@ func unmarshalSearchArtistResponse(t *testing.T, bytes []byte) []artist.Artist {
 	return response
 }
 
-func setup(t *testing.T, params map[string]string) (*httptest.ResponseRecorder, *http.Request, SearchArtistHandler) {
+func setup(t *testing.T, params map[string]string) (*httptest.ResponseRecorder, *http.Request, SearchHandler[Result]) {
 	t.Helper()
-	handler := createSearchArtistHandler()
+	handler := NewSearchHandler(defaultSearcher(), "someType", logging.NoopLogger{})
 	writer := httptest.NewRecorder()
 	request := buildRequestWithParams(t, params)
 	return writer, request, handler
@@ -122,31 +128,22 @@ func TestLimitStatusCodeDependingOnValue(t *testing.T) {
 	}
 }
 
-func TestSearchArtistRepositoryCalledWithParams(t *testing.T) {
-	repository := artist.FakeArtistRepository{}
-	repository.SetSearchReturnValue(defaultArtists())
-	handler := NewSearchArtistHandler(&repository, logging.NoopLogger{})
+func TestSearcherCalledWithParams(t *testing.T) {
+	searcher := FakeSearcher[Result]{}
+	searcher.SetSearchResult(defaultResults())
+	handler := NewSearchHandler(&searcher, "someType", logging.NoopLogger{})
 	request := buildRequestWithParams(t, defaultQueryParams())
 
 	handler.ServeHTTP(httptest.NewRecorder(), request)
 
-	actual := repository.GetSearchArtistArgs()
+	actual := searcher.GetSearchArgs()
 	testtools.AssertEqual(t, actual.Context, request.Context())
 	testtools.AssertEqual(t, fmt.Sprint(actual.Limit), defaultQueryParams()["limit"])
 	testtools.AssertEqual(t, actual.Name, defaultQueryParams()["name"])
 }
 
-func TestSearchArtistReturnsArtists(t *testing.T) {
-	writer, request, handler := setup(t, defaultQueryParams())
-
-	handler.ServeHTTP(writer, request)
-
-	testtools.AssertEqual(t, writer.Code, http.StatusOK)
-	testtools.AssertEqual(t, unmarshalSearchArtistResponse(t, writer.Body.Bytes()), defaultArtists())
-}
-
-func TestSearchArtistReturnsInternalErrorOnEncoderError(t *testing.T) {
-	encoder := serialization.FakeEncoder[[]artist.Artist]{}
+func TestSearchReturnsInternalErrorOnEncoderError(t *testing.T) {
+	encoder := serialization.FakeEncoder[[]Result]{}
 	encoder.SetError(errors.New("test error"))
 	writer, request, handler := setup(t, defaultQueryParams())
 	handler.SetEncoder(encoder)
@@ -154,4 +151,15 @@ func TestSearchArtistReturnsInternalErrorOnEncoderError(t *testing.T) {
 	handler.ServeHTTP(writer, request)
 
 	testtools.AssertEqual(t, writer.Code, http.StatusInternalServerError)
+}
+
+func TestSearchReturnsExpectedResult(t *testing.T) {
+	testtools.SkipOnShortRun(t)
+
+	writer, request, handler := setup(t, defaultQueryParams())
+
+	handler.ServeHTTP(writer, request)
+
+	testtools.AssertEqual(t, writer.Code, http.StatusOK)
+	testtools.AssertEqual(t, unmarshalSearchResponse(t, writer.Body.Bytes()), defaultResults())
 }
