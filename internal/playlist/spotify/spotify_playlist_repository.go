@@ -1,8 +1,10 @@
 package spotify
 
 import (
+	"context"
 	"fmt"
 
+	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist"
 	"festwrap/internal/playlist/errors"
@@ -13,17 +15,16 @@ import (
 type SpotifyPlaylistRepository struct {
 	songsSerializer    serialization.Serializer[SpotifySongs]
 	playlistSerializer serialization.Serializer[SpotifyPlaylist]
-	accessToken        string
+	tokenKey           types.ContextKey
 	host               string
 	httpSender         httpsender.HTTPRequestSender
 }
 
-func NewSpotifyPlaylistRepository(
-	httpSender httpsender.HTTPRequestSender, accessToken string) SpotifyPlaylistRepository {
+func NewSpotifyPlaylistRepository(httpSender httpsender.HTTPRequestSender) SpotifyPlaylistRepository {
 	playlistSerializer := serialization.NewJsonSerializer[SpotifyPlaylist]()
 	songSerializer := serialization.NewJsonSerializer[SpotifySongs]()
 	return SpotifyPlaylistRepository{
-		accessToken:        accessToken,
+		tokenKey:           "token",
 		host:               "api.spotify.com",
 		httpSender:         httpSender,
 		songsSerializer:    &songSerializer,
@@ -31,9 +32,14 @@ func NewSpotifyPlaylistRepository(
 	}
 }
 
-func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Song) error {
+func (r *SpotifyPlaylistRepository) AddSongs(ctx context.Context, playlistId string, songs []song.Song) error {
 	if len(songs) == 0 {
 		return errors.NewCannotAddSongsToPlaylistError("no songs provided")
+	}
+
+	token, ok := ctx.Value(r.tokenKey).(string)
+	if !ok {
+		return errors.NewCannotAddSongsToPlaylistError("Could not retrieve token from context")
 	}
 
 	body, err := r.songsSerializer.Serialize(NewSpotifySongs(songs))
@@ -42,7 +48,7 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
 	}
 
-	httpOptions := r.addSongsHttpOptions(playlistId, body)
+	httpOptions := r.addSongsHttpOptions(playlistId, body, token)
 	_, err = r.httpSender.Send(httpOptions)
 	if err != nil {
 		return errors.NewCannotAddSongsToPlaylistError(err.Error())
@@ -51,7 +57,12 @@ func (r *SpotifyPlaylistRepository) AddSongs(playlistId string, songs []song.Son
 	return nil
 }
 
-func (r *SpotifyPlaylistRepository) CreatePlaylist(userId string, playlist playlist.Playlist) error {
+func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, userId string, playlist playlist.Playlist) error {
+	token, ok := ctx.Value(r.tokenKey).(string)
+	if !ok {
+		return errors.NewCannotCreatePlaylistError("Could not retrieve token from context")
+	}
+
 	body, err := r.playlistSerializer.Serialize(
 		SpotifyPlaylist{
 			Name:        playlist.Name,
@@ -64,13 +75,17 @@ func (r *SpotifyPlaylistRepository) CreatePlaylist(userId string, playlist playl
 		return errors.NewCannotCreatePlaylistError(errorMsg)
 	}
 
-	httpOptions := r.createPlaylistOptions(userId, body)
+	httpOptions := r.createPlaylistOptions(userId, body, token)
 	_, err = r.httpSender.Send(httpOptions)
 	if err != nil {
 		return errors.NewCannotCreatePlaylistError(err.Error())
 	}
 
 	return nil
+}
+
+func (r *SpotifyPlaylistRepository) SetTokenKey(key types.ContextKey) {
+	r.tokenKey = key
 }
 
 func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequestSender) {
@@ -85,25 +100,29 @@ func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serializati
 	r.playlistSerializer = serializer
 }
 
-func (r *SpotifyPlaylistRepository) addSongsHttpOptions(playlistId string, body []byte) httpsender.HTTPRequestOptions {
+func (r *SpotifyPlaylistRepository) addSongsHttpOptions(
+	playlistId string, body []byte, token string,
+) httpsender.HTTPRequestOptions {
 	url := fmt.Sprintf("https://%s/v1/playlists/%s/tracks", r.host, playlistId)
 	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
 	httpOptions.SetBody(body)
-	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders())
+	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders(token))
 	return httpOptions
 }
 
-func (r *SpotifyPlaylistRepository) createPlaylistOptions(userId string, body []byte) httpsender.HTTPRequestOptions {
+func (r *SpotifyPlaylistRepository) createPlaylistOptions(
+	userId string, body []byte, token string,
+) httpsender.HTTPRequestOptions {
 	url := fmt.Sprintf("https://%s/v1/users/%s/playlists", r.host, userId)
 	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
 	httpOptions.SetBody(body)
-	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders())
+	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders(token))
 	return httpOptions
 }
 
-func (r *SpotifyPlaylistRepository) GetSpotifyBaseHeaders() map[string]string {
+func (r *SpotifyPlaylistRepository) GetSpotifyBaseHeaders(token string) map[string]string {
 	return map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", r.accessToken),
+		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Content-Type":  "application/json",
 	}
 }

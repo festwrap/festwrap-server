@@ -1,9 +1,12 @@
 package spotify
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist"
 	"festwrap/internal/serialization"
@@ -72,6 +75,20 @@ func errorPlaylistSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
 	return serializer
 }
 
+func defaultToken() string {
+	return "abcdefg12345"
+}
+
+func defaultTokenKey() types.ContextKey {
+	return "token"
+}
+
+func defaultContext() context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, defaultTokenKey(), defaultToken())
+	return ctx
+}
+
 func expectedAddSongsHttpOptions() httpsender.HTTPRequestOptions {
 	options := httpsender.NewHTTPRequestOptions("https://api.spotify.com/v1/playlists/test_id/tracks", httpsender.POST, 201)
 	options.SetHeaders(defaultHeaders())
@@ -88,13 +105,14 @@ func expectedCreatePlaylistHttpOptions() httpsender.HTTPRequestOptions {
 
 func defaultHeaders() map[string]string {
 	return map[string]string{
-		"Authorization": "Bearer abcdefg12345",
+		"Authorization": fmt.Sprintf("Bearer %s", defaultToken()),
 		"Content-Type":  "application/json",
 	}
 }
 
 func spotifyPlaylistRepository() SpotifyPlaylistRepository {
-	repository := NewSpotifyPlaylistRepository(fakeSender(), "abcdefg12345")
+	repository := NewSpotifyPlaylistRepository(fakeSender())
+	repository.SetTokenKey(defaultTokenKey())
 	repository.SetSongSerializer(defaultSongsSerializer())
 	repository.SetPlaylistSerializer(defaultPlaylistSerializer())
 	return repository
@@ -103,7 +121,7 @@ func spotifyPlaylistRepository() SpotifyPlaylistRepository {
 func TestAddSongsReturnsErrorWhenNoSongsProvided(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	err := repository.AddSongs(defaultPlaylistId(), []song.Song{})
+	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), []song.Song{})
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -113,7 +131,7 @@ func TestAddSongsSerializesInputSongs(t *testing.T) {
 	serializer := defaultSongsSerializer()
 	repository.SetSongSerializer(serializer)
 
-	repository.AddSongs(defaultPlaylistId(), defaultSongs())
+	repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
 
 	expected := SpotifySongs{Uris: []string{"uri1", "uri2"}}
 	actual := serializer.GetArgs()
@@ -124,7 +142,7 @@ func TestAddSongsReturnsErrorOnNonSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetSongSerializer(errorSongsSerializer())
 
-	err := repository.AddSongs(defaultPlaylistId(), defaultSongs())
+	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -134,7 +152,7 @@ func TestAddSongsSendsRequestUsingProperOptions(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(sender)
 
-	repository.AddSongs(defaultPlaylistId(), defaultSongs())
+	repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
 
 	actual := sender.GetSendArgs()
 	testtools.AssertEqual(t, actual, expectedAddSongsHttpOptions())
@@ -145,7 +163,7 @@ func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(sender)
 
-	err := repository.AddSongs(defaultPlaylistId(), defaultSongs())
+	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -155,7 +173,7 @@ func TestAddSongsSerializesInputPlaylist(t *testing.T) {
 	serializer := defaultPlaylistSerializer()
 	repository.SetPlaylistSerializer(serializer)
 
-	repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
 
 	expected := SpotifyPlaylist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
 	actual := serializer.GetArgs()
@@ -166,7 +184,7 @@ func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistSerializer(errorPlaylistSerializer())
 
-	err := repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+	err := repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -176,7 +194,7 @@ func TestCreatePlaylistSendsCreateRequestWithOptions(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(sender)
 
-	repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
 
 	actual := sender.GetSendArgs()
 	testtools.AssertEqual(t, actual, expectedCreatePlaylistHttpOptions())
@@ -187,7 +205,7 @@ func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(sender)
 
-	err := repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+	err := repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -199,7 +217,7 @@ func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository.SetHTTPSender(sender)
 	repository.SetSongSerializer(&serializer)
 
-	repository.AddSongs(defaultPlaylistId(), defaultSongs())
+	repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
 
 	actual := sender.GetSendArgs()
 	testtools.AssertEqual(t, actual, expectedAddSongsHttpOptions())
@@ -214,8 +232,42 @@ func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository.SetPlaylistSerializer(&serializer)
 	repository.SetHTTPSender(sender)
 
-	repository.CreatePlaylist(defaultUserId(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
 
 	actual := sender.GetSendArgs()
 	testtools.AssertEqual(t, actual, expectedCreatePlaylistHttpOptions())
+}
+
+func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
+	tests := map[string]struct {
+		repositoryTokenKey types.ContextKey
+		tokenKey           types.ContextKey
+		tokenVal           interface{}
+	}{
+		"returns error when token is wrong type": {
+			repositoryTokenKey: "matchingKey",
+			tokenKey:           "matchingKey",
+			tokenVal:           1234,
+		},
+		"returns error when token is missing": {
+			repositoryTokenKey: "someKey",
+			tokenKey:           "otherKey",
+			tokenVal:           "myToken",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, test.tokenKey, test.tokenVal)
+			repository := spotifyPlaylistRepository()
+			repository.SetTokenKey(test.repositoryTokenKey)
+
+			err := repository.AddSongs(ctx, defaultPlaylistId(), defaultSongs())
+			testtools.AssertErrorIsNotNil(t, err)
+
+			err = repository.CreatePlaylist(ctx, defaultUserId(), defaultPlaylist())
+			testtools.AssertErrorIsNotNil(t, err)
+		})
+	}
 }

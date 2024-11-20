@@ -1,13 +1,18 @@
 package playlist
 
-import "festwrap/internal/song"
+import (
+	"context"
+	"festwrap/internal/song"
+)
 
 type AddSongsArgs struct {
+	Context    context.Context
 	PlaylistId string
 	Songs      []song.Song
 }
 
 type CreatePlaylistArgs struct {
+	Context  context.Context
 	UserId   string
 	Playlist Playlist
 }
@@ -22,13 +27,13 @@ func NewFakePlaylistRepository() FakePlaylistRepository {
 	return FakePlaylistRepository{}
 }
 
-func (s *FakePlaylistRepository) CreatePlaylist(userId string, playlist Playlist) error {
-	s.createPlaylistArgs = CreatePlaylistArgs{UserId: userId, Playlist: playlist}
+func (s *FakePlaylistRepository) CreatePlaylist(ctx context.Context, userId string, playlist Playlist) error {
+	s.createPlaylistArgs = CreatePlaylistArgs{Context: ctx, UserId: userId, Playlist: playlist}
 	return s.err
 }
 
-func (s *FakePlaylistRepository) AddSongs(playlistId string, songs []song.Song) error {
-	s.addSongArgs = AddSongsArgs{PlaylistId: playlistId, Songs: songs}
+func (s *FakePlaylistRepository) AddSongs(ctx context.Context, playlistId string, songs []song.Song) error {
+	s.addSongArgs = AddSongsArgs{Context: ctx, PlaylistId: playlistId, Songs: songs}
 	return s.err
 }
 
