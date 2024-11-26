@@ -4,18 +4,8 @@ import (
 	"io"
 )
 
-type EncodeArgs[T any] struct {
-	Writer io.Writer
-	Object T
-}
-
 type FakeEncoder[T any] struct {
-	encodeArgs EncodeArgs[T]
-	err        error
-}
-
-func (e FakeEncoder[T]) GetEncodeArgs() EncodeArgs[T] {
-	return e.encodeArgs
+	err error
 }
 
 func (e *FakeEncoder[T]) SetError(err error) {

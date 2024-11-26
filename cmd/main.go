@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"festwrap/cmd/handler"
+	"festwrap/cmd/handler/search"
 	"festwrap/cmd/middleware"
 	"festwrap/internal/artist/spotify"
 	"festwrap/internal/env"
@@ -44,7 +44,8 @@ func main() {
 	mux := http.NewServeMux()
 
 	repository := spotify.NewSpotifyArtistRepository(&httpSender)
-	searchArtistsHandler := handler.NewSearchArtistHandler(repository, logger)
+	artistSearcher := search.NewFunctionSearcher(repository.SearchArtist)
+	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP)
 
 	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
