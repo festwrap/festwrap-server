@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
@@ -13,22 +14,27 @@ import (
 )
 
 type SpotifyPlaylistRepository struct {
-	songsSerializer    serialization.Serializer[SpotifySongs]
-	playlistSerializer serialization.Serializer[SpotifyPlaylist]
-	tokenKey           types.ContextKey
-	host               string
-	httpSender         httpsender.HTTPRequestSender
+	songsSerializer      serialization.Serializer[SpotifySongs]
+	playlistSerializer   serialization.Serializer[SpotifyPlaylist]
+	playlistDeserializer serialization.Deserializer[SpotifySearchPlaylistResponse]
+	userIdKey            types.ContextKey
+	tokenKey             types.ContextKey
+	host                 string
+	httpSender           httpsender.HTTPRequestSender
 }
 
 func NewSpotifyPlaylistRepository(httpSender httpsender.HTTPRequestSender) SpotifyPlaylistRepository {
 	playlistSerializer := serialization.NewJsonSerializer[SpotifyPlaylist]()
 	songSerializer := serialization.NewJsonSerializer[SpotifySongs]()
+	playlistDeserializer := serialization.NewJsonDeserializer[SpotifySearchPlaylistResponse]()
 	return SpotifyPlaylistRepository{
-		tokenKey:           "token",
-		host:               "api.spotify.com",
-		httpSender:         httpSender,
-		songsSerializer:    &songSerializer,
-		playlistSerializer: &playlistSerializer,
+		tokenKey:             "token",
+		userIdKey:            "user_id",
+		host:                 "api.spotify.com",
+		httpSender:           httpSender,
+		songsSerializer:      &songSerializer,
+		playlistSerializer:   &playlistSerializer,
+		playlistDeserializer: &playlistDeserializer,
 	}
 }
 
@@ -84,6 +90,52 @@ func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, userId s
 	return nil
 }
 
+func (r *SpotifyPlaylistRepository) SearchPlaylist(ctx context.Context, name string, limit int) ([]playlist.Playlist, error) {
+	emptyResponse := []playlist.Playlist{}
+	token, ok := ctx.Value(r.tokenKey).(string)
+	if !ok {
+		return emptyResponse, errors.NewCannotSearchPlaylistError("Could not retrieve token from context")
+	}
+
+	userId, ok := ctx.Value(r.userIdKey).(string)
+	if !ok {
+		return emptyResponse, errors.NewCannotSearchPlaylistError("Could not retrieve user id from context")
+	}
+
+	httpOptions := r.searchPlaylistOptions(name, limit, token)
+	response, err := r.httpSender.Send(httpOptions)
+	if err != nil {
+		return emptyResponse, errors.NewCannotSearchPlaylistError(err.Error())
+	}
+
+	var searchedPlaylist SpotifySearchPlaylistResponse
+	err = r.playlistDeserializer.Deserialize(*response, &searchedPlaylist)
+	if err != nil {
+		return nil, errors.NewCannotSearchPlaylistError(err.Error())
+	}
+
+	return filterPlaylistByUser(searchedPlaylist.Playlists.Items, userId), nil
+}
+
+func filterPlaylistByUser(playlists []SpotifySearchPlaylist, userId string) []playlist.Playlist {
+	var userPlaylists []playlist.Playlist
+	for _, currentPlaylist := range playlists {
+		if currentPlaylist.OwnerMetadata.Id == userId {
+			playlistObj := playlist.Playlist{
+				Name:        currentPlaylist.Name,
+				Description: currentPlaylist.Description,
+				IsPublic:    currentPlaylist.Public,
+			}
+			userPlaylists = append(userPlaylists, playlistObj)
+		}
+	}
+	return userPlaylists
+}
+
+func (r *SpotifyPlaylistRepository) SetUserIdKey(key types.ContextKey) {
+	r.userIdKey = key
+}
+
 func (r *SpotifyPlaylistRepository) SetTokenKey(key types.ContextKey) {
 	r.tokenKey = key
 }
@@ -98,6 +150,10 @@ func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer serialization.S
 
 func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
 	r.playlistSerializer = serializer
+}
+
+func (r *SpotifyPlaylistRepository) SetPlaylistDeserializer(deserializer serialization.Deserializer[SpotifySearchPlaylistResponse]) {
+	r.playlistDeserializer = deserializer
 }
 
 func (r *SpotifyPlaylistRepository) addSongsHttpOptions(
@@ -116,6 +172,19 @@ func (r *SpotifyPlaylistRepository) createPlaylistOptions(
 	url := fmt.Sprintf("https://%s/v1/users/%s/playlists", r.host, userId)
 	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
 	httpOptions.SetBody(body)
+	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders(token))
+	return httpOptions
+}
+
+func (r *SpotifyPlaylistRepository) searchPlaylistOptions(
+	playlistName string, limit int, token string,
+) httpsender.HTTPRequestOptions {
+	queryParams := url.Values{}
+	queryParams.Set("q", playlistName)
+	queryParams.Set("type", "playlist")
+	queryParams.Set("limit", fmt.Sprintf("%d", limit))
+	url := fmt.Sprintf("https://%s/v1/search?%s", r.host, queryParams.Encode())
+	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
 	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders(token))
 	return httpOptions
 }
