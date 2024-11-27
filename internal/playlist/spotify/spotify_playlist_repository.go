@@ -140,12 +140,24 @@ func (r *SpotifyPlaylistRepository) SetTokenKey(key types.ContextKey) {
 	r.tokenKey = key
 }
 
+func (r *SpotifyPlaylistRepository) GetHTTPSender() httpsender.HTTPRequestSender {
+	return r.httpSender
+}
+
 func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequestSender) {
 	r.httpSender = httpSender
 }
 
 func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer serialization.Serializer[SpotifySongs]) {
 	r.songsSerializer = serializer
+}
+
+func (r *SpotifyPlaylistRepository) GetSongSerializer() serialization.Serializer[SpotifySongs] {
+	return r.songsSerializer
+}
+
+func (r *SpotifyPlaylistRepository) GetPlaylistSerializer() serialization.Serializer[SpotifyPlaylist] {
+	return r.playlistSerializer
 }
 
 func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
