@@ -115,22 +115,10 @@ func defaultSongsSerializer() *serialization.FakeSerializer[SpotifySongs] {
 	return &serializer
 }
 
-func errorSongsSerializer() *serialization.FakeSerializer[SpotifySongs] {
-	serializer := defaultSongsSerializer()
-	serializer.SetError(errors.New("test songs error"))
-	return serializer
-}
-
 func defaultPlaylistSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
 	serializer := serialization.FakeSerializer[SpotifyPlaylist]{}
 	serializer.SetResponse(defaultPlaylistBody())
 	return &serializer
-}
-
-func errorPlaylistSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
-	serializer := defaultPlaylistSerializer()
-	serializer.SetError(errors.New("test playlist error"))
-	return serializer
 }
 
 func defaultPlaylistDeserializer() *serialization.FakeDeserializer[SpotifySearchPlaylistResponse] {
@@ -228,7 +216,9 @@ func TestAddSongsSerializesInputSongs(t *testing.T) {
 
 func TestAddSongsReturnsErrorOnNonSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
-	repository.SetSongSerializer(errorSongsSerializer())
+	serializer := defaultSongsSerializer()
+	serializer.SetError(errors.New("test songs error"))
+	repository.SetSongSerializer(serializer)
 
 	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
 
@@ -265,7 +255,9 @@ func TestAddSongsSerializesInputPlaylist(t *testing.T) {
 
 func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
-	repository.SetPlaylistSerializer(errorPlaylistSerializer())
+	serializer := defaultPlaylistSerializer()
+	serializer.SetError(errors.New("test playlist error"))
+	repository.SetPlaylistSerializer(serializer)
 
 	err := repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
 
