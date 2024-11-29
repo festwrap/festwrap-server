@@ -23,7 +23,7 @@ func defaultTokenKey() types.ContextKey {
 	return tokenKey
 }
 
-func testSetup() (AuthTokenMiddleware, *http.Request, *httptest.ResponseRecorder) {
+func tokenAuthMiddlewareTestSetup() (AuthTokenMiddleware, *http.Request, *httptest.ResponseRecorder) {
 	middleware := NewAuthTokenMiddleware(GetTokenHandler{})
 	request := httptest.NewRequest("GET", "http://example.com", nil)
 	writer := httptest.NewRecorder()
@@ -31,7 +31,7 @@ func testSetup() (AuthTokenMiddleware, *http.Request, *httptest.ResponseRecorder
 }
 
 func TestBadRequestErrorOnMissingAuthHeader(t *testing.T) {
-	middleware, request, writer := testSetup()
+	middleware, request, writer := tokenAuthMiddlewareTestSetup()
 
 	middleware.ServeHTTP(writer, request)
 
@@ -39,7 +39,7 @@ func TestBadRequestErrorOnMissingAuthHeader(t *testing.T) {
 }
 
 func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
-	middleware, request, writer := testSetup()
+	middleware, request, writer := tokenAuthMiddlewareTestSetup()
 	request.Header.Set("Authorization", "something")
 
 	middleware.ServeHTTP(writer, request)
@@ -48,7 +48,7 @@ func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
 }
 
 func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
-	middleware, request, writer := testSetup()
+	middleware, request, writer := tokenAuthMiddlewareTestSetup()
 	request.Header.Set("Authorization", "Bearer 1234")
 
 	middleware.ServeHTTP(writer, request)
@@ -57,7 +57,7 @@ func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
 }
 
 func TestMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
-	middleware, request, writer := testSetup()
+	middleware, request, writer := tokenAuthMiddlewareTestSetup()
 	request.Header.Set("Authorization", "Bearer 1234")
 
 	middleware.ServeHTTP(writer, request)
