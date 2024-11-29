@@ -10,11 +10,13 @@ import (
 
 	"festwrap/cmd/handler/search"
 	"festwrap/cmd/middleware"
-	"festwrap/internal/artist/spotify"
+	spotifyArtists "festwrap/internal/artist/spotify"
 	"festwrap/internal/env"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/logging"
+	spotifyplaylists "festwrap/internal/playlist/spotify"
+	spotifyusers "festwrap/internal/user/spotify"
 )
 
 func GetEnvWithDefaultOrFail[T env.EnvValue](key string, defaultValue T) T {
@@ -43,11 +45,19 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	repository := spotify.NewSpotifyArtistRepository(&httpSender)
-	artistSearcher := search.NewFunctionSearcher(repository.SearchArtist)
+	artistRepository := spotifyArtists.NewSpotifyArtistRepository(&httpSender)
+	artistSearcher := search.NewFunctionSearcher(artistRepository.SearchArtist)
 	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP)
 
+	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(&httpSender)
+	playlistSearcher := search.NewFunctionSearcher(playlistRepository.SearchPlaylist)
+	userRepository := spotifyusers.NewSpotifyUserRepository(&httpSender)
+	searchPlaylistsHandler := search.NewSearchHandler(&playlistSearcher, "playlists", logger)
+	mux.HandleFunc(
+		"/playlists/search",
+		middleware.NewUserIdMiddleware(&searchPlaylistsHandler, userRepository).ServeHTTP,
+	)
 	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 
 	server := &http.Server{
