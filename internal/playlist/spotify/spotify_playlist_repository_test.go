@@ -171,7 +171,7 @@ func expectedSearchPlaylistHttpOptions() httpsender.HTTPRequestOptions {
 		defaultSearchPlaylistLimit(),
 		defaultPlaylistName(),
 	)
-	options := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
+	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(defaultHeaders())
 	return options
 }
