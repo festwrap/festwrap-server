@@ -196,7 +196,7 @@ func (r *SpotifyPlaylistRepository) searchPlaylistOptions(
 	queryParams.Set("type", "playlist")
 	queryParams.Set("limit", fmt.Sprintf("%d", limit))
 	url := fmt.Sprintf("https://%s/v1/search?%s", r.host, queryParams.Encode())
-	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
+	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	httpOptions.SetHeaders(r.GetSpotifyBaseHeaders(token))
 	return httpOptions
 }
