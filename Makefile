@@ -1,6 +1,8 @@
 ROOT ?= ./
 IMAGE_NAME ?= "festwrap-server"
 IMAGE_TAG ?= "latest"
+CONTAINER_NAME ?= "festwrap-server"
+PORT ?= 8080
 
 .PHONY: pre-commit-install
 pre-commit-install:
@@ -26,3 +28,16 @@ run-tests: run-unit-tests run-integration-tests
 .PHONE: build-image
 build-image:
 	docker build -f Dockerfile -t ${IMAGE_NAME}:${IMAGE_TAG} .
+
+
+.PHONE: run-server
+run-server:
+	@docker run --name $(CONTAINER_NAME) \
+        -d -e FESTWRAP_PORT=$(PORT) \
+        -p $(PORT):$(PORT) \
+        -t ${IMAGE_NAME}:${IMAGE_TAG}
+
+
+.PHONE: stop-server
+stop-server:
+	@docker container stop $(CONTAINER_NAME) && docker container rm $(CONTAINER_NAME)

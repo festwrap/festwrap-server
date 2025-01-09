@@ -28,13 +28,37 @@ make run-tests
 
 ## Running the API
 
-To run the API, you can type:
+### Run the app
+
+To run the API locally, you can type:
 
 ```shell
 go run cmd/main.go
 ```
 
-Then you can query it locally by typing:
+### Run the app container
+
+To run the app Docker image, first make sure to build the image:
+
+```shell
+make build-image
+```
+
+Then start the container:
+
+```shell
+make run-server
+```
+
+To stop the container:
+
+```shell
+make stop-server
+```
+
+## Calling the API
+
+Once the API is up, you can query it locally by typing:
 
 ```shell
 curl --location 'http://localhost:8080/artists/search?name=<artist>' \
