@@ -246,7 +246,7 @@ func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
 func TestAddSongsSerializesInputPlaylist(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	expected := SpotifyPlaylist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
 	actual := repository.GetPlaylistSerializer().(*serialization.FakeSerializer[SpotifyPlaylist]).GetArgs()
@@ -259,7 +259,7 @@ func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 	serializer.SetError(errors.New("test playlist error"))
 	repository.SetPlaylistSerializer(serializer)
 
-	err := repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
+	err := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -267,7 +267,7 @@ func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 func TestCreatePlaylistSendsCreateRequestWithOptions(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	testtools.AssertEqual(t, actual, expectedCreatePlaylistHttpOptions())
@@ -277,7 +277,7 @@ func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(errorSender())
 
-	err := repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
+	err := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }
@@ -340,7 +340,7 @@ func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistSerializer(&serializer)
 
-	repository.CreatePlaylist(defaultContext(), defaultUserId(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	testtools.AssertEqual(t, actual, expectedCreatePlaylistHttpOptions())
@@ -391,7 +391,7 @@ func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 			err := repository.AddSongs(ctx, defaultPlaylistId(), defaultSongs())
 			testtools.AssertErrorIsNotNil(t, err)
 
-			err = repository.CreatePlaylist(ctx, defaultUserId(), defaultPlaylist())
+			err = repository.CreatePlaylist(ctx, defaultPlaylist())
 			testtools.AssertErrorIsNotNil(t, err)
 
 			_, err = repository.SearchPlaylist(ctx, defaultPlaylistName(), defaultSearchPlaylistLimit())
@@ -426,6 +426,9 @@ func TestRepositoryMethodsReturnErrorWhenInvalidUserId(t *testing.T) {
 			repository.SetUserIdKey(test.repositoryUserIdKey)
 
 			_, err := repository.SearchPlaylist(ctx, defaultPlaylistName(), defaultSearchPlaylistLimit())
+			testtools.AssertErrorIsNotNil(t, err)
+
+			err = repository.CreatePlaylist(ctx, defaultPlaylist())
 			testtools.AssertErrorIsNotNil(t, err)
 		})
 	}
