@@ -63,10 +63,15 @@ func (r *SpotifyPlaylistRepository) AddSongs(ctx context.Context, playlistId str
 	return nil
 }
 
-func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, userId string, playlist playlist.Playlist) error {
+func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist playlist.Playlist) error {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
 		return errors.NewCannotCreatePlaylistError("Could not retrieve token from context")
+	}
+
+	userId, ok := ctx.Value(r.userIdKey).(string)
+	if !ok {
+		return errors.NewCannotCreatePlaylistError("Could not retrieve user id from context")
 	}
 
 	body, err := r.playlistSerializer.Serialize(
