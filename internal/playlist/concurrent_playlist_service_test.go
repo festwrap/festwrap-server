@@ -101,6 +101,7 @@ func newFakeSongRepository() song.FakeSongRepository {
 
 func testSetup() (FakePlaylistRepository, setlist.FakeSetlistRepository, song.FakeSongRepository) {
 	playlistRepository := NewFakePlaylistRepository()
+	playlistRepository.SetCreatedPlaylistId("some_id")
 	setlistRepository := newFakeSetlistRepository()
 	songRepository := newFakeSongRepository()
 	return playlistRepository, setlistRepository, songRepository
@@ -110,7 +111,7 @@ func TestCreatePlaylistRepositoryCalledWithArgs(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
+	_, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	actual := playlistRepository.GetCreatePlaylistArgs()
 	expected := CreatePlaylistArgs{Context: defaultContext(), Playlist: defaultPlaylist()}
@@ -118,12 +119,24 @@ func TestCreatePlaylistRepositoryCalledWithArgs(t *testing.T) {
 	testtools.AssertEqual(t, actual, expected)
 }
 
+func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
+	playlistRepository, setlistRepository, songRepository := testSetup()
+	expected := "some random id"
+	playlistRepository.SetCreatedPlaylistId(expected)
+	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+
+	actual, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
+
+	testtools.AssertEqual(t, actual, expected)
+	testtools.AssertErrorIsNil(t, err)
+}
+
 func TestCreatePlaylistReturnsErrorIfRepositoryErrors(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	playlistRepository.SetError(errors.New("test error"))
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
+	_, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
 	testtools.AssertErrorIsNotNil(t, err)
 }

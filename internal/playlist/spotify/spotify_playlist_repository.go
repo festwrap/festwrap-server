@@ -14,27 +14,30 @@ import (
 )
 
 type SpotifyPlaylistRepository struct {
-	songsSerializer      serialization.Serializer[SpotifySongs]
-	playlistSerializer   serialization.Serializer[SpotifyPlaylist]
-	playlistDeserializer serialization.Deserializer[SpotifySearchPlaylistResponse]
-	userIdKey            types.ContextKey
-	tokenKey             types.ContextKey
-	host                 string
-	httpSender           httpsender.HTTPRequestSender
+	songsSerializer            serialization.Serializer[SpotifySongs]
+	playlistCreateSerializer   serialization.Serializer[SpotifyPlaylist]
+	playlistSearchDeserializer serialization.Deserializer[SpotifySearchPlaylistResponse]
+	playlistCreateDeserializer serialization.Deserializer[SpotifyCreatePlaylistResponse]
+	userIdKey                  types.ContextKey
+	tokenKey                   types.ContextKey
+	host                       string
+	httpSender                 httpsender.HTTPRequestSender
 }
 
 func NewSpotifyPlaylistRepository(httpSender httpsender.HTTPRequestSender) SpotifyPlaylistRepository {
-	playlistSerializer := serialization.NewJsonSerializer[SpotifyPlaylist]()
 	songSerializer := serialization.NewJsonSerializer[SpotifySongs]()
-	playlistDeserializer := serialization.NewJsonDeserializer[SpotifySearchPlaylistResponse]()
+	playlistCreateSerializer := serialization.NewJsonSerializer[SpotifyPlaylist]()
+	playlistSearchDeserializer := serialization.NewJsonDeserializer[SpotifySearchPlaylistResponse]()
+	playlistCreateDeserializer := serialization.NewJsonDeserializer[SpotifyCreatePlaylistResponse]()
 	return SpotifyPlaylistRepository{
-		tokenKey:             "token",
-		userIdKey:            "user_id",
-		host:                 "api.spotify.com",
-		httpSender:           httpSender,
-		songsSerializer:      &songSerializer,
-		playlistSerializer:   &playlistSerializer,
-		playlistDeserializer: &playlistDeserializer,
+		tokenKey:                   "token",
+		userIdKey:                  "user_id",
+		host:                       "api.spotify.com",
+		httpSender:                 httpSender,
+		songsSerializer:            &songSerializer,
+		playlistCreateSerializer:   &playlistCreateSerializer,
+		playlistSearchDeserializer: &playlistSearchDeserializer,
+		playlistCreateDeserializer: playlistCreateDeserializer,
 	}
 }
 
@@ -63,18 +66,18 @@ func (r *SpotifyPlaylistRepository) AddSongs(ctx context.Context, playlistId str
 	return nil
 }
 
-func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist playlist.Playlist) error {
+func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist playlist.Playlist) (string, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return errors.NewCannotCreatePlaylistError("Could not retrieve token from context")
+		return "", errors.NewCannotCreatePlaylistError("Could not retrieve token from context")
 	}
 
 	userId, ok := ctx.Value(r.userIdKey).(string)
 	if !ok {
-		return errors.NewCannotCreatePlaylistError("Could not retrieve user id from context")
+		return "", errors.NewCannotCreatePlaylistError("Could not retrieve user id from context")
 	}
 
-	body, err := r.playlistSerializer.Serialize(
+	body, err := r.playlistCreateSerializer.Serialize(
 		SpotifyPlaylist{
 			Name:        playlist.Name,
 			Description: playlist.Description,
@@ -83,16 +86,22 @@ func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist
 	)
 	if err != nil {
 		errorMsg := fmt.Sprintf("could not serialize playlist: %v", err.Error())
-		return errors.NewCannotCreatePlaylistError(errorMsg)
+		return "", errors.NewCannotCreatePlaylistError(errorMsg)
 	}
 
 	httpOptions := r.createPlaylistOptions(userId, body, token)
-	_, err = r.httpSender.Send(httpOptions)
+	response, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return errors.NewCannotCreatePlaylistError(err.Error())
+		return "", errors.NewCannotCreatePlaylistError(err.Error())
 	}
 
-	return nil
+	var parsedResponse SpotifyCreatePlaylistResponse
+	err = r.playlistCreateDeserializer.Deserialize(*response, &parsedResponse)
+	if err != nil {
+		return "", errors.NewCannotCreatePlaylistError(err.Error())
+	}
+
+	return parsedResponse.Id, nil
 }
 
 func (r *SpotifyPlaylistRepository) SearchPlaylist(ctx context.Context, name string, limit int) ([]playlist.Playlist, error) {
@@ -114,7 +123,7 @@ func (r *SpotifyPlaylistRepository) SearchPlaylist(ctx context.Context, name str
 	}
 
 	var searchedPlaylist SpotifySearchPlaylistResponse
-	err = r.playlistDeserializer.Deserialize(*response, &searchedPlaylist)
+	err = r.playlistSearchDeserializer.Deserialize(*response, &searchedPlaylist)
 	if err != nil {
 		return nil, errors.NewCannotSearchPlaylistError(err.Error())
 	}
@@ -161,16 +170,20 @@ func (r *SpotifyPlaylistRepository) GetSongSerializer() serialization.Serializer
 	return r.songsSerializer
 }
 
-func (r *SpotifyPlaylistRepository) GetPlaylistSerializer() serialization.Serializer[SpotifyPlaylist] {
-	return r.playlistSerializer
+func (r *SpotifyPlaylistRepository) GetPlaylistCreateSerializer() serialization.Serializer[SpotifyPlaylist] {
+	return r.playlistCreateSerializer
 }
 
-func (r *SpotifyPlaylistRepository) SetPlaylistSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
-	r.playlistSerializer = serializer
+func (r *SpotifyPlaylistRepository) SetPlaylistCreateSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
+	r.playlistCreateSerializer = serializer
 }
 
-func (r *SpotifyPlaylistRepository) SetPlaylistDeserializer(deserializer serialization.Deserializer[SpotifySearchPlaylistResponse]) {
-	r.playlistDeserializer = deserializer
+func (r *SpotifyPlaylistRepository) SetPlaylistSearchDeserializer(deserializer serialization.Deserializer[SpotifySearchPlaylistResponse]) {
+	r.playlistSearchDeserializer = deserializer
+}
+
+func (r *SpotifyPlaylistRepository) SetPlaylistCreateDeserializer(deserializer serialization.Deserializer[SpotifyCreatePlaylistResponse]) {
+	r.playlistCreateDeserializer = deserializer
 }
 
 func (r *SpotifyPlaylistRepository) addSongsHttpOptions(
