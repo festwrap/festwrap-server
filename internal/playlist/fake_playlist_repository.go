@@ -59,7 +59,7 @@ func (s *FakePlaylistRepository) GetAddSongArgs() AddSongsArgs {
 	return s.addSongArgs
 }
 
-func (s *FakePlaylistRepository) GetCreatePlaylistSongArgs() CreatePlaylistArgs {
+func (s *FakePlaylistRepository) GetCreatePlaylistArgs() CreatePlaylistArgs {
 	return s.createPlaylistArgs
 }
 

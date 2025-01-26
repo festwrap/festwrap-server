@@ -14,6 +14,10 @@ func defaultContext() context.Context {
 	return context.Background()
 }
 
+func defaultPlaylist() Playlist {
+	return Playlist{Name: "My playlist", Description: "Some playlist", IsPublic: true}
+}
+
 func defaultPlaylistId() string {
 	return "myPlaylist"
 }
@@ -100,6 +104,28 @@ func testSetup() (FakePlaylistRepository, setlist.FakeSetlistRepository, song.Fa
 	setlistRepository := newFakeSetlistRepository()
 	songRepository := newFakeSongRepository()
 	return playlistRepository, setlistRepository, songRepository
+}
+
+func TestCreatePlaylistRepositoryCalledWithArgs(t *testing.T) {
+	playlistRepository, setlistRepository, songRepository := testSetup()
+	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+
+	err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
+
+	actual := playlistRepository.GetCreatePlaylistArgs()
+	expected := CreatePlaylistArgs{Context: defaultContext(), Playlist: defaultPlaylist()}
+	testtools.AssertErrorIsNil(t, err)
+	testtools.AssertEqual(t, actual, expected)
+}
+
+func TestCreatePlaylistReturnsErrorIfRepositoryErrors(t *testing.T) {
+	playlistRepository, setlistRepository, songRepository := testSetup()
+	playlistRepository.SetError(errors.New("test error"))
+	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+
+	err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
+
+	testtools.AssertErrorIsNotNil(t, err)
 }
 
 func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
