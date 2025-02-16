@@ -9,6 +9,8 @@ import (
 
 	httpclient "festwrap/internal/http/client"
 	"festwrap/internal/testtools"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultRequestBody() []byte {
@@ -57,8 +59,8 @@ func TestSendRequestHasProvidedMethod(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := string(options.GetMethod())
-	testtools.AssertEqual(t, actual, expected.Method)
-	testtools.AssertErrorIsNil(t, err)
+	assert.Equal(t, actual, expected.Method)
+	assert.Nil(t, err)
 }
 
 func TestSendRequestHasProvidedUrl(t *testing.T) {
@@ -68,8 +70,8 @@ func TestSendRequestHasProvidedUrl(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := options.GetUrl()
-	testtools.AssertEqual(t, actual, expected.URL.String())
-	testtools.AssertErrorIsNil(t, err)
+	assert.Equal(t, actual, expected.URL.String())
+	assert.Nil(t, err)
 }
 
 func TestSendRequestHasProvidedBody(t *testing.T) {
@@ -79,8 +81,8 @@ func TestSendRequestHasProvidedBody(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := options.GetBody()
-	testtools.AssertEqual(t, actual, readBodyFromRequest(t, expected))
-	testtools.AssertErrorIsNil(t, err)
+	assert.Equal(t, actual, readBodyFromRequest(t, expected))
+	assert.Nil(t, err)
 }
 
 func TestSendRequestDoesNotIncludeBodyIfNotProvided(t *testing.T) {
@@ -90,8 +92,9 @@ func TestSendRequestDoesNotIncludeBodyIfNotProvided(t *testing.T) {
 	_, err := sender.Send(options)
 
 	expected := client.GetRequestArg()
-	testtools.AssertIsNil(t, expected.Body)
-	testtools.AssertErrorIsNil(t, err)
+
+	assert.Nil(t, expected.Body)
+	assert.Nil(t, err)
 }
 
 func TestSendRequestUsesHeaders(t *testing.T) {
@@ -106,7 +109,7 @@ func TestSendRequestUsesHeaders(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	assertHeadersMatch(t, headers, expected.Header)
-	testtools.AssertErrorIsNil(t, err)
+	assert.Nil(t, err)
 }
 
 func TestSendRequestUsesNoHeadersIfNotProvided(t *testing.T) {
@@ -118,7 +121,7 @@ func TestSendRequestUsesNoHeadersIfNotProvided(t *testing.T) {
 	if len(expected.Header) > 0 {
 		t.Errorf("Headers should be empty, found %v", expected.Header)
 	}
-	testtools.AssertErrorIsNil(t, err)
+	assert.Nil(t, err)
 }
 
 func TestSendRequestReturnsErrorOnErrorRequestOptions(t *testing.T) {
@@ -127,7 +130,7 @@ func TestSendRequestReturnsErrorOnErrorRequestOptions(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSendRequestReturnsErrorOnClientError(t *testing.T) {
@@ -136,7 +139,7 @@ func TestSendRequestReturnsErrorOnClientError(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSendRequestReturnsErrorWhenStatusNotExpected(t *testing.T) {
@@ -145,7 +148,7 @@ func TestSendRequestReturnsErrorWhenStatusNotExpected(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSendRequestReturnsErrorOnResponseBodyError(t *testing.T) {
@@ -154,7 +157,7 @@ func TestSendRequestReturnsErrorOnResponseBodyError(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSendRequestReturnsResponseBody(t *testing.T) {
@@ -162,8 +165,8 @@ func TestSendRequestReturnsResponseBody(t *testing.T) {
 
 	body, err := sender.Send(options)
 
-	testtools.AssertEqual(t, string(*body), string(defaultResponseBody()))
-	testtools.AssertErrorIsNil(t, err)
+	assert.Equal(t, string(*body), string(defaultResponseBody()))
+	assert.Nil(t, err)
 }
 
 func readBodyFromRequest(t *testing.T, request *http.Request) []byte {

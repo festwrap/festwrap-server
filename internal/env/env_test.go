@@ -1,9 +1,10 @@
 package env
 
 import (
-	"festwrap/internal/testtools"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetEnvReturnsDefaultValueIfDoesntExist(t *testing.T) {
@@ -12,7 +13,7 @@ func TestGetEnvReturnsDefaultValueIfDoesntExist(t *testing.T) {
 		defaultValue := 2
 		value, _ := GetEnvWithDefault("MY_KEY", defaultValue)
 
-		testtools.AssertEqual(t, value, defaultValue)
+		assert.Equal(t, value, defaultValue)
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -20,7 +21,7 @@ func TestGetEnvReturnsDefaultValueIfDoesntExist(t *testing.T) {
 		defaultValue := "something"
 		value, _ := GetEnvWithDefault("MY_KEY", defaultValue)
 
-		testtools.AssertEqual(t, value, defaultValue)
+		assert.Equal(t, value, defaultValue)
 	})
 }
 
@@ -31,7 +32,7 @@ func TestGetEnvReturnsExistingEnvVariable(t *testing.T) {
 		os.Setenv(key, value)
 		actual, _ := GetEnvWithDefault(key, 0)
 
-		testtools.AssertEqual(t, actual, 42)
+		assert.Equal(t, actual, 42)
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -40,7 +41,7 @@ func TestGetEnvReturnsExistingEnvVariable(t *testing.T) {
 		os.Setenv(key, value)
 		actual, _ := GetEnvWithDefault(key, "")
 
-		testtools.AssertEqual(t, actual, value)
+		assert.Equal(t, actual, value)
 	})
 }
 
@@ -51,5 +52,5 @@ func TestGetEnvReturnsErrorOnInvalidEnvVar(t *testing.T) {
 
 	_, err := GetEnvWithDefault(key, 0)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }

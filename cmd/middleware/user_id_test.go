@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	types "festwrap/internal"
-	"festwrap/internal/testtools"
 	"festwrap/internal/user"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type GetUserIdHandler struct{}
@@ -48,7 +49,7 @@ func TestGetUserIdCallsRepositoryWithRequestContext(t *testing.T) {
 	middleware.ServeHTTP(writer, request)
 
 	fakeRepository := middleware.GetUserRepository().(*user.FakeUserRepository)
-	testtools.AssertEqual(t, fakeRepository.GetGetCurrentIdArgs().Context, request.Context())
+	assert.Equal(t, fakeRepository.GetGetCurrentIdArgs().Context, request.Context())
 }
 
 func TestGetUserReturnsInternalErrorOnRepositoryError(t *testing.T) {
@@ -59,7 +60,7 @@ func TestGetUserReturnsInternalErrorOnRepositoryError(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Result().StatusCode, http.StatusInternalServerError)
+	assert.Equal(t, writer.Result().StatusCode, http.StatusInternalServerError)
 }
 
 func TestUserIsPlacedInExpectedContextKey(t *testing.T) {
@@ -67,7 +68,7 @@ func TestUserIsPlacedInExpectedContextKey(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Body.String(), "some_id")
+	assert.Equal(t, writer.Body.String(), "some_id")
 }
 
 func TestUserIdMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
@@ -75,5 +76,5 @@ func TestUserIdMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Code, http.StatusContinue)
+	assert.Equal(t, writer.Code, http.StatusContinue)
 }

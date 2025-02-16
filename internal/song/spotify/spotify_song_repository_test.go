@@ -8,6 +8,8 @@ import (
 	"festwrap/internal/testtools"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultArtist() string {
@@ -74,8 +76,8 @@ func TestGetSongSendsRequestWithProperOptions(t *testing.T) {
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, sender.GetSendArgs(), expectedHttpOptions())
+	assert.Nil(t, err)
+	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
 }
 
 func TestGetSongReturnsErrorOnSendError(t *testing.T) {
@@ -85,7 +87,7 @@ func TestGetSongReturnsErrorOnSendError(t *testing.T) {
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSongCallsDeserializeWithSendResponseBody(t *testing.T) {
@@ -95,8 +97,8 @@ func TestGetSongCallsDeserializeWithSendResponseBody(t *testing.T) {
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, deserializer.GetArgs(), defaultResponse())
+	assert.Nil(t, err)
+	assert.Equal(t, deserializer.GetArgs(), defaultResponse())
 }
 
 func TestGetSongReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
@@ -107,7 +109,7 @@ func TestGetSongReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSongReturnsErrorIfNoSongsFound(t *testing.T) {
@@ -119,7 +121,7 @@ func TestGetSongReturnsErrorIfNoSongsFound(t *testing.T) {
 
 	_, err := repository.GetSong(defaultArtist(), defaultTitle())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSongReturnsFirstSongFound(t *testing.T) {
@@ -128,8 +130,8 @@ func TestGetSongReturnsFirstSongFound(t *testing.T) {
 	actual, err := repository.GetSong(defaultArtist(), defaultTitle())
 
 	expected := song.NewSong(defaultDeserializedResponse().Tracks.Songs[0].Uri)
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, *actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, *actual, expected)
 }
 
 func TestGetSongReturnsFirstSongFoundIntegration(t *testing.T) {
@@ -143,6 +145,6 @@ func TestGetSongReturnsFirstSongFoundIntegration(t *testing.T) {
 	actual, err := repository.GetSong(defaultArtist(), defaultTitle())
 
 	expected := song.NewSong("spotify:track:4rH1kFLYW0b28UNRyn7dK3")
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, *actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, *actual, expected)
 }

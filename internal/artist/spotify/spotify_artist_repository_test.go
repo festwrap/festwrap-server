@@ -11,6 +11,8 @@ import (
 	"festwrap/internal/serialization"
 	"festwrap/internal/testtools"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultSearchName() string {
@@ -128,8 +130,8 @@ func TestSearchArtistSendsRequestWithProperOptions(t *testing.T) {
 
 	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, sender.GetSendArgs(), expectedHttpOptions())
+	assert.Nil(t, err)
+	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
 }
 
 func TestSearchArtistReturnsErrorOnWrongKeyType(t *testing.T) {
@@ -139,7 +141,7 @@ func TestSearchArtistReturnsErrorOnWrongKeyType(t *testing.T) {
 
 	_, err := repository.SearchArtist(ctx, defaultSearchName(), defaultLimit())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSearchArtistReturnsErrorOnSendError(t *testing.T) {
@@ -149,7 +151,7 @@ func TestSearchArtistReturnsErrorOnSendError(t *testing.T) {
 
 	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSearchArtistCallsDeserializeWithSendResponseBody(t *testing.T) {
@@ -159,8 +161,8 @@ func TestSearchArtistCallsDeserializeWithSendResponseBody(t *testing.T) {
 
 	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, deserializer.GetArgs(), defaultResponse())
+	assert.Nil(t, err)
+	assert.Equal(t, deserializer.GetArgs(), defaultResponse())
 }
 
 func TestSearchArtistsReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
@@ -171,7 +173,7 @@ func TestSearchArtistsReturnsErrorOnResponseBodyDeserializationError(t *testing.
 
 	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestSearchArtistReturnsDeserializedArtists(t *testing.T) {
@@ -179,7 +181,7 @@ func TestSearchArtistReturnsDeserializedArtists(t *testing.T) {
 
 	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertEqual(t, artists, defaultArtists())
+	assert.Equal(t, artists, defaultArtists())
 }
 
 func TestSearchArtistReturnsEmptyIfNoneFound(t *testing.T) {
@@ -191,7 +193,7 @@ func TestSearchArtistReturnsEmptyIfNoneFound(t *testing.T) {
 
 	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertEqual(t, artists, []artist.Artist{})
+	assert.Equal(t, artists, []artist.Artist{})
 }
 
 func TestSearchArtistReturnsDeserializedArtistsIntegration(t *testing.T) {
@@ -205,5 +207,5 @@ func TestSearchArtistReturnsDeserializedArtistsIntegration(t *testing.T) {
 
 	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
 
-	testtools.AssertEqual(t, artists, integrationArtists())
+	assert.Equal(t, artists, integrationArtists())
 }

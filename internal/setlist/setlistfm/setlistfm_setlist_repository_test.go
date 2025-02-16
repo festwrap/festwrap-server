@@ -8,6 +8,8 @@ import (
 	"festwrap/internal/testtools"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultArtist() string {
@@ -111,7 +113,7 @@ func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
 
 	repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertEqual(t, sender.GetSendArgs(), expectedHttpOptions())
+	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
 }
 
 func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
@@ -121,7 +123,7 @@ func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 
 	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSetlistDeserializerCalledWithSenderResponse(t *testing.T) {
@@ -131,7 +133,7 @@ func TestGetSetlistDeserializerCalledWithSenderResponse(t *testing.T) {
 
 	repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertEqual(t, deserializer.GetArgs(), senderResponse())
+	assert.Equal(t, deserializer.GetArgs(), senderResponse())
 }
 
 func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
@@ -142,7 +144,7 @@ func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 
 	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
@@ -154,7 +156,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 
 	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSetlistReturnsSetlistFromDeserializedResponse(t *testing.T) {
@@ -162,7 +164,7 @@ func TestGetSetlistReturnsSetlistFromDeserializedResponse(t *testing.T) {
 
 	actual, _ := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertEqual(t, actual, expectedSetlist())
+	assert.Equal(t, actual, expectedSetlist())
 }
 
 func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
@@ -170,7 +172,7 @@ func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
 
 	_, err := repository.GetSetlist(defaultArtist(), 50)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetSetlistRetrievesSetlistFromResponseIntegration(t *testing.T) {
@@ -183,6 +185,6 @@ func TestGetSetlistRetrievesSetlistFromResponseIntegration(t *testing.T) {
 
 	actual, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, integrationSetlist())
+	assert.Nil(t, err)
+	assert.Equal(t, actual, integrationSetlist())
 }
