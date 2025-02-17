@@ -1,8 +1,9 @@
 package serialization
 
 import (
-	"festwrap/internal/testtools"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBaseSerializerReturnsExpectedOutput(t *testing.T) {
@@ -12,8 +13,8 @@ func TestBaseSerializerReturnsExpectedOutput(t *testing.T) {
 	actual, err := serializer.Serialize(object)
 
 	expected := serializableObjectBytes()
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }
 
 func TestBaseSerializerReturnsErrorOnNonSerializableObject(t *testing.T) {
@@ -22,5 +23,5 @@ func TestBaseSerializerReturnsErrorOnNonSerializableObject(t *testing.T) {
 	object := nonSerializableObject()
 	_, err := serializer.Serialize(object)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }

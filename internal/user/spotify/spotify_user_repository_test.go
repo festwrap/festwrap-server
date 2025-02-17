@@ -8,6 +8,8 @@ import (
 	"festwrap/internal/serialization"
 	"festwrap/internal/testtools"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultTokenKey() types.ContextKey {
@@ -83,7 +85,7 @@ func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 			repository.SetTokenKey(test.repositoryTokenKey)
 
 			_, err := repository.GetCurrentUserId(ctx)
-			testtools.AssertErrorIsNotNil(t, err)
+			assert.NotNil(t, err)
 		})
 	}
 }
@@ -94,8 +96,8 @@ func TestGetCurrentUserIdSendsRequestWithProperOptions(t *testing.T) {
 
 	_, err := repository.GetCurrentUserId(defaultContext())
 
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, sender.GetSendArgs(), expectedHttpOptions())
+	assert.Nil(t, err)
+	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
 }
 
 func TestGetCurrentUserReturnsErrorOnSendError(t *testing.T) {
@@ -105,7 +107,7 @@ func TestGetCurrentUserReturnsErrorOnSendError(t *testing.T) {
 
 	_, err := repository.GetCurrentUserId(defaultContext())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetCurrentUserCallsDeserializeWithSendResponseBody(t *testing.T) {
@@ -113,9 +115,9 @@ func TestGetCurrentUserCallsDeserializeWithSendResponseBody(t *testing.T) {
 
 	_, err := repository.GetCurrentUserId(defaultContext())
 
-	testtools.AssertErrorIsNil(t, err)
+	assert.Nil(t, err)
 	deserializer := repository.GetDeserializer().(*serialization.FakeDeserializer[spotifyUserResponse])
-	testtools.AssertEqual(t, deserializer.GetArgs(), defaultResponse())
+	assert.Equal(t, deserializer.GetArgs(), defaultResponse())
 }
 
 func TestGetCurrentUserReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
@@ -126,7 +128,7 @@ func TestGetCurrentUserReturnsErrorOnResponseBodyDeserializationError(t *testing
 
 	_, err := repository.GetCurrentUserId(defaultContext())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestGetCurrentUserReturnsFirstSongFoundIntegration(t *testing.T) {
@@ -138,6 +140,6 @@ func TestGetCurrentUserReturnsFirstSongFoundIntegration(t *testing.T) {
 	actual, err := repository.GetCurrentUserId(defaultContext())
 
 	expected := "my_id"
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }

@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	types "festwrap/internal"
-	"festwrap/internal/testtools"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type GetTokenHandler struct{}
@@ -35,7 +36,7 @@ func TestBadRequestErrorOnMissingAuthHeader(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Code, http.StatusBadRequest)
+	assert.Equal(t, writer.Code, http.StatusBadRequest)
 }
 
 func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
@@ -44,7 +45,7 @@ func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Code, http.StatusUnprocessableEntity)
+	assert.Equal(t, writer.Code, http.StatusUnprocessableEntity)
 }
 
 func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
@@ -53,7 +54,7 @@ func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Body.String(), "1234")
+	assert.Equal(t, writer.Body.String(), "1234")
 }
 
 func TestMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
@@ -62,5 +63,5 @@ func TestMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	testtools.AssertEqual(t, writer.Code, http.StatusAccepted)
+	assert.Equal(t, writer.Code, http.StatusAccepted)
 }

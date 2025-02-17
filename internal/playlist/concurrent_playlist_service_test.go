@@ -8,6 +8,8 @@ import (
 	"festwrap/internal/setlist"
 	"festwrap/internal/song"
 	"festwrap/internal/testtools"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultContext() context.Context {
@@ -115,8 +117,8 @@ func TestCreatePlaylistRepositoryCalledWithArgs(t *testing.T) {
 
 	actual := playlistRepository.GetCreatePlaylistArgs()
 	expected := CreatePlaylistArgs{Context: defaultContext(), Playlist: defaultPlaylist()}
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }
 
 func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
@@ -127,8 +129,8 @@ func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
 
 	actual, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
-	testtools.AssertEqual(t, actual, expected)
-	testtools.AssertErrorIsNil(t, err)
+	assert.Equal(t, actual, expected)
+	assert.Nil(t, err)
 }
 
 func TestCreatePlaylistReturnsErrorIfRepositoryErrors(t *testing.T) {
@@ -138,7 +140,7 @@ func TestCreatePlaylistReturnsErrorIfRepositoryErrors(t *testing.T) {
 
 	_, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
@@ -153,8 +155,8 @@ func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
 
 	actual := setlistRepository.GetGetSetlistArgs()
 	expected := setlist.GetSetlistArgs{Artist: artist, MinSongs: minSongs}
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }
 
 func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
@@ -165,7 +167,7 @@ func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
@@ -176,7 +178,7 @@ func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
 
 	actual := songRepository.GetGetSongArgs()
 	expected := defaultGetSongArgs()
-	testtools.AssertErrorIsNil(t, err)
+	assert.Nil(t, err)
 	if !testtools.HaveSameElements(actual, expected) {
 		t.Errorf("Expected called songs %v, found %v", expected, actual)
 	}
@@ -191,8 +193,8 @@ func TestAddSetlistAddsSongsFetched(t *testing.T) {
 
 	actual := playlistRepository.GetAddSongArgs()
 	expected := defaultAddSongsArgs()
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }
 
 func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
@@ -204,8 +206,8 @@ func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
 
 	actual := playlistRepository.GetAddSongArgs()
 	expected := addSongsArgsWithErrors()
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }
 
 func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
@@ -215,7 +217,7 @@ func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
@@ -225,5 +227,5 @@ func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }

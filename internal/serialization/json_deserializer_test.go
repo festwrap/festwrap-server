@@ -1,8 +1,9 @@
 package serialization
 
 import (
-	"festwrap/internal/testtools"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJsonDeserializerProducesExpectedResult(t *testing.T) {
@@ -12,8 +13,8 @@ func TestJsonDeserializerProducesExpectedResult(t *testing.T) {
 	err := deserializer.Deserialize(serializableObjectBytes(), &actual)
 
 	expected := serializableObject()
-	testtools.AssertErrorIsNil(t, err)
-	testtools.AssertEqual(t, actual, expected)
+	assert.Nil(t, err)
+	assert.Equal(t, actual, expected)
 }
 
 func TestJsonDeserializerReturnsErrorOnNonJsonInput(t *testing.T) {
@@ -23,5 +24,5 @@ func TestJsonDeserializerReturnsErrorOnNonJsonInput(t *testing.T) {
 	nonJsonBytes := []byte(`"something": "something"`)
 	err := deserializer.Deserialize(nonJsonBytes, &object)
 
-	testtools.AssertErrorIsNotNil(t, err)
+	assert.NotNil(t, err)
 }
