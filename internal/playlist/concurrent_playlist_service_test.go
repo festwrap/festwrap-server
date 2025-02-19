@@ -63,8 +63,8 @@ func emptySetlist() setlist.Setlist {
 
 func defaultGetSongArgs() []song.GetSongArgs {
 	return []song.GetSongArgs{
-		{Artist: defaultArtist(), Title: "My song"},
-		{Artist: defaultArtist(), Title: "My other song"},
+		{Context: defaultContext(), Artist: defaultArtist(), Title: "My song"},
+		{Context: defaultContext(), Artist: defaultArtist(), Title: "My other song"},
 	}
 }
 

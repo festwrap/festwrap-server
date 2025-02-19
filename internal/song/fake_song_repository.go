@@ -1,13 +1,15 @@
 package song
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
 
 type GetSongArgs struct {
-	Artist string
-	Title  string
+	Context context.Context
+	Artist  string
+	Title   string
 }
 
 type FakeSongRepository struct {
@@ -22,8 +24,8 @@ func NewFakeSongRepository() FakeSongRepository {
 	}
 }
 
-func (r *FakeSongRepository) GetSong(artist string, title string) (*Song, error) {
-	return r.repository.GetSong(artist, title)
+func (r *FakeSongRepository) GetSong(ctx context.Context, artist string, title string) (*Song, error) {
+	return r.repository.GetSong(ctx, artist, title)
 }
 
 func (r *FakeSongRepository) GetGetSongArgs() []GetSongArgs {
@@ -40,8 +42,8 @@ type WrappedFakeSongRepository struct {
 	mutex       sync.Mutex
 }
 
-func (w *WrappedFakeSongRepository) GetSong(artist string, title string) (*Song, error) {
-	w.getSongArgs = append(w.getSongArgs, GetSongArgs{Artist: artist, Title: title})
+func (w *WrappedFakeSongRepository) GetSong(ctx context.Context, artist string, title string) (*Song, error) {
+	w.getSongArgs = append(w.getSongArgs, GetSongArgs{Context: ctx, Artist: artist, Title: title})
 	return w.popSongLeft()
 }
 

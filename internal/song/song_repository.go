@@ -1,5 +1,7 @@
 package song
 
+import "context"
+
 type SongRepository interface {
-	GetSong(artist string, title string) (*Song, error)
+	GetSong(ctx context.Context, artist string, title string) (*Song, error)
 }

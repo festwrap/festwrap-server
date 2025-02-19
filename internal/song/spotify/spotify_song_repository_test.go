@@ -1,7 +1,9 @@
 package spotify
 
 import (
+	"context"
 	"errors"
+	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
 	"festwrap/internal/song"
@@ -11,6 +13,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func defaultToken() string {
+	return "some_token"
+}
+
+func defaultTokenKey() types.ContextKey {
+	return "token"
+}
 
 func defaultArtist() string {
 	return "Movements"
@@ -64,8 +74,14 @@ func defaultDeserializer() *serialization.FakeDeserializer[spotifyResponse] {
 	return deserializer
 }
 
+func defaultContext() context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, defaultTokenKey(), defaultToken())
+	return ctx
+}
+
 func spotifySongRepository(sender httpsender.HTTPRequestSender) SpotifySongRepository {
-	repository := NewSpotifySongRepository("some_token", sender)
+	repository := NewSpotifySongRepository(sender)
 	repository.SetDeserializer(defaultDeserializer())
 	return *repository
 }
@@ -74,7 +90,7 @@ func TestGetSongSendsRequestWithProperOptions(t *testing.T) {
 	sender := defaultSender()
 	repository := spotifySongRepository(sender)
 
-	_, err := repository.GetSong(defaultArtist(), defaultTitle())
+	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.Nil(t, err)
 	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
@@ -85,7 +101,7 @@ func TestGetSongReturnsErrorOnSendError(t *testing.T) {
 	sender.SetError(errors.New("test error"))
 	repository := spotifySongRepository(sender)
 
-	_, err := repository.GetSong(defaultArtist(), defaultTitle())
+	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.NotNil(t, err)
 }
@@ -95,7 +111,7 @@ func TestGetSongCallsDeserializeWithSendResponseBody(t *testing.T) {
 	deserializer := defaultDeserializer()
 	repository.SetDeserializer(deserializer)
 
-	_, err := repository.GetSong(defaultArtist(), defaultTitle())
+	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.Nil(t, err)
 	assert.Equal(t, deserializer.GetArgs(), defaultResponse())
@@ -107,7 +123,7 @@ func TestGetSongReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
 	deserializer.SetError(errors.New("test error"))
 	repository.SetDeserializer(deserializer)
 
-	_, err := repository.GetSong(defaultArtist(), defaultTitle())
+	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.NotNil(t, err)
 }
@@ -119,7 +135,7 @@ func TestGetSongReturnsErrorIfNoSongsFound(t *testing.T) {
 	deserializer.SetResponse(emptyResponse)
 	repository.SetDeserializer(deserializer)
 
-	_, err := repository.GetSong(defaultArtist(), defaultTitle())
+	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.NotNil(t, err)
 }
@@ -127,11 +143,43 @@ func TestGetSongReturnsErrorIfNoSongsFound(t *testing.T) {
 func TestGetSongReturnsFirstSongFound(t *testing.T) {
 	repository := spotifySongRepository(defaultSender())
 
-	actual, err := repository.GetSong(defaultArtist(), defaultTitle())
+	actual, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	expected := song.NewSong(defaultDeserializedResponse().Tracks.Songs[0].Uri)
 	assert.Nil(t, err)
 	assert.Equal(t, *actual, expected)
+}
+
+func TestGetSongReturnErrorWhenInvalidToken(t *testing.T) {
+	tests := map[string]struct {
+		repositoryTokenKey types.ContextKey
+		tokenKey           types.ContextKey
+		tokenVal           interface{}
+	}{
+		"returns error when token is wrong type": {
+			repositoryTokenKey: "matchingKey",
+			tokenKey:           "matchingKey",
+			tokenVal:           1234,
+		},
+		"returns error when token is missing": {
+			repositoryTokenKey: "someKey",
+			tokenKey:           "otherKey",
+			tokenVal:           "myToken",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, test.tokenKey, test.tokenVal)
+			repository := spotifySongRepository(defaultSender())
+			repository.SetTokenKey(test.repositoryTokenKey)
+
+			_, err := repository.GetSong(ctx, defaultArtist(), defaultTitle())
+
+			assert.NotNil(t, err)
+		})
+	}
 }
 
 func TestGetSongReturnsFirstSongFoundIntegration(t *testing.T) {
@@ -140,9 +188,9 @@ func TestGetSongReturnsFirstSongFoundIntegration(t *testing.T) {
 	sender := defaultSender()
 	response := integrationResponse(t)
 	sender.SetResponse(&response)
-	repository := NewSpotifySongRepository("some_token", sender)
+	repository := NewSpotifySongRepository(sender)
 
-	actual, err := repository.GetSong(defaultArtist(), defaultTitle())
+	actual, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	expected := song.NewSong("spotify:track:4rH1kFLYW0b28UNRyn7dK3")
 	assert.Nil(t, err)

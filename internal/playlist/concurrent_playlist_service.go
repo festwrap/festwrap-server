@@ -45,7 +45,7 @@ func (s *ConcurrentPlaylistService) AddSetlist(ctx context.Context, playlistId s
 
 	ch := make(chan FetchSongResult)
 	for _, song := range setlist.GetSongs() {
-		go s.fetchSong(artist, song, ch)
+		go s.fetchSong(ctx, artist, song, ch)
 	}
 
 	songs := []song.Song{}
@@ -73,7 +73,12 @@ func (s *ConcurrentPlaylistService) SetMinSongs(minSongs int) {
 	s.minSongs = minSongs
 }
 
-func (s *ConcurrentPlaylistService) fetchSong(artist string, song setlist.Song, ch chan<- FetchSongResult) {
-	songDetails, err := s.songRepository.GetSong(artist, song.GetTitle())
+func (s *ConcurrentPlaylistService) fetchSong(
+	ctx context.Context,
+	artist string,
+	song setlist.Song,
+	ch chan<- FetchSongResult,
+) {
+	songDetails, err := s.songRepository.GetSong(ctx, artist, song.GetTitle())
 	ch <- FetchSongResult{Song: songDetails, Err: err}
 }
