@@ -44,7 +44,7 @@ func partialErrorPlaylistService() *mocks.PlaylistServiceMock {
 
 func buildRequest(t *testing.T, playlistId string, body []byte) *http.Request {
 	t.Helper()
-	requestUrl, err := url.Parse("https://example.com/playlist/{playlistId}/update")
+	requestUrl, err := url.Parse("https://example.com/playlist/{playlistId}")
 	if err != nil {
 		t.Errorf("Could not create request: %v", err.Error())
 	}
