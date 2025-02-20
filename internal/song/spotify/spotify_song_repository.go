@@ -1,9 +1,11 @@
 package spotify
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
+	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
 	"festwrap/internal/song"
@@ -11,26 +13,28 @@ import (
 )
 
 type SpotifySongRepository struct {
-	accessToken  string
+	tokenKey     types.ContextKey
 	host         string
 	httpSender   httpsender.HTTPRequestSender
 	deserializer serialization.Deserializer[spotifyResponse]
 }
 
-func NewSpotifySongRepository(
-	accessToken string,
-	httpSender httpsender.HTTPRequestSender,
-) *SpotifySongRepository {
+func NewSpotifySongRepository(httpSender httpsender.HTTPRequestSender) *SpotifySongRepository {
 	return &SpotifySongRepository{
-		accessToken:  accessToken,
+		tokenKey:     "token",
 		host:         "api.spotify.com",
 		httpSender:   httpSender,
 		deserializer: serialization.NewJsonDeserializer[spotifyResponse](),
 	}
 }
 
-func (r *SpotifySongRepository) GetSong(artist string, title string) (*song.Song, error) {
-	httpOptions := r.createSongHttpOptions(artist, title)
+func (r *SpotifySongRepository) GetSong(ctx context.Context, artist string, title string) (*song.Song, error) {
+	token, ok := ctx.Value(r.tokenKey).(string)
+	if !ok {
+		return nil, errors.NewCannotRetrieveSongError("Could not retrieve token from context")
+	}
+
+	httpOptions := r.createSongHttpOptions(artist, title, token)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSongError(err.Error())
@@ -56,10 +60,14 @@ func (r *SpotifySongRepository) SetDeserializer(deserializer serialization.Deser
 	r.deserializer = deserializer
 }
 
-func (r *SpotifySongRepository) createSongHttpOptions(artist string, title string) httpsender.HTTPRequestOptions {
+func (r *SpotifySongRepository) createSongHttpOptions(
+	artist string,
+	title string,
+	token string,
+) httpsender.HTTPRequestOptions {
 	httpOptions := httpsender.NewHTTPRequestOptions(r.getSetlistFullUrl(artist, title), httpsender.GET, 200)
 	httpOptions.SetHeaders(
-		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", r.accessToken)},
+		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)},
 	)
 	return httpOptions
 }
@@ -70,4 +78,8 @@ func (r *SpotifySongRepository) getSetlistFullUrl(artist string, title string) s
 	queryParams.Set("type", "track")
 	setlistPath := "v1/search"
 	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
+}
+
+func (r *SpotifySongRepository) SetTokenKey(key types.ContextKey) {
+	r.tokenKey = key
 }

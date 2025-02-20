@@ -30,16 +30,12 @@ func main() {
 
 	fmt.Printf("Adding latest setlist songs for %s into Spotify playlist with id %s \n", *artist, *playlistId)
 
-	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(
-		*setlistfmApiKey,
-		&httpSender,
-	)
-	songRepository := spotifySong.NewSpotifySongRepository(
-		*spotifyAccessToken,
-		&httpSender,
-	)
-
 	var tokenKey types.ContextKey = "token"
+
+	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(*setlistfmApiKey, &httpSender)
+	songRepository := spotifySong.NewSpotifySongRepository(&httpSender)
+	songRepository.SetTokenKey(tokenKey)
+
 	playlistRepository := spotifyPlaylist.NewSpotifyPlaylistRepository(&httpSender)
 	playlistRepository.SetTokenKey(tokenKey)
 	playlistService := playlist.NewConcurrentPlaylistService(

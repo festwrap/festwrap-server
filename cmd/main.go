@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	playlisthandler "festwrap/cmd/handler/playlist"
 	"festwrap/cmd/handler/search"
 	"festwrap/cmd/middleware"
 	spotifyArtists "festwrap/internal/artist/spotify"
@@ -15,7 +16,10 @@ import (
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/logging"
+	"festwrap/internal/playlist"
 	spotifyplaylists "festwrap/internal/playlist/spotify"
+	setlistfm "festwrap/internal/setlist/setlistfm"
+	spotifysongs "festwrap/internal/song/spotify"
 	spotifyusers "festwrap/internal/user/spotify"
 )
 
@@ -27,11 +31,20 @@ func GetEnvWithDefaultOrFail[T env.EnvValue](key string, defaultValue T) T {
 	return variable
 }
 
+func GetEnvStringOrFail(key string) string {
+	variable := os.Getenv(key)
+	if variable == "" {
+		log.Fatalf("Could not read variable %s", key)
+	}
+	return variable
+}
+
 func main() {
 
 	port := GetEnvWithDefaultOrFail[string]("FESTWRAP_PORT", "8080")
 	maxConnsPerHost := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_CONNS_PER_HOST", 10)
 	timeoutSeconds := GetEnvWithDefaultOrFail[int]("FESTWRAP_TIMEOUT_SECONDS", 5)
+	setlistfmApiKey := GetEnvStringOrFail("FESTWRAP_SETLISTFM_APIKEY")
 
 	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger := logging.NewBaseLogger(slogLogger)
@@ -58,8 +71,18 @@ func main() {
 		"/playlists/search",
 		middleware.NewUserIdMiddleware(&searchPlaylistsHandler, userRepository).ServeHTTP,
 	)
-	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 
+	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(setlistfmApiKey, &httpSender)
+	songRepository := spotifysongs.NewSpotifySongRepository(&httpSender)
+	playlistService := playlist.NewConcurrentPlaylistService(
+		&playlistRepository,
+		setlistRepository,
+		songRepository,
+	)
+	playlistUpdateHandler := playlisthandler.NewUpdatePlaylistHandler(&playlistService, logger)
+	mux.HandleFunc("/playlists/{playlistId}", playlistUpdateHandler.ServeHTTP)
+
+	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: wrappedMux,
