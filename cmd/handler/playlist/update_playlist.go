@@ -47,8 +47,8 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	var update playlistUpdate
 	h.deserializer.Deserialize(requestBody, &update)
-	if len(update.Artists) > h.maxArtists {
-		message := fmt.Sprintf("validation error: cannot update playlist with more than %d artists", h.maxArtists)
+	if len(update.Artists) == 0 || len(update.Artists) > h.maxArtists {
+		message := fmt.Sprintf("validation error: number of artists must be between 1 and %d", h.maxArtists)
 		h.logger.Warn(message)
 		http.Error(w, message, http.StatusBadRequest)
 		return

@@ -22,11 +22,11 @@ func defaultPlaylistId() string {
 }
 
 func defaultUpdateBody() []byte {
-	return []byte(`{artists:[{"name":"Silverstein",{"name":"Chinese Football"}]}`)
+	return []byte(`{"artists":[{"name":"Silverstein"},{"name":"Chinese Football"}]}`)
 }
 
 func defaultDeserializedBody() playlistUpdate {
-	return playlistUpdate{Artists: []updateArtists{{Name: "Silverstein"}, {"Chinese Football"}}}
+	return playlistUpdate{Artists: []playlistArtist{{Name: "Silverstein"}, {"Chinese Football"}}}
 }
 
 func alwaysErrorPlaylistService() *mocks.PlaylistServiceMock {
@@ -90,15 +90,37 @@ func TestBadRequestOnInvalidBody(t *testing.T) {
 	assert.Equal(t, writer.Code, http.StatusBadRequest)
 }
 
-func TestBadRequestOnMoreArtistsThanAllowed(t *testing.T) {
-	request := buildRequest(t, "", defaultUpdateBody())
-	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
-	handler.SetMaxArtists(1)
+func TestBadRequestOnUnexpectedArtistNumber(t *testing.T) {
+	tests := map[string]struct {
+		artists    playlistUpdate
+		maxArtists int
+	}{
+		"no artists": {
+			artists:    playlistUpdate{Artists: []playlistArtist{}},
+			maxArtists: 5,
+		},
+		"more artists than limit": {
+			artists:    defaultDeserializedBody(),
+			maxArtists: 1,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	handler.ServeHTTP(writer, request)
+			request := buildRequest(t, defaultPlaylistId(), defaultUpdateBody())
+			writer := httptest.NewRecorder()
+			handler := updatePlaylistHandler(t)
+			deserializer := serialization.FakeDeserializer[playlistUpdate]{}
+			deserializer.SetResponse(test.artists)
+			handler.SetDeserializer(&deserializer)
+			handler.SetMaxArtists(test.maxArtists)
 
-	assert.Equal(t, writer.Code, http.StatusBadRequest)
+			handler.ServeHTTP(writer, request)
+
+			assert.Equal(t, writer.Code, http.StatusBadRequest)
+		})
+	}
 }
 
 func TestServerStatusOnNoErrors(t *testing.T) {
