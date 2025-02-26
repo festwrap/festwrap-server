@@ -9,98 +9,93 @@ import (
 	"testing"
 
 	"festwrap/internal/logging"
-	mocks "festwrap/internal/playlist/mocks"
-	"festwrap/internal/serialization"
+	"festwrap/internal/playlist"
+	playlistmocks "festwrap/internal/playlist/mocks"
 	"festwrap/internal/testtools"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-func defaultPlaylistId() string {
-	return "myId"
+const (
+	playlistId     = "someId"
+	playlistIdPath = "playlistId"
+)
+
+func updateArtists() []playlist.PlaylistArtist {
+	return []playlist.PlaylistArtist{
+		playlist.PlaylistArtist{Name: "Comeback Kid"},
+		playlist.PlaylistArtist{Name: "Municipal Waste"},
+	}
 }
 
-func defaultUpdateBody() []byte {
-	return []byte(`{"artists":[{"name":"Silverstein"},{"name":"Chinese Football"}]}`)
-}
-
-func defaultDeserializedBody() playlistUpdate {
-	return playlistUpdate{Artists: []playlistArtist{{Name: "Silverstein"}, {"Chinese Football"}}}
-}
-
-func alwaysErrorPlaylistService() *mocks.PlaylistServiceMock {
-	playlistService := &mocks.PlaylistServiceMock{}
-	playlistService.On("AddSetlist", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("test error"))
+func alwaysSuccessPlaylistService(request *http.Request) *playlistmocks.PlaylistServiceMock {
+	playlistService := &playlistmocks.PlaylistServiceMock{}
+	playlistService.On("AddSetlist", request.Context(), playlistId, "Municipal Waste").Return(nil)
+	playlistService.On("AddSetlist", request.Context(), playlistId, "Comeback Kid").Return(nil)
 	return playlistService
 }
 
-func partialErrorPlaylistService() *mocks.PlaylistServiceMock {
-	playlistService := &mocks.PlaylistServiceMock{}
-	playlistService.On("AddSetlist", mock.Anything, defaultPlaylistId(), "Silverstein").Return(errors.New("test error"))
-	playlistService.On("AddSetlist", mock.Anything, defaultPlaylistId(), mock.Anything).Return(nil)
+func alwaysErrorPlaylistService(request *http.Request) *playlistmocks.PlaylistServiceMock {
+	playlistService := &playlistmocks.PlaylistServiceMock{}
+	playlistService.On("AddSetlist", request.Context(), playlistId, "Municipal Waste").Return(errors.New("error 1"))
+	playlistService.On("AddSetlist", request.Context(), playlistId, "Comeback Kid").Return(errors.New("error 2"))
 	return playlistService
 }
 
-func buildRequest(t *testing.T, playlistId string, body []byte) *http.Request {
+func partialErrorPlaylistService(request *http.Request) *playlistmocks.PlaylistServiceMock {
+	playlistService := &playlistmocks.PlaylistServiceMock{}
+	playlistService.On("AddSetlist", request.Context(), playlistId, "Municipal Waste").Return(nil)
+	playlistService.On("AddSetlist", request.Context(), playlistId, "Comeback Kid").Return(errors.New("error 1"))
+	return playlistService
+}
+
+func buildRequest(t *testing.T) *http.Request {
 	t.Helper()
-	requestUrl, err := url.Parse("https://example.com/playlist/{playlistId}")
+	requestUrl, err := url.Parse("https://example.com/playlist/")
 	if err != nil {
 		t.Errorf("Could not create request: %v", err.Error())
 	}
-
-	request := httptest.NewRequest("GET", requestUrl.String(), bytes.NewBuffer(body))
-	if playlistId != "" {
-		request.SetPathValue("playlistId", playlistId)
-	}
-	return request
+	body := []byte(`{"artists":[{"name":"Comeback Kid"}, {"name":"Municipal Waste"}]}`)
+	return httptest.NewRequest("GET", requestUrl.String(), bytes.NewBuffer(body))
 }
 
-func updatePlaylistHandler(t *testing.T) UpdatePlaylistHandler {
+func setup(t *testing.T) (UpdatePlaylistHandler, *http.Request, *httptest.ResponseRecorder) {
 	t.Helper()
-	deserializer := serialization.FakeDeserializer[playlistUpdate]{}
-	deserializer.SetResponse(defaultDeserializedBody())
 
-	playlistService := mocks.NewPlaylistServiceMock()
-	playlistService.On("AddSetlist", mock.Anything, defaultPlaylistId(), mock.Anything).Return(nil)
+	request := buildRequest(t)
+	writer := httptest.NewRecorder()
 
-	handler := NewUpdatePlaylistHandler(&playlistService, logging.NoopLogger{})
-	handler.SetDeserializer(&deserializer)
-	return handler
+	builder := playlistmocks.PlaylistUpdateBuilderMock{}
+	builder.On("Build", request).Return(playlist.PlaylistUpdate{PlaylistId: playlistId, Artists: updateArtists()}, nil)
+
+	playlistService := alwaysSuccessPlaylistService(request)
+
+	handler := NewUpdatePlaylistHandler(playlistService, &builder, logging.NoopLogger{})
+	return handler, request, writer
 }
 
-func TestBadRequestIfPlaylistIdNotProvided(t *testing.T) {
-	request := buildRequest(t, "", defaultUpdateBody())
-	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
+func TestUpdatePlaylistHandlerReturnsErrorOnUpdateBuilderError(t *testing.T) {
+	handler, request, writer := setup(t)
+	builder := playlistmocks.PlaylistUpdateBuilderMock{}
+	builder.On("Build", request).Return(playlist.PlaylistUpdate{}, errors.New("test error"))
+	handler.SetPlaylistUpdateBuilder(&builder)
 
 	handler.ServeHTTP(writer, request)
 
 	assert.Equal(t, writer.Code, http.StatusBadRequest)
 }
 
-func TestBadRequestOnInvalidBody(t *testing.T) {
-	invalidBody := []byte(`{"someInvalidBody":"value"}`)
-	request := buildRequest(t, "", invalidBody)
-	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
-
-	handler.ServeHTTP(writer, request)
-
-	assert.Equal(t, writer.Code, http.StatusBadRequest)
-}
-
-func TestBadRequestOnUnexpectedArtistNumber(t *testing.T) {
+func TestUpdatePlaylistHandlerReturnsErrorIfArtistsOutOfBounds(t *testing.T) {
 	tests := map[string]struct {
-		artists    playlistUpdate
+		artists    []playlist.PlaylistArtist
 		maxArtists int
 	}{
 		"no artists": {
-			artists:    playlistUpdate{Artists: []playlistArtist{}},
+			artists:    []playlist.PlaylistArtist{},
 			maxArtists: 5,
 		},
 		"more artists than limit": {
-			artists:    defaultDeserializedBody(),
+			artists:    updateArtists(),
 			maxArtists: 1,
 		},
 	}
@@ -108,12 +103,13 @@ func TestBadRequestOnUnexpectedArtistNumber(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			request := buildRequest(t, defaultPlaylistId(), defaultUpdateBody())
-			writer := httptest.NewRecorder()
-			handler := updatePlaylistHandler(t)
-			deserializer := serialization.FakeDeserializer[playlistUpdate]{}
-			deserializer.SetResponse(test.artists)
-			handler.SetDeserializer(&deserializer)
+			handler, request, writer := setup(t)
+			builder := playlistmocks.PlaylistUpdateBuilderMock{}
+			builder.On("Build", request).Return(
+				playlist.PlaylistUpdate{PlaylistId: playlistId, Artists: test.artists},
+				nil,
+			)
+			handler.SetPlaylistUpdateBuilder(&builder)
 			handler.SetMaxArtists(test.maxArtists)
 
 			handler.ServeHTTP(writer, request)
@@ -123,45 +119,51 @@ func TestBadRequestOnUnexpectedArtistNumber(t *testing.T) {
 	}
 }
 
-func TestServerStatusOnNoErrors(t *testing.T) {
-	request := buildRequest(t, defaultPlaylistId(), defaultUpdateBody())
-	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
+func TestUpdatePlaylistHandlerAddsSetlisttWithArtistsFromBuilder(t *testing.T) {
+	handler, request, writer := setup(t)
+
+	handler.ServeHTTP(writer, request)
+
+	playlistService := handler.GetPlaylistService().(*playlistmocks.PlaylistServiceMock)
+	playlistService.AssertExpectations(t)
+}
+
+func TestUpdatePlaylistHandlerStatusOnNoErrors(t *testing.T) {
+	handler, request, writer := setup(t)
 
 	handler.ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusCreated, writer.Code)
 }
 
-func TestServerErrorReturnedWhenAllArtistsFailed(t *testing.T) {
-	request := buildRequest(t, defaultPlaylistId(), defaultUpdateBody())
-	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
-	handler.SetPlaylistService(alwaysErrorPlaylistService())
+func TestUpdatePlaylistHandlerStatusOnAllFailures(t *testing.T) {
+	handler, request, writer := setup(t)
+	playlistService := alwaysErrorPlaylistService(request)
+	handler.SetPlaylistService(playlistService)
 
 	handler.ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 }
 
-func TestServerStatusOnPartialErrors(t *testing.T) {
-	request := buildRequest(t, defaultPlaylistId(), defaultUpdateBody())
-	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
-	handler.SetPlaylistService(partialErrorPlaylistService())
+func TestUpdatePlaylistHandlerStatusOnPartialErrors(t *testing.T) {
+	handler, request, writer := setup(t)
+	playlistService := partialErrorPlaylistService(request)
+	handler.SetPlaylistService(playlistService)
 
 	handler.ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusMultiStatus, writer.Code)
 }
 
-func TestHandlerUsesDeserializedBodyIntegration(t *testing.T) {
+func TestUpdateExistingPlaylistHandlerIntegration(t *testing.T) {
 	testtools.SkipOnShortRun(t)
 
-	request := buildRequest(t, defaultPlaylistId(), defaultUpdateBody())
+	request := buildRequest(t)
+	request.SetPathValue(playlistIdPath, playlistId)
 	writer := httptest.NewRecorder()
-	handler := updatePlaylistHandler(t)
-	handler.SetDeserializer(serialization.NewJsonDeserializer[playlistUpdate]())
+	playlistService := alwaysSuccessPlaylistService(request)
+	handler := NewUpdateExistingPlaylistHandler(playlistIdPath, playlistService, logging.NoopLogger{})
 
 	handler.ServeHTTP(writer, request)
 
