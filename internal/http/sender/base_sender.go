@@ -2,6 +2,7 @@ package httpsender
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,7 +42,7 @@ func (c *BaseHTTPRequestSender) Send(options HTTPRequestOptions) (*[]byte, error
 			options.GetExpectedStatusCode(),
 			response.StatusCode,
 		)
-		return nil, fmt.Errorf(errorMsg)
+		return nil, errors.New(errorMsg)
 	}
 
 	defer response.Body.Close()

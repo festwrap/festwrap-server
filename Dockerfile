@@ -1,4 +1,4 @@
-ARG GO_VERSION="1.22.7-bookworm"
+ARG GO_VERSION="1.24.0-bookworm"
 FROM golang:${GO_VERSION}
 
 ARG PORT=8080

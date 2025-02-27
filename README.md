@@ -8,7 +8,7 @@ The UI is located in [this other repository](https://github.com/DanielMoraDC/fes
 
 # Local development
 
-Make sure Go 1.22+ and Make are available in your system.
+Make sure Go 1.24+ and Make are available in your system.
 
 We use pre-commit for static code analysis. Make sure hooks are installed (i.e. `brew install pre-commit` in MacOS) before contributing:
 
