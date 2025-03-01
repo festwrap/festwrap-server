@@ -74,7 +74,7 @@ func (r *SpotifySongRepository) createSongHttpOptions(
 
 func (r *SpotifySongRepository) getSetlistFullUrl(artist string, title string) string {
 	queryParams := url.Values{}
-	queryParams.Set("q", fmt.Sprintf("+artist:%s+track:%s", artist, title))
+	queryParams.Set("q", fmt.Sprintf("artist:%s track:%s", artist, title))
 	queryParams.Set("type", "track")
 	setlistPath := "v1/search"
 	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
