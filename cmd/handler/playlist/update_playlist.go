@@ -3,50 +3,52 @@ package playlist
 import (
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
-	"festwrap/internal/serialization"
 	"fmt"
-	"io"
 	"net/http"
 )
 
 type UpdatePlaylistHandler struct {
-	playlistService playlist.PlaylistService
-	logger          logging.Logger
-	deserializer    serialization.Deserializer[playlistUpdate]
-	maxArtists      int
-	playlistIdPath  string
+	playlistService       playlist.PlaylistService
+	logger                logging.Logger
+	playlistUpdateBuilder playlist.PlaylistUpdateBuilder
+	maxArtists            int
 }
 
-func NewUpdatePlaylistHandler(playlistService playlist.PlaylistService, logger logging.Logger) UpdatePlaylistHandler {
+func NewUpdatePlaylistHandler(
+	playlistService playlist.PlaylistService,
+	playlistUpdateBuilder playlist.PlaylistUpdateBuilder,
+	logger logging.Logger,
+) UpdatePlaylistHandler {
 	return UpdatePlaylistHandler{
-		playlistService: playlistService,
-		logger:          logger,
-		deserializer:    serialization.NewJsonDeserializer[playlistUpdate](),
-		maxArtists:      5,
-		playlistIdPath:  "playlistId",
+		playlistService:       playlistService,
+		logger:                logger,
+		playlistUpdateBuilder: playlistUpdateBuilder,
+		maxArtists:            5,
+	}
+}
+
+func NewUpdateExistingPlaylistHandler(
+	pathId string,
+	playlistService playlist.PlaylistService,
+	logger logging.Logger,
+) UpdatePlaylistHandler {
+	builder := playlist.NewExistingPlaylistUpdateBuilder(pathId)
+	return UpdatePlaylistHandler{
+		playlistService:       playlistService,
+		logger:                logger,
+		playlistUpdateBuilder: &builder,
+		maxArtists:            5,
 	}
 }
 
 func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	playlistId := r.PathValue(h.playlistIdPath)
-	if playlistId == "" {
-		message := "validation error: playlist id was not provided"
-		h.logger.Warn(message)
-		http.Error(w, message, http.StatusBadRequest)
-		return
-	}
-
-	defer r.Body.Close()
-	requestBody, err := io.ReadAll(r.Body)
+	update, err := h.playlistUpdateBuilder.Build(r)
 	if err != nil {
-		message := "validation error: could not read body"
-		h.logger.Warn(message)
-		http.Error(w, message, http.StatusBadRequest)
+		h.logger.Warn(fmt.Sprintf("could not get playlist update details: %v", err))
+		http.Error(w, "could not obtain playlist details from request", http.StatusBadRequest)
 		return
 	}
 
-	var update playlistUpdate
-	h.deserializer.Deserialize(requestBody, &update)
 	if len(update.Artists) == 0 || len(update.Artists) > h.maxArtists {
 		message := fmt.Sprintf("validation error: number of artists must be between 1 and %d", h.maxArtists)
 		h.logger.Warn(message)
@@ -56,9 +58,10 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	errors := 0
 	for _, artist := range update.Artists {
-		err := h.playlistService.AddSetlist(r.Context(), playlistId, artist.Name)
+		err := h.playlistService.AddSetlist(r.Context(), update.PlaylistId, artist.Name)
 		if err != nil {
-			h.logger.Warn(fmt.Sprintf("could not add songs for %s to playlist %s: %v", artist.Name, playlistId, err))
+			message := fmt.Sprintf("could not add songs for %s to playlist %s: %v", artist.Name, update.PlaylistId, err)
+			h.logger.Warn(message)
 			errors += 1
 		}
 	}
@@ -73,8 +76,12 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(statusCode)
 }
 
-func (h *UpdatePlaylistHandler) SetDeserializer(deserializer serialization.Deserializer[playlistUpdate]) {
-	h.deserializer = deserializer
+func (h *UpdatePlaylistHandler) SetPlaylistUpdateBuilder(builder playlist.PlaylistUpdateBuilder) {
+	h.playlistUpdateBuilder = builder
+}
+
+func (h *UpdatePlaylistHandler) GetPlaylistService() playlist.PlaylistService {
+	return h.playlistService
 }
 
 func (h *UpdatePlaylistHandler) SetPlaylistService(service playlist.PlaylistService) {

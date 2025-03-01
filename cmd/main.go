@@ -18,7 +18,7 @@ import (
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
 	spotifyplaylists "festwrap/internal/playlist/spotify"
-	setlistfm "festwrap/internal/setlist/setlistfm"
+	"festwrap/internal/setlist/setlistfm"
 	spotifysongs "festwrap/internal/song/spotify"
 	spotifyusers "festwrap/internal/user/spotify"
 )
@@ -79,7 +79,7 @@ func main() {
 		setlistRepository,
 		songRepository,
 	)
-	playlistUpdateHandler := playlisthandler.NewUpdatePlaylistHandler(&playlistService, logger)
+	playlistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
 	mux.HandleFunc("/playlists/{playlistId}", playlistUpdateHandler.ServeHTTP)
 
 	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
