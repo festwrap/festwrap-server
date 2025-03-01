@@ -31,7 +31,7 @@ func defaultTitle() string {
 }
 
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	url := "https://api.spotify.com/v1/search?q=%2Bartist%3AMovements%2Btrack%3ADaylily&type=track"
+	url := "https://api.spotify.com/v1/search?q=artist%3AMovements+track%3ADaylily&type=track"
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
 		map[string]string{"Authorization": "Bearer some_token"},
