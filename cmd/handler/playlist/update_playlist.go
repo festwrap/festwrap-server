@@ -42,6 +42,19 @@ func NewUpdateExistingPlaylistHandler(
 	}
 }
 
+func NewUpdateNewPlaylistHandler(
+	playlistService playlist.PlaylistService,
+	logger logging.Logger,
+) UpdatePlaylistHandler {
+	builder := builders.NewNewPlaylistUpdateBuilder(playlistService)
+	return UpdatePlaylistHandler{
+		playlistService:       playlistService,
+		logger:                logger,
+		playlistUpdateBuilder: &builder,
+		maxArtists:            5,
+	}
+}
+
 func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	update, err := h.playlistUpdateBuilder.Build(r)
 	if err != nil {

@@ -79,8 +79,14 @@ func main() {
 		setlistRepository,
 		songRepository,
 	)
-	playlistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
-	mux.HandleFunc("/playlists/{playlistId}", playlistUpdateHandler.ServeHTTP)
+	existingPlaylistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
+	mux.HandleFunc("/playlists/{playlistId}", existingPlaylistUpdateHandler.ServeHTTP)
+
+	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
+	mux.HandleFunc(
+		"/playlists",
+		middleware.NewUserIdMiddleware(&newPlaylistUpdateHandler, userRepository).ServeHTTP,
+	)
 
 	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 	server := &http.Server{
