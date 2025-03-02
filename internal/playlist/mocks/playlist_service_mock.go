@@ -17,7 +17,7 @@ func NewPlaylistServiceMock() PlaylistServiceMock {
 
 func (s *PlaylistServiceMock) CreatePlaylist(ctx context.Context, playlistInput playlist.Playlist) (string, error) {
 	args := s.Called(ctx, playlistInput)
-	return args.String(0), args.Error(0)
+	return args.String(0), args.Error(1)
 }
 
 func (s *PlaylistServiceMock) AddSetlist(ctx context.Context, playlistId string, artist string) error {
