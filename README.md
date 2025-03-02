@@ -60,13 +60,38 @@ make stop-server
 
 ## Calling the API
 
-Once the API is up, you can query it locally by typing:
+All endpoints require passing a Spotify token to authenticate. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
+
+### Artists search
 
 ```shell
 curl --location 'http://localhost:8080/artists/search?name=<artist>' \
       --header 'Authorization: Bearer <token>'
 ```
 
-And you will need to fill for the following variables:
-- `<artist>`: the artist to search for.
-- `<token>`: Spotify token to access the API. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
+### Playlist search
+
+```shell
+curl --location 'http://localhost:8080/playlists/search?name=<playlist>' \
+      --header 'Authorization: Bearer <token>'
+```
+
+### Add songs
+
+For adding setlists to existing playlists:
+
+```shell
+curl -X POST --location 'http://localhost:8080/playlists/<playlist_id>' \
+      --header 'Authorization: Bearer <token>'
+      --header 'Content-Type: application/json' \
+--data '{"artists":[{"name": "<artist_name>"}]}
+```
+
+For creating a new playlist with setlists:
+
+```shell
+curl -X PUT --location 'http://localhost:8080/playlists' \
+      --header 'Authorization: Bearer <token>'
+      --header 'Content-Type: application/json' \
+--data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>","description":"<playlist_description>","isPublic":<true_false>}}
+```
