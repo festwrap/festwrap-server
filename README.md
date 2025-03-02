@@ -47,8 +47,10 @@ make build-image
 Then start the container:
 
 ```shell
-make run-server
+FESTWRAP_SETLISTFM_APIKEY=<setlistfm_key> make run-server
 ```
+
+The Setlistfm API key can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
 
 To stop the container:
 
@@ -58,33 +60,38 @@ make stop-server
 
 ## Calling the API
 
-Once the API is up, you can query it locally by typing:
+All endpoints require passing a Spotify token to authenticate. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
+
+### Artists search
 
 ```shell
 curl --location 'http://localhost:8080/artists/search?name=<artist>' \
       --header 'Authorization: Bearer <token>'
 ```
 
-And you will need to fill for the following variables:
-- `<artist>`: the artist to search for.
-- `<token>`: Spotify token to access the API. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
-
-
-## Add songs to playlist
-
-We can add recent setlist songs from an artist using the `main` file:
+### Playlist search
 
 ```shell
-go \
-    run cmd/scripts/add_songs_to_playlist.go \
-    --spotify-token <spotify_token> \
-    --setlistfm-key <setlistfm_key> \
-    --artist <artist> \
-    --playlist-id <playlist_id>
+curl --location 'http://localhost:8080/playlists/search?name=<playlist>' \
+      --header 'Authorization: Bearer <token>'
 ```
 
-Here we explain the parameters to provide and how to get them:
-- `<spotify_token>`: See above.
-- `<setlistfm_key>`: Setlistfm API token to obtain the latest setlist for an artist. It can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
-- `<artist>`: The artist to request songs from.
-- `<playlist_id>`: Identifier of the playlist to add songs to. To obtain that, go to your playlist and click the "..." button. Then go to `Share -> Copy link to playlist`. The copied content will look like this: `https://open.spotify.com/playlist/<playlist_id>?<params>`.
+### Add songs
+
+For adding setlists to existing playlists:
+
+```shell
+curl -X POST --location 'http://localhost:8080/playlists/<playlist_id>' \
+      --header 'Authorization: Bearer <token>'
+      --header 'Content-Type: application/json' \
+--data '{"artists":[{"name": "<artist_name>"}]}
+```
+
+For creating a new playlist with setlists:
+
+```shell
+curl -X PUT --location 'http://localhost:8080/playlists' \
+      --header 'Authorization: Bearer <token>'
+      --header 'Content-Type: application/json' \
+--data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>","description":"<playlist_description>","isPublic":<true_false>}}
+```
