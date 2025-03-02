@@ -47,8 +47,10 @@ make build-image
 Then start the container:
 
 ```shell
-make run-server
+FESTWRAP_SETLISTFM_APIKEY=<setlistfm_key> make run-server
 ```
+
+The Setlistfm API key can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
 
 To stop the container:
 

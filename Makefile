@@ -33,7 +33,9 @@ build-image:
 .PHONE: run-server
 run-server:
 	@docker run --name $(CONTAINER_NAME) \
-        -d -e FESTWRAP_PORT=$(PORT) \
+        -d \
+		-e FESTWRAP_PORT=$(PORT) \
+		-e FESTWRAP_SETLISTFM_APIKEY=$(FESTWRAP_SETLISTFM_APIKEY) \
         -p $(PORT):$(PORT) \
         -t ${IMAGE_NAME}:${IMAGE_TAG}
 
