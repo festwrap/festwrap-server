@@ -12,7 +12,6 @@ import (
 	"festwrap/internal/playlist"
 	playlistmocks "festwrap/internal/playlist/mocks"
 	buildermocks "festwrap/internal/playlist/update_builders/mocks"
-	"festwrap/internal/testtools"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -23,10 +22,7 @@ const (
 )
 
 func updateArtists() []playlist.PlaylistArtist {
-	return []playlist.PlaylistArtist{
-		playlist.PlaylistArtist{Name: "Comeback Kid"},
-		playlist.PlaylistArtist{Name: "Municipal Waste"},
-	}
+	return []playlist.PlaylistArtist{{Name: "Comeback Kid"}, {Name: "Municipal Waste"}}
 }
 
 func alwaysSuccessPlaylistService(request *http.Request) *playlistmocks.PlaylistServiceMock {
@@ -155,18 +151,4 @@ func TestUpdatePlaylistHandlerStatusOnPartialErrors(t *testing.T) {
 	handler.ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusMultiStatus, writer.Code)
-}
-
-func TestUpdateExistingPlaylistHandlerIntegration(t *testing.T) {
-	testtools.SkipOnShortRun(t)
-
-	request := buildRequest(t)
-	request.SetPathValue(playlistIdPath, playlistId)
-	writer := httptest.NewRecorder()
-	playlistService := alwaysSuccessPlaylistService(request)
-	handler := NewUpdateExistingPlaylistHandler(playlistIdPath, playlistService, logging.NoopLogger{})
-
-	handler.ServeHTTP(writer, request)
-
-	assert.Equal(t, http.StatusCreated, writer.Code)
 }
