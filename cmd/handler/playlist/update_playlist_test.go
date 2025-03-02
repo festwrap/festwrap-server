@@ -11,6 +11,7 @@ import (
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
 	playlistmocks "festwrap/internal/playlist/mocks"
+	buildermocks "festwrap/internal/playlist/update_builders/mocks"
 	"festwrap/internal/testtools"
 
 	"github.com/stretchr/testify/assert"
@@ -65,7 +66,7 @@ func setup(t *testing.T) (UpdatePlaylistHandler, *http.Request, *httptest.Respon
 	request := buildRequest(t)
 	writer := httptest.NewRecorder()
 
-	builder := playlistmocks.PlaylistUpdateBuilderMock{}
+	builder := buildermocks.PlaylistUpdateBuilderMock{}
 	builder.On("Build", request).Return(playlist.PlaylistUpdate{PlaylistId: playlistId, Artists: updateArtists()}, nil)
 
 	playlistService := alwaysSuccessPlaylistService(request)
@@ -76,7 +77,7 @@ func setup(t *testing.T) (UpdatePlaylistHandler, *http.Request, *httptest.Respon
 
 func TestUpdatePlaylistHandlerReturnsErrorOnUpdateBuilderError(t *testing.T) {
 	handler, request, writer := setup(t)
-	builder := playlistmocks.PlaylistUpdateBuilderMock{}
+	builder := buildermocks.PlaylistUpdateBuilderMock{}
 	builder.On("Build", request).Return(playlist.PlaylistUpdate{}, errors.New("test error"))
 	handler.SetPlaylistUpdateBuilder(&builder)
 
@@ -104,7 +105,7 @@ func TestUpdatePlaylistHandlerReturnsErrorIfArtistsOutOfBounds(t *testing.T) {
 			t.Parallel()
 
 			handler, request, writer := setup(t)
-			builder := playlistmocks.PlaylistUpdateBuilderMock{}
+			builder := buildermocks.PlaylistUpdateBuilderMock{}
 			builder.On("Build", request).Return(
 				playlist.PlaylistUpdate{PlaylistId: playlistId, Artists: test.artists},
 				nil,

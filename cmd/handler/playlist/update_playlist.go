@@ -3,6 +3,7 @@ package playlist
 import (
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
+	builders "festwrap/internal/playlist/update_builders"
 	"fmt"
 	"net/http"
 )
@@ -32,7 +33,7 @@ func NewUpdateExistingPlaylistHandler(
 	playlistService playlist.PlaylistService,
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
-	builder := playlist.NewExistingPlaylistUpdateBuilder(pathId)
+	builder := builders.NewExistingPlaylistUpdateBuilder(pathId)
 	return UpdatePlaylistHandler{
 		playlistService:       playlistService,
 		logger:                logger,

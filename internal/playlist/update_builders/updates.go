@@ -1,4 +1,4 @@
-package playlist
+package update_builders
 
 type PlaylistArtist struct {
 	Name string `json:"name"`
@@ -6,9 +6,4 @@ type PlaylistArtist struct {
 
 type PlaylistArtists struct {
 	Artists []PlaylistArtist `json:"artists"`
-}
-
-type PlaylistUpdate struct {
-	PlaylistId string
-	Artists    []PlaylistArtist
 }

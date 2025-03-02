@@ -1,15 +1,17 @@
-package playlist
+package update_builders
 
 import (
 	"bytes"
 	"errors"
-	"festwrap/internal/serialization"
-	"festwrap/internal/testtools"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"festwrap/internal/playlist"
+	"festwrap/internal/serialization"
+	"festwrap/internal/testtools"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,6 +27,16 @@ func updateBody() []byte {
 
 func updateArtists() []PlaylistArtist {
 	return []PlaylistArtist{{Name: "Silverstein"}, {Name: "Chinese Football"}}
+}
+
+func playlistUpdate() playlist.PlaylistUpdate {
+	return playlist.PlaylistUpdate{
+		PlaylistId: playlistId,
+		Artists: []playlist.PlaylistArtist{
+			playlist.PlaylistArtist{Name: "Silverstein"},
+			playlist.PlaylistArtist{Name: "Chinese Football"},
+		},
+	}
 }
 
 func buildRequest(t *testing.T, playlistId string, body []byte) *http.Request {
@@ -81,7 +93,7 @@ func TestExistingUpdateBuilderReturnsDeserializedContent(t *testing.T) {
 
 	actual, err := builder.Build(request)
 
-	expected := PlaylistUpdate{PlaylistId: playlistId, Artists: updateArtists()}
+	expected := playlistUpdate()
 	assert.Equal(t, expected, actual)
 	assert.Nil(t, err)
 	assert.Equal(t, deserializer.GetArgs(), updateBody())
@@ -95,7 +107,7 @@ func TestExistingUpdateBuilderReturnsExpectedResultIntegration(t *testing.T) {
 
 	actual, err := builder.Build(request)
 
-	expected := PlaylistUpdate{PlaylistId: playlistId, Artists: updateArtists()}
+	expected := playlistUpdate()
 	assert.Equal(t, expected, actual)
 	assert.Nil(t, err)
 }
