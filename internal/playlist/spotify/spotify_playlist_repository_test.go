@@ -49,7 +49,7 @@ func songsToAddResponseBody() []byte {
 }
 
 func playlistToCreate() playlist.Playlist {
-	return playlist.Playlist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
+	return playlist.Playlist{Id: createPlaylistId, Name: "my-playlist", Description: "some playlist", IsPublic: false}
 }
 
 func createPlaylistBody() []byte {
@@ -62,12 +62,14 @@ func searchedPlaylistsResponseBody() []byte {
 			"playlists": {
 				"items": [
 					{
+						"id":"id1",
 						"name":"first playlist",
 						"description":"First description",
 						"public":true,
 						"owner":{"id":"qrRwLBFxQL9fknW8NzBn4JprRNgS"}
 					},
 					{
+						"id":"id2",
 						"name":"second playlist",
 						"description":"Second description",
 						"public":false,
@@ -84,12 +86,14 @@ func searchedPlaylists() SpotifySearchPlaylistResponse {
 		Playlists: SpotifySearchPlaylists{
 			Items: []SpotifySearchPlaylist{
 				{
+					Id:            "id1",
 					Name:          "first playlist",
 					Description:   "First description",
 					Public:        true,
 					OwnerMetadata: SpotifyPlaylistOwnerMetadata{Id: userId},
 				},
 				{
+					Id:            "id2",
 					Name:          "second playlist",
 					Description:   "Second description",
 					Public:        false,
@@ -111,6 +115,7 @@ func createdPlaylist() SpotifyCreatePlaylistResponse {
 func searchedFilteredPlaylists() []playlist.Playlist {
 	return []playlist.Playlist{
 		{
+			Id:          "id1",
 			Name:        "first playlist",
 			Description: "First description",
 			IsPublic:    true,

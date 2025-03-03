@@ -17,7 +17,7 @@ func defaultContext() context.Context {
 }
 
 func defaultPlaylist() Playlist {
-	return Playlist{Name: "My playlist", Description: "Some playlist", IsPublic: true}
+	return Playlist{Id: defaultPlaylistId(), Name: "My playlist", Description: "Some playlist", IsPublic: true}
 }
 
 func defaultPlaylistId() string {
