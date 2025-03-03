@@ -16,6 +16,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	addSongsPlaylistId  = "testId"
+	createPlaylistId    = "someId"
+	searchPlaylistName  = "searchPlaylist"
+	searchPlaylistLimit = 5
+	token               = "abcdefg12345" // gitleaks:allow
+	tokenKey            = "token"
+	userId              = "qrRwLBFxQL9fknW8NzBn4JprRNgS"
+	userIdKey           = "userId"
+)
+
 func fakeSender() *httpsender.FakeHTTPSender {
 	sender := httpsender.FakeHTTPSender{}
 	emptyResponse := []byte("")
@@ -29,46 +40,36 @@ func errorSender() *httpsender.FakeHTTPSender {
 	return &sender
 }
 
-func defaultPlaylistId() string {
-	return "test_id"
-}
-
-func defaultPlaylistName() string {
-	return "myPlaylist"
-}
-
-func defaultSearchPlaylistLimit() int {
-	return 5
-}
-
-func defaultSongs() []song.Song {
+func songsToAdd() []song.Song {
 	return []song.Song{song.NewSong("uri1"), song.NewSong("uri2")}
 }
 
-func defaultPlaylist() playlist.Playlist {
-	return playlist.Playlist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
-}
-
-func defaultSongsBody() []byte {
+func songsToAddResponseBody() []byte {
 	return []byte(`{"uris":["uri1","uri2"]}`)
 }
 
-func defaultPlaylistBody() []byte {
+func playlistToCreate() playlist.Playlist {
+	return playlist.Playlist{Id: createPlaylistId, Name: "my-playlist", Description: "some playlist", IsPublic: false}
+}
+
+func createPlaylistBody() []byte {
 	return []byte(`{"name":"my-playlist","description":"some playlist","is_public":false}`)
 }
 
-func defaultSearchedPlaylistsResponse() []byte {
+func searchedPlaylistsResponseBody() []byte {
 	return []byte(`
 		{
 			"playlists": {
 				"items": [
 					{
+						"id":"id1",
 						"name":"first playlist",
 						"description":"First description",
 						"public":true,
 						"owner":{"id":"qrRwLBFxQL9fknW8NzBn4JprRNgS"}
 					},
 					{
+						"id":"id2",
 						"name":"second playlist",
 						"description":"Second description",
 						"public":false,
@@ -80,17 +81,19 @@ func defaultSearchedPlaylistsResponse() []byte {
 	`)
 }
 
-func defaultSearchedPlaylists() SpotifySearchPlaylistResponse {
+func searchedPlaylists() SpotifySearchPlaylistResponse {
 	return SpotifySearchPlaylistResponse{
 		Playlists: SpotifySearchPlaylists{
 			Items: []SpotifySearchPlaylist{
 				{
+					Id:            "id1",
 					Name:          "first playlist",
 					Description:   "First description",
 					Public:        true,
-					OwnerMetadata: SpotifyPlaylistOwnerMetadata{Id: defaultUserId()},
+					OwnerMetadata: SpotifyPlaylistOwnerMetadata{Id: userId},
 				},
 				{
+					Id:            "id2",
 					Name:          "second playlist",
 					Description:   "Second description",
 					Public:        false,
@@ -101,17 +104,18 @@ func defaultSearchedPlaylists() SpotifySearchPlaylistResponse {
 	}
 }
 
-func defaultPlaylistCreationResponse() []byte {
-	return []byte(fmt.Sprintf(`{"id":"%s"}`, defaultPlaylistId()))
+func createPlaylistResponseBody() []byte {
+	return []byte(fmt.Sprintf(`{"id":"%s"}`, createPlaylistId))
 }
 
-func defaultPlaylistCreation() SpotifyCreatePlaylistResponse {
-	return SpotifyCreatePlaylistResponse{Id: defaultPlaylistId()}
+func createdPlaylist() SpotifyCreatePlaylistResponse {
+	return SpotifyCreatePlaylistResponse{Id: createPlaylistId}
 }
 
-func defaultSearchedFilteredPlaylists() []playlist.Playlist {
+func searchedFilteredPlaylists() []playlist.Playlist {
 	return []playlist.Playlist{
 		{
+			Id:          "id1",
 			Name:        "first playlist",
 			Description: "First description",
 			IsPublic:    true,
@@ -119,82 +123,67 @@ func defaultSearchedFilteredPlaylists() []playlist.Playlist {
 	}
 }
 
-func defaultSongsSerializer() *serialization.FakeSerializer[SpotifySongs] {
+func songSerializer() *serialization.FakeSerializer[SpotifySongs] {
 	serializer := serialization.FakeSerializer[SpotifySongs]{}
-	serializer.SetResponse(defaultSongsBody())
+	serializer.SetResponse(songsToAddResponseBody())
 	return &serializer
 }
 
-func defaultPlaylistCreateSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
+func playlistCreateSerializer() *serialization.FakeSerializer[SpotifyPlaylist] {
 	serializer := serialization.FakeSerializer[SpotifyPlaylist]{}
-	serializer.SetResponse(defaultPlaylistBody())
+	serializer.SetResponse(createPlaylistBody())
 	return &serializer
 }
 
-func defaultPlaylistCreateDeserializer() *serialization.FakeDeserializer[SpotifyCreatePlaylistResponse] {
+func playlistCreateDeserializer() *serialization.FakeDeserializer[SpotifyCreatePlaylistResponse] {
 	deserializer := serialization.FakeDeserializer[SpotifyCreatePlaylistResponse]{}
-	deserializer.SetResponse(defaultPlaylistCreation())
+	deserializer.SetResponse(createdPlaylist())
 	return &deserializer
 }
 
-func defaultPlaylistSearchDeserializer() *serialization.FakeDeserializer[SpotifySearchPlaylistResponse] {
+func playlistSearchDeserializer() *serialization.FakeDeserializer[SpotifySearchPlaylistResponse] {
 	deserializer := serialization.FakeDeserializer[SpotifySearchPlaylistResponse]{}
-	deserializer.SetResponse(defaultSearchedPlaylists())
+	deserializer.SetResponse(searchedPlaylists())
 	return &deserializer
-}
-
-func defaultToken() string {
-	return "abcdefg12345"
-}
-
-func defaultTokenKey() types.ContextKey {
-	return "token"
-}
-
-func defaultUserId() string {
-	return "qrRwLBFxQL9fknW8NzBn4JprRNgS"
-}
-
-func defaultUserIdKey() types.ContextKey {
-	return "userId"
 }
 
 func defaultContext() context.Context {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, defaultTokenKey(), defaultToken())
-	ctx = context.WithValue(ctx, defaultUserIdKey(), defaultUserId())
+	ctx = context.WithValue(ctx, types.ContextKey(tokenKey), token)
+	ctx = context.WithValue(ctx, types.ContextKey(userIdKey), userId)
 	return ctx
 }
 
 func expectedAddSongsHttpOptions() httpsender.HTTPRequestOptions {
-	options := httpsender.NewHTTPRequestOptions("https://api.spotify.com/v1/playlists/test_id/tracks", httpsender.POST, 201)
-	options.SetHeaders(defaultHeaders())
-	options.SetBody(defaultSongsBody())
+	url := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks", addSongsPlaylistId)
+	options := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
+	options.SetHeaders(authHeaders())
+	options.SetBody(songsToAddResponseBody())
 	return options
 }
 
 func expectedCreatePlaylistHttpOptions() httpsender.HTTPRequestOptions {
-	url := fmt.Sprintf("https://api.spotify.com/v1/users/%s/playlists", defaultUserId())
+	url := fmt.Sprintf("https://api.spotify.com/v1/users/%s/playlists", userId)
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
-	options.SetHeaders(defaultHeaders())
-	options.SetBody(defaultPlaylistBody())
+	options.SetHeaders(authHeaders())
+	options.SetBody(createPlaylistBody())
 	return options
 }
 
 func expectedSearchPlaylistHttpOptions() httpsender.HTTPRequestOptions {
 	url := fmt.Sprintf(
 		"https://api.spotify.com/v1/search?limit=%d&q=%s&type=playlist",
-		defaultSearchPlaylistLimit(),
-		defaultPlaylistName(),
+		searchPlaylistLimit,
+		searchPlaylistName,
 	)
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
-	options.SetHeaders(defaultHeaders())
+	options.SetHeaders(authHeaders())
 	return options
 }
 
-func defaultHeaders() map[string]string {
+func authHeaders() map[string]string {
 	return map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", defaultToken()),
+		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Content-Type":  "application/json",
 	}
 }
@@ -202,13 +191,13 @@ func defaultHeaders() map[string]string {
 func spotifyPlaylistRepository() SpotifyPlaylistRepository {
 	repository := NewSpotifyPlaylistRepository(fakeSender())
 
-	repository.SetTokenKey(defaultTokenKey())
-	repository.SetUserIdKey(defaultUserIdKey())
+	repository.SetTokenKey(tokenKey)
+	repository.SetUserIdKey(userIdKey)
 
-	repository.SetSongSerializer(defaultSongsSerializer())
-	repository.SetPlaylistCreateSerializer(defaultPlaylistCreateSerializer())
-	repository.SetPlaylistSearchDeserializer(defaultPlaylistSearchDeserializer())
-	repository.SetPlaylistCreateDeserializer((defaultPlaylistCreateDeserializer()))
+	repository.SetSongSerializer(songSerializer())
+	repository.SetPlaylistCreateSerializer(playlistCreateSerializer())
+	repository.SetPlaylistSearchDeserializer(playlistSearchDeserializer())
+	repository.SetPlaylistCreateDeserializer((playlistCreateDeserializer()))
 
 	return repository
 }
@@ -216,7 +205,7 @@ func spotifyPlaylistRepository() SpotifyPlaylistRepository {
 func TestAddSongsReturnsErrorWhenNoSongsProvided(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), []song.Song{})
+	err := repository.AddSongs(defaultContext(), addSongsPlaylistId, []song.Song{})
 
 	assert.NotNil(t, err)
 }
@@ -224,7 +213,7 @@ func TestAddSongsReturnsErrorWhenNoSongsProvided(t *testing.T) {
 func TestAddSongsSerializesInputSongs(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
+	repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	expected := SpotifySongs{Uris: []string{"uri1", "uri2"}}
 	actual := repository.GetSongSerializer().(*serialization.FakeSerializer[SpotifySongs]).GetArgs()
@@ -233,11 +222,11 @@ func TestAddSongsSerializesInputSongs(t *testing.T) {
 
 func TestAddSongsReturnsErrorOnNonSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
-	serializer := defaultSongsSerializer()
+	serializer := songSerializer()
 	serializer.SetError(errors.New("test songs error"))
 	repository.SetSongSerializer(serializer)
 
-	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
+	err := repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	assert.NotNil(t, err)
 }
@@ -245,7 +234,7 @@ func TestAddSongsReturnsErrorOnNonSerializationError(t *testing.T) {
 func TestAddSongsSendsRequestUsingProperOptions(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
+	repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	assert.Equal(t, actual, expectedAddSongsHttpOptions())
@@ -255,7 +244,7 @@ func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(errorSender())
 
-	err := repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
+	err := repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	assert.NotNil(t, err)
 }
@@ -263,7 +252,7 @@ func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
 func TestAddSongsSerializesInputPlaylist(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	expected := SpotifyPlaylist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
 	actual := repository.GetPlaylistCreateSerializer().(*serialization.FakeSerializer[SpotifyPlaylist]).GetArgs()
@@ -272,11 +261,11 @@ func TestAddSongsSerializesInputPlaylist(t *testing.T) {
 
 func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
-	serializer := defaultPlaylistCreateSerializer()
+	serializer := playlistCreateSerializer()
 	serializer.SetError(errors.New("test playlist error"))
 	repository.SetPlaylistCreateSerializer(serializer)
 
-	_, err := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	_, err := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	assert.NotNil(t, err)
 }
@@ -284,7 +273,7 @@ func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 func TestCreatePlaylistSendsCreateRequestWithOptions(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	assert.Equal(t, actual, expectedCreatePlaylistHttpOptions())
@@ -292,23 +281,23 @@ func TestCreatePlaylistSendsCreateRequestWithOptions(t *testing.T) {
 
 func TestCreatePlaylistReturnsErrorOnDeserializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
-	deserializer := defaultPlaylistCreateDeserializer()
+	deserializer := playlistCreateDeserializer()
 	deserializer.SetError(errors.New("test create playlist error"))
 	repository.SetPlaylistCreateDeserializer(deserializer)
 
-	_, err := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	_, err := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	assert.NotNil(t, err)
 }
 
 func TestCreatePlaylistReturnsIdFromDeserializedResponse(t *testing.T) {
 	repository := spotifyPlaylistRepository()
-	deserialized := defaultPlaylistCreation()
-	deserializer := defaultPlaylistCreateDeserializer()
+	deserialized := createdPlaylist()
+	deserializer := playlistCreateDeserializer()
 	deserializer.SetResponse(deserialized)
 	repository.SetPlaylistCreateDeserializer(deserializer)
 
-	actual, _ := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	actual, _ := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	assert.Equal(t, actual, deserialized.Id)
 }
@@ -317,7 +306,7 @@ func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(errorSender())
 
-	_, err := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	_, err := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	assert.NotNil(t, err)
 }
@@ -325,7 +314,7 @@ func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
 func TestSearchPlaylistSendsCreateRequestWithOptions(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	repository.SearchPlaylist(defaultContext(), defaultPlaylistName(), defaultSearchPlaylistLimit())
+	repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	assert.Equal(t, actual, expectedSearchPlaylistHttpOptions())
@@ -335,18 +324,18 @@ func TestSearchPlaylistReturnsErrorOnSendError(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetHTTPSender(errorSender())
 
-	_, err := repository.SearchPlaylist(defaultContext(), defaultPlaylistName(), defaultSearchPlaylistLimit())
+	_, err := repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
 	assert.NotNil(t, err)
 }
 
 func TestSearchPlaylistReturnsErrorOnDeserializationError(t *testing.T) {
-	deserializer := defaultPlaylistSearchDeserializer()
+	deserializer := playlistSearchDeserializer()
 	deserializer.SetError(errors.New("test deserialization error"))
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistSearchDeserializer(deserializer)
 
-	_, err := repository.SearchPlaylist(defaultContext(), defaultPlaylistName(), defaultSearchPlaylistLimit())
+	_, err := repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
 	assert.NotNil(t, err)
 }
@@ -354,10 +343,10 @@ func TestSearchPlaylistReturnsErrorOnDeserializationError(t *testing.T) {
 func TestSearchPlaylistReturnsDeserializedContent(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 
-	actual, err := repository.SearchPlaylist(defaultContext(), defaultPlaylistName(), defaultSearchPlaylistLimit())
+	actual, err := repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
 	assert.Nil(t, err)
-	assert.Equal(t, actual, defaultSearchedFilteredPlaylists())
+	assert.Equal(t, actual, searchedFilteredPlaylists())
 }
 
 func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
@@ -367,7 +356,7 @@ func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetSongSerializer(&serializer)
 
-	repository.AddSongs(defaultContext(), defaultPlaylistId(), defaultSongs())
+	repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	assert.Equal(t, actual, expectedAddSongsHttpOptions())
@@ -380,7 +369,7 @@ func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistCreateSerializer(&serializer)
 
-	repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
 	assert.Equal(t, actual, expectedCreatePlaylistHttpOptions())
@@ -391,32 +380,32 @@ func TestCreatePlaylistReturnsResultsUsingDeserializerIntegration(t *testing.T) 
 
 	repository := spotifyPlaylistRepository()
 	sender := fakeSender()
-	response := defaultPlaylistCreationResponse()
+	response := createPlaylistResponseBody()
 	sender.SetResponse(&response)
 	repository.SetHTTPSender(sender)
 	deserializer := serialization.NewJsonDeserializer[SpotifyCreatePlaylistResponse]()
 	repository.SetPlaylistCreateDeserializer(&deserializer)
 
-	id, err := repository.CreatePlaylist(defaultContext(), defaultPlaylist())
+	id, err := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	assert.Nil(t, err)
-	assert.Equal(t, id, defaultPlaylistId())
+	assert.Equal(t, id, createPlaylistId)
 }
 
 func TestSearchPlaylistReturnsResultsUsingDeserializerIntegration(t *testing.T) {
 	testtools.SkipOnShortRun(t)
 
 	sender := fakeSender()
-	response := defaultSearchedPlaylistsResponse()
+	response := searchedPlaylistsResponseBody()
 	sender.SetResponse(&response)
 	deserializer := serialization.NewJsonDeserializer[SpotifySearchPlaylistResponse]()
 	repository := spotifyPlaylistRepository()
 	repository.SetPlaylistSearchDeserializer(deserializer)
 	repository.SetHTTPSender(sender)
 
-	actual, err := repository.SearchPlaylist(defaultContext(), defaultPlaylistName(), defaultSearchPlaylistLimit())
+	actual, err := repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
-	assert.Equal(t, actual, defaultSearchedFilteredPlaylists())
+	assert.Equal(t, actual, searchedFilteredPlaylists())
 	assert.Nil(t, err)
 }
 
@@ -445,13 +434,13 @@ func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 			repository := spotifyPlaylistRepository()
 			repository.SetTokenKey(test.repositoryTokenKey)
 
-			err := repository.AddSongs(ctx, defaultPlaylistId(), defaultSongs())
+			err := repository.AddSongs(ctx, addSongsPlaylistId, songsToAdd())
 			assert.NotNil(t, err)
 
-			_, err = repository.CreatePlaylist(ctx, defaultPlaylist())
+			_, err = repository.CreatePlaylist(ctx, playlistToCreate())
 			assert.NotNil(t, err)
 
-			_, err = repository.SearchPlaylist(ctx, defaultPlaylistName(), defaultSearchPlaylistLimit())
+			_, err = repository.SearchPlaylist(ctx, searchPlaylistName, searchPlaylistLimit)
 			assert.NotNil(t, err)
 		})
 	}
@@ -482,10 +471,10 @@ func TestRepositoryMethodsReturnErrorWhenInvalidUserId(t *testing.T) {
 			repository := spotifyPlaylistRepository()
 			repository.SetUserIdKey(test.repositoryUserIdKey)
 
-			_, err := repository.SearchPlaylist(ctx, defaultPlaylistName(), defaultSearchPlaylistLimit())
+			_, err := repository.SearchPlaylist(ctx, searchPlaylistName, searchPlaylistLimit)
 			assert.NotNil(t, err)
 
-			_, err = repository.CreatePlaylist(ctx, defaultPlaylist())
+			_, err = repository.CreatePlaylist(ctx, playlistToCreate())
 			assert.NotNil(t, err)
 		})
 	}
