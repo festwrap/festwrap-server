@@ -3,7 +3,6 @@ package setlistfm
 import (
 	"errors"
 	httpsender "festwrap/internal/http/sender"
-	"festwrap/internal/serialization"
 	"festwrap/internal/setlist"
 	"festwrap/internal/testtools"
 	"path/filepath"
@@ -13,23 +12,7 @@ import (
 )
 
 func defaultArtist() string {
-	return "Boysetsfire"
-}
-
-func deserializedResponse() setlistFMResponse {
-	artist := setlistfmArtist{Name: defaultArtist()}
-	songs := []setlistfmSong{
-		{Name: "Closure"},
-		{Name: "Rookie"},
-		{Name: "The Misery Index"},
-		{Name: "One Match"},
-		{Name: "Requiem"},
-	}
-	set := setlistfmSet{Songs: songs}
-	setlists := []setlistFMSetlist{
-		{Artist: artist, Sets: setlistFMSets{Sets: []setlistfmSet{set}}},
-	}
-	return setlistFMResponse{Body: setlists}
+	return "The Menzingers"
 }
 
 func defaultMinSongs() int {
@@ -41,6 +24,11 @@ func responseBody(t *testing.T) []byte {
 	return testtools.LoadTestDataOrError(t, path)
 }
 
+func emptyResponseBody(t *testing.T) []byte {
+	path := filepath.Join(testtools.GetParentDir(t), "testdata", "no_setlists_response.json")
+	return testtools.LoadTestDataOrError(t, path)
+}
+
 func defaultSender(t *testing.T) *httpsender.FakeHTTPSender {
 	sender := httpsender.FakeHTTPSender{}
 	response := responseBody(t)
@@ -48,14 +36,8 @@ func defaultSender(t *testing.T) *httpsender.FakeHTTPSender {
 	return &sender
 }
 
-func defaultDeserializer() serialization.FakeDeserializer[setlistFMResponse] {
-	result := serialization.FakeDeserializer[setlistFMResponse]{}
-	result.SetResponse(deserializedResponse())
-	return result
-}
-
 func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	url := "https://api.setlist.fm/rest/1.0/search/setlists?artistName=Boysetsfire"
+	url := "https://api.setlist.fm/rest/1.0/search/setlists?artistName=The+Menzingers"
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
 		map[string]string{
@@ -67,27 +49,6 @@ func expectedHttpOptions() httpsender.HTTPRequestOptions {
 }
 
 func expectedSetlist() *setlist.Setlist {
-	expected := setlist.NewSetlist(
-		"Boysetsfire",
-		[]setlist.Song{
-			setlist.NewSong("Closure"),
-			setlist.NewSong("Rookie"),
-			setlist.NewSong("The Misery Index"),
-			setlist.NewSong("One Match"),
-			setlist.NewSong("Requiem"),
-		},
-	)
-	return &expected
-}
-
-func setlistRepository(sender httpsender.HTTPRequestSender) SetlistFMRepository {
-	repository := *NewSetlistFMSetlistRepository("some_api_key", sender)
-	deserializer := defaultDeserializer()
-	repository.SetDeserializer(&deserializer)
-	return repository
-}
-
-func integrationSetlist() *setlist.Setlist {
 	songs := []setlist.Song{
 		setlist.NewSong("Walk of Life"),
 		setlist.NewSong("Anna"),
@@ -105,7 +66,7 @@ func integrationSetlist() *setlist.Setlist {
 
 func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
 	sender := defaultSender(t)
-	repository := setlistRepository(sender)
+	repository := NewSetlistFMSetlistRepository("some_api_key", sender)
 
 	repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
@@ -115,28 +76,18 @@ func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
 func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 	sender := httpsender.FakeHTTPSender{}
 	sender.SetError(errors.New("test error"))
-	repository := setlistRepository(&sender)
+	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
 	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
 	assert.NotNil(t, err)
 }
 
-func TestGetSetlistDeserializerCalledWithSenderResponse(t *testing.T) {
-	repository := setlistRepository(defaultSender(t))
-	deserializer := defaultDeserializer()
-	repository.SetDeserializer(&deserializer)
-
-	repository.GetSetlist(defaultArtist(), defaultMinSongs())
-
-	assert.Equal(t, deserializer.GetArgs(), responseBody(t))
-}
-
 func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
-	repository := setlistRepository(defaultSender(t))
-	deserializer := defaultDeserializer()
-	deserializer.SetError(errors.New("test deserialization error"))
-	repository.SetDeserializer(&deserializer)
+	sender := httpsender.FakeHTTPSender{}
+	invalidResponse := []byte("{bad response}")
+	sender.SetResponse(&invalidResponse)
+	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
 	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
@@ -144,19 +95,18 @@ func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 }
 
 func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
-	repository := setlistRepository(defaultSender(t))
-	deserializer := defaultDeserializer()
-	emptyResponse := setlistFMResponse{Body: []setlistFMSetlist{}}
-	deserializer.SetResponse(emptyResponse)
-	repository.SetDeserializer(&deserializer)
+	sender := httpsender.FakeHTTPSender{}
+	response := emptyResponseBody(t)
+	sender.SetResponse(&response)
+	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
 	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
 	assert.NotNil(t, err)
 }
 
-func TestGetSetlistReturnsSetlistFromDeserializedResponse(t *testing.T) {
-	repository := setlistRepository(defaultSender(t))
+func TestGetSetlistReturnsSetlist(t *testing.T) {
+	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
 
 	actual, _ := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
@@ -164,23 +114,9 @@ func TestGetSetlistReturnsSetlistFromDeserializedResponse(t *testing.T) {
 }
 
 func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
-	repository := setlistRepository(defaultSender(t))
+	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
 
 	_, err := repository.GetSetlist(defaultArtist(), 50)
 
 	assert.NotNil(t, err)
-}
-
-func TestGetSetlistRetrievesSetlistFromResponseIntegration(t *testing.T) {
-	testtools.SkipOnShortRun(t)
-
-	sender := defaultSender(t)
-	response := responseBody(t)
-	sender.SetResponse(&response)
-	repository := NewSetlistFMSetlistRepository("some_api_key", sender)
-
-	actual, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
-
-	assert.Nil(t, err)
-	assert.Equal(t, actual, integrationSetlist())
 }
