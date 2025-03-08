@@ -36,13 +36,14 @@ func defaultMinSongs() int {
 	return 3
 }
 
-func senderResponse() []byte {
-	return []byte("some response")
+func responseBody(t *testing.T) []byte {
+	path := filepath.Join(testtools.GetParentDir(t), "testdata", "response.json")
+	return testtools.LoadTestDataOrError(t, path)
 }
 
-func defaultSender() *httpsender.FakeHTTPSender {
+func defaultSender(t *testing.T) *httpsender.FakeHTTPSender {
 	sender := httpsender.FakeHTTPSender{}
-	response := senderResponse()
+	response := responseBody(t)
 	sender.SetResponse(&response)
 	return &sender
 }
@@ -86,11 +87,6 @@ func setlistRepository(sender httpsender.HTTPRequestSender) SetlistFMRepository 
 	return repository
 }
 
-func integrationResponse(t *testing.T) []byte {
-	path := filepath.Join(testtools.GetParentDir(t), "testdata", "response.json")
-	return testtools.LoadTestDataOrError(t, path)
-}
-
 func integrationSetlist() *setlist.Setlist {
 	songs := []setlist.Song{
 		setlist.NewSong("Walk of Life"),
@@ -108,7 +104,7 @@ func integrationSetlist() *setlist.Setlist {
 }
 
 func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
-	sender := defaultSender()
+	sender := defaultSender(t)
 	repository := setlistRepository(sender)
 
 	repository.GetSetlist(defaultArtist(), defaultMinSongs())
@@ -127,17 +123,17 @@ func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 }
 
 func TestGetSetlistDeserializerCalledWithSenderResponse(t *testing.T) {
-	repository := setlistRepository(defaultSender())
+	repository := setlistRepository(defaultSender(t))
 	deserializer := defaultDeserializer()
 	repository.SetDeserializer(&deserializer)
 
 	repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
-	assert.Equal(t, deserializer.GetArgs(), senderResponse())
+	assert.Equal(t, deserializer.GetArgs(), responseBody(t))
 }
 
 func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
-	repository := setlistRepository(defaultSender())
+	repository := setlistRepository(defaultSender(t))
 	deserializer := defaultDeserializer()
 	deserializer.SetError(errors.New("test deserialization error"))
 	repository.SetDeserializer(&deserializer)
@@ -148,7 +144,7 @@ func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 }
 
 func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
-	repository := setlistRepository(defaultSender())
+	repository := setlistRepository(defaultSender(t))
 	deserializer := defaultDeserializer()
 	emptyResponse := setlistFMResponse{Body: []setlistFMSetlist{}}
 	deserializer.SetResponse(emptyResponse)
@@ -160,7 +156,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 }
 
 func TestGetSetlistReturnsSetlistFromDeserializedResponse(t *testing.T) {
-	repository := setlistRepository(defaultSender())
+	repository := setlistRepository(defaultSender(t))
 
 	actual, _ := repository.GetSetlist(defaultArtist(), defaultMinSongs())
 
@@ -168,7 +164,7 @@ func TestGetSetlistReturnsSetlistFromDeserializedResponse(t *testing.T) {
 }
 
 func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
-	repository := setlistRepository(defaultSender())
+	repository := setlistRepository(defaultSender(t))
 
 	_, err := repository.GetSetlist(defaultArtist(), 50)
 
@@ -178,8 +174,8 @@ func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
 func TestGetSetlistRetrievesSetlistFromResponseIntegration(t *testing.T) {
 	testtools.SkipOnShortRun(t)
 
-	sender := defaultSender()
-	response := integrationResponse(t)
+	sender := defaultSender(t)
+	response := responseBody(t)
 	sender.SetResponse(&response)
 	repository := NewSetlistFMSetlistRepository("some_api_key", sender)
 
