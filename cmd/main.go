@@ -45,6 +45,7 @@ func main() {
 	maxConnsPerHost := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_CONNS_PER_HOST", 10)
 	timeoutSeconds := GetEnvWithDefaultOrFail[int]("FESTWRAP_TIMEOUT_SECONDS", 5)
 	setlistfmApiKey := GetEnvStringOrFail("FESTWRAP_SETLISTFM_APIKEY")
+	maxSetlistFMNumSearchPages := GetEnvWithDefaultOrFail[int]("FESTWRAP_SETLISTFM_NUM_SEARCH_PAGES", 3)
 
 	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger := logging.NewBaseLogger(slogLogger)
@@ -73,6 +74,7 @@ func main() {
 	)
 
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(setlistfmApiKey, &httpSender)
+	setlistRepository.SetMaxPages(maxSetlistFMNumSearchPages)
 	songRepository := spotifysongs.NewSpotifySongRepository(&httpSender)
 	playlistService := playlist.NewConcurrentPlaylistService(
 		&playlistRepository,

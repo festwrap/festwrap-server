@@ -15,6 +15,7 @@ type SetlistFMRepository struct {
 	apiKey       string
 	deserializer serialization.Deserializer[setlistFMResponse]
 	httpSender   httpsender.HTTPRequestSender
+	maxPages     int
 }
 
 func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
@@ -24,6 +25,7 @@ func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequ
 		apiKey:       apiKey,
 		deserializer: &deserializer,
 		httpSender:   httpSender,
+		maxPages:     1,
 	}
 }
 
@@ -33,7 +35,30 @@ func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deseria
 
 func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.Setlist, error) {
 
-	httpOptions := r.createSetlistHttpOptions(artist)
+	page := 1
+	var setlist *setlist.Setlist
+	var err error
+
+	for page <= r.maxPages {
+		setlist, err = r.getFirstSetlistFromPage(artist, page, minSongs)
+		resultOrErrorFound := setlist != nil || err != nil
+		if resultOrErrorFound {
+			break
+		} else {
+			page += 1
+		}
+	}
+
+	if setlist == nil {
+		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
+		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
+	} else {
+		return setlist, nil
+	}
+}
+
+func (r *SetlistFMRepository) getFirstSetlistFromPage(artist string, page int, minSongs int) (*setlist.Setlist, error) {
+	httpOptions := r.createSetlistHttpOptions(artist, page)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
 		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
@@ -46,19 +71,12 @@ func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.
 	}
 
 	setlist := response.findSetlistWithMinSongs(minSongs)
-	if setlist == nil {
-		// TODO: if no valid setlist found, we should check for the next page
-		// TODO: probable a good idea to move the min songs filter to repository
-		// TODO: By doing so, we keep deserializer logic simpler
-		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
-	}
-
 	return setlist, nil
 }
 
-func (r *SetlistFMRepository) createSetlistHttpOptions(artist string) httpsender.HTTPRequestOptions {
-	httpOptions := httpsender.NewHTTPRequestOptions(r.getSetlistFullUrl(artist), httpsender.GET, 200)
+func (r *SetlistFMRepository) createSetlistHttpOptions(artist string, page int) httpsender.HTTPRequestOptions {
+	url := r.getSetlistFullUrl(artist, page)
+	httpOptions := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	httpOptions.SetHeaders(
 		map[string]string{
 			"x-api-key": r.apiKey,
@@ -68,9 +86,14 @@ func (r *SetlistFMRepository) createSetlistHttpOptions(artist string) httpsender
 	return httpOptions
 }
 
-func (r *SetlistFMRepository) getSetlistFullUrl(artist string) string {
+func (r *SetlistFMRepository) getSetlistFullUrl(artist string, page int) string {
 	queryParams := url.Values{}
 	queryParams.Set("artistName", artist)
+	queryParams.Set("p", fmt.Sprint(page))
 	setlistPath := "rest/1.0/search/setlists"
 	return fmt.Sprintf("https://%s/%s?%s", r.host, setlistPath, queryParams.Encode())
+}
+
+func (r *SetlistFMRepository) SetMaxPages(maxPages int) {
+	r.maxPages = maxPages
 }

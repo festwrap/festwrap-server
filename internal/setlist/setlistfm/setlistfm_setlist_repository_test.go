@@ -2,43 +2,48 @@ package setlistfm
 
 import (
 	"errors"
-	httpsender "festwrap/internal/http/sender"
-	"festwrap/internal/setlist"
-	"festwrap/internal/testtools"
+	"fmt"
 	"path/filepath"
 	"testing"
+
+	httpsender "festwrap/internal/http/sender"
+	httpsendermocks "festwrap/internal/http/sender/mocks"
+	"festwrap/internal/setlist"
+	"festwrap/internal/testtools"
 
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	artist   = "The Menzingers"
-	minSongs = 3
+	setlistFMApiKey = "someApiKey"
+	artist          = "The Menzingers"
+	minSongs        = 3
 )
 
-func responseBody(t *testing.T) []byte {
+func responseBody(t *testing.T) *[]byte {
 	path := filepath.Join(testtools.GetParentDir(t), "testdata", "response.json")
-	return testtools.LoadTestDataOrError(t, path)
+	response := testtools.LoadTestDataOrError(t, path)
+	return &response
 }
 
-func emptyResponseBody(t *testing.T) []byte {
+func emptyResponseBody(t *testing.T) *[]byte {
 	path := filepath.Join(testtools.GetParentDir(t), "testdata", "no_setlists_response.json")
-	return testtools.LoadTestDataOrError(t, path)
+	response := testtools.LoadTestDataOrError(t, path)
+	return &response
 }
 
-func defaultSender(t *testing.T) *httpsender.FakeHTTPSender {
-	sender := httpsender.FakeHTTPSender{}
-	response := responseBody(t)
-	sender.SetResponse(&response)
+func sender(t *testing.T) httpsender.HTTPRequestSender {
+	sender := httpsendermocks.HTTPSenderMock{}
+	sender.On("Send", getSetlistHttpOptions(1)).Return(responseBody(t), nil)
 	return &sender
 }
 
-func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	url := "https://api.setlist.fm/rest/1.0/search/setlists?artistName=The+Menzingers"
+func getSetlistHttpOptions(page int) httpsender.HTTPRequestOptions {
+	url := fmt.Sprintf("https://api.setlist.fm/rest/1.0/search/setlists?artistName=The+Menzingers&p=%d", page)
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
 		map[string]string{
-			"x-api-key": "some_api_key",
+			"x-api-key": setlistFMApiKey,
 			"Accept":    "application/json",
 		},
 	)
@@ -62,18 +67,18 @@ func expectedSetlist() *setlist.Setlist {
 }
 
 func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
-	sender := defaultSender(t)
-	repository := NewSetlistFMSetlistRepository("some_api_key", sender)
+	sender := sender(t).(*httpsendermocks.HTTPSenderMock)
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, sender)
 
 	repository.GetSetlist(artist, minSongs)
 
-	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
+	sender.AssertExpectations(t)
 }
 
 func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
-	sender := httpsender.FakeHTTPSender{}
-	sender.SetError(errors.New("test error"))
-	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
+	sender := httpsendermocks.HTTPSenderMock{}
+	sender.On("Send", getSetlistHttpOptions(1)).Return(nil, errors.New("test error"))
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, &sender)
 
 	_, err := repository.GetSetlist(artist, minSongs)
 
@@ -81,10 +86,10 @@ func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 }
 
 func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
-	sender := httpsender.FakeHTTPSender{}
+	sender := httpsendermocks.HTTPSenderMock{}
 	invalidResponse := []byte("{bad response}")
-	sender.SetResponse(&invalidResponse)
-	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
+	sender.On("Send", getSetlistHttpOptions(1)).Return(&invalidResponse, nil)
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, &sender)
 
 	_, err := repository.GetSetlist(artist, minSongs)
 
@@ -92,10 +97,9 @@ func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 }
 
 func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
-	sender := httpsender.FakeHTTPSender{}
-	response := emptyResponseBody(t)
-	sender.SetResponse(&response)
-	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
+	sender := httpsendermocks.HTTPSenderMock{}
+	sender.On("Send", getSetlistHttpOptions(1)).Return(emptyResponseBody(t), nil)
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, &sender)
 
 	_, err := repository.GetSetlist(artist, minSongs)
 
@@ -103,7 +107,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 }
 
 func TestGetSetlistReturnsSetlist(t *testing.T) {
-	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, sender(t))
 
 	actual, _ := repository.GetSetlist(artist, minSongs)
 
@@ -111,9 +115,22 @@ func TestGetSetlistReturnsSetlist(t *testing.T) {
 }
 
 func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
-	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, sender(t))
 
 	_, err := repository.GetSetlist(artist, 50)
 
 	assert.NotNil(t, err)
+}
+
+func TestGetSetlistReturnsResultsFromNextPageIfFirstHasNoResults(t *testing.T) {
+	multiPageSender := httpsendermocks.HTTPSenderMock{}
+	multiPageSender.On("Send", getSetlistHttpOptions(1)).Return(emptyResponseBody(t), nil)
+	multiPageSender.On("Send", getSetlistHttpOptions(2)).Return(responseBody(t), nil)
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, &multiPageSender)
+	repository.SetMaxPages(3)
+
+	actual, err := repository.GetSetlist(artist, minSongs)
+
+	assert.Equal(t, expectedSetlist(), actual)
+	assert.Nil(t, err)
 }
