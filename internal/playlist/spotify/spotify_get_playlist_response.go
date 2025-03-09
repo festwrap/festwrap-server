@@ -5,6 +5,7 @@ type SpotifyPlaylistOwnerMetadata struct {
 }
 
 type SpotifySearchPlaylist struct {
+	Id            string                       `json:"id"`
 	Description   string                       `json:"description"`
 	Name          string                       `json:"name"`
 	Public        bool                         `json:"public"`

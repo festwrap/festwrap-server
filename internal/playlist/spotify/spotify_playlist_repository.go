@@ -136,6 +136,7 @@ func filterPlaylistByUser(playlists []SpotifySearchPlaylist, userId string) []pl
 	for _, currentPlaylist := range playlists {
 		if currentPlaylist.OwnerMetadata.Id == userId {
 			playlistObj := playlist.Playlist{
+				Id:          currentPlaylist.Id,
 				Name:        currentPlaylist.Name,
 				Description: currentPlaylist.Description,
 				IsPublic:    currentPlaylist.Public,
