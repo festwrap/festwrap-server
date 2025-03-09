@@ -12,12 +12,9 @@ import (
 )
 
 const (
-	artist = "The Menzingers"
+	artist   = "The Menzingers"
+	minSongs = 3
 )
-
-func defaultMinSongs() int {
-	return 3
-}
 
 func responseBody(t *testing.T) []byte {
 	path := filepath.Join(testtools.GetParentDir(t), "testdata", "response.json")
@@ -68,7 +65,7 @@ func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
 	sender := defaultSender(t)
 	repository := NewSetlistFMSetlistRepository("some_api_key", sender)
 
-	repository.GetSetlist(artist, defaultMinSongs())
+	repository.GetSetlist(artist, minSongs)
 
 	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
 }
@@ -78,7 +75,7 @@ func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 	sender.SetError(errors.New("test error"))
 	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
-	_, err := repository.GetSetlist(artist, defaultMinSongs())
+	_, err := repository.GetSetlist(artist, minSongs)
 
 	assert.NotNil(t, err)
 }
@@ -89,7 +86,7 @@ func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 	sender.SetResponse(&invalidResponse)
 	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
-	_, err := repository.GetSetlist(artist, defaultMinSongs())
+	_, err := repository.GetSetlist(artist, minSongs)
 
 	assert.NotNil(t, err)
 }
@@ -100,7 +97,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 	sender.SetResponse(&response)
 	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
-	_, err := repository.GetSetlist(artist, defaultMinSongs())
+	_, err := repository.GetSetlist(artist, minSongs)
 
 	assert.NotNil(t, err)
 }
@@ -108,7 +105,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 func TestGetSetlistReturnsSetlist(t *testing.T) {
 	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
 
-	actual, _ := repository.GetSetlist(artist, defaultMinSongs())
+	actual, _ := repository.GetSetlist(artist, minSongs)
 
 	assert.Equal(t, actual, expectedSetlist())
 }
