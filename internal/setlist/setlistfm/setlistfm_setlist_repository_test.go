@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func defaultArtist() string {
-	return "The Menzingers"
-}
+const (
+	artist = "The Menzingers"
+)
 
 func defaultMinSongs() int {
 	return 3
@@ -68,7 +68,7 @@ func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {
 	sender := defaultSender(t)
 	repository := NewSetlistFMSetlistRepository("some_api_key", sender)
 
-	repository.GetSetlist(defaultArtist(), defaultMinSongs())
+	repository.GetSetlist(artist, defaultMinSongs())
 
 	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
 }
@@ -78,7 +78,7 @@ func TestGetSetlistReturnsErrorOnSenderError(t *testing.T) {
 	sender.SetError(errors.New("test error"))
 	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
-	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
+	_, err := repository.GetSetlist(artist, defaultMinSongs())
 
 	assert.NotNil(t, err)
 }
@@ -89,7 +89,7 @@ func TestGetSetlistReturnsErrorOnDeserializationError(t *testing.T) {
 	sender.SetResponse(&invalidResponse)
 	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
-	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
+	_, err := repository.GetSetlist(artist, defaultMinSongs())
 
 	assert.NotNil(t, err)
 }
@@ -100,7 +100,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 	sender.SetResponse(&response)
 	repository := NewSetlistFMSetlistRepository("some_api_key", &sender)
 
-	_, err := repository.GetSetlist(defaultArtist(), defaultMinSongs())
+	_, err := repository.GetSetlist(artist, defaultMinSongs())
 
 	assert.NotNil(t, err)
 }
@@ -108,7 +108,7 @@ func TestGetSetlistReturnsErrorIfNoSetlistFound(t *testing.T) {
 func TestGetSetlistReturnsSetlist(t *testing.T) {
 	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
 
-	actual, _ := repository.GetSetlist(defaultArtist(), defaultMinSongs())
+	actual, _ := repository.GetSetlist(artist, defaultMinSongs())
 
 	assert.Equal(t, actual, expectedSetlist())
 }
@@ -116,7 +116,7 @@ func TestGetSetlistReturnsSetlist(t *testing.T) {
 func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {
 	repository := NewSetlistFMSetlistRepository("some_api_key", defaultSender(t))
 
-	_, err := repository.GetSetlist(defaultArtist(), 50)
+	_, err := repository.GetSetlist(artist, 50)
 
 	assert.NotNil(t, err)
 }
