@@ -36,7 +36,7 @@ func TestBadRequestErrorOnMissingAuthHeader(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusBadRequest)
+	assert.Equal(t, http.StatusBadRequest, writer.Code)
 }
 
 func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
@@ -45,7 +45,7 @@ func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusUnprocessableEntity)
+	assert.Equal(t, http.StatusUnprocessableEntity, writer.Code)
 }
 
 func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
@@ -54,7 +54,7 @@ func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Body.String(), "1234")
+	assert.Equal(t, "1234", writer.Body.String())
 }
 
 func TestMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
@@ -63,5 +63,5 @@ func TestMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusAccepted)
+	assert.Equal(t, http.StatusAccepted, writer.Code)
 }

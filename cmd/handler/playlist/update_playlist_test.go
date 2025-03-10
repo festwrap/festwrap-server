@@ -79,7 +79,7 @@ func TestUpdatePlaylistHandlerReturnsErrorOnUpdateBuilderError(t *testing.T) {
 
 	handler.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusBadRequest)
+	assert.Equal(t, http.StatusBadRequest, writer.Code)
 }
 
 func TestUpdatePlaylistHandlerReturnsErrorIfArtistsOutOfBounds(t *testing.T) {
@@ -111,7 +111,7 @@ func TestUpdatePlaylistHandlerReturnsErrorIfArtistsOutOfBounds(t *testing.T) {
 
 			handler.ServeHTTP(writer, request)
 
-			assert.Equal(t, writer.Code, http.StatusBadRequest)
+			assert.Equal(t, http.StatusBadRequest, writer.Code)
 		})
 	}
 }

@@ -49,7 +49,7 @@ func TestGetUserIdCallsRepositoryWithRequestContext(t *testing.T) {
 	middleware.ServeHTTP(writer, request)
 
 	fakeRepository := middleware.GetUserRepository().(*user.FakeUserRepository)
-	assert.Equal(t, fakeRepository.GetGetCurrentIdArgs().Context, request.Context())
+	assert.Equal(t, request.Context(), fakeRepository.GetGetCurrentIdArgs().Context)
 }
 
 func TestGetUserReturnsInternalErrorOnRepositoryError(t *testing.T) {
@@ -60,7 +60,7 @@ func TestGetUserReturnsInternalErrorOnRepositoryError(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Result().StatusCode, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusInternalServerError, writer.Result().StatusCode)
 }
 
 func TestUserIsPlacedInExpectedContextKey(t *testing.T) {
@@ -68,7 +68,7 @@ func TestUserIsPlacedInExpectedContextKey(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Body.String(), "some_id")
+	assert.Equal(t, "some_id", writer.Body.String())
 }
 
 func TestUserIdMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
@@ -76,5 +76,5 @@ func TestUserIdMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
 
 	middleware.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusContinue)
+	assert.Equal(t, http.StatusContinue, writer.Code)
 }

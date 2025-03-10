@@ -111,7 +111,7 @@ func TestGetSetlistReturnsSetlist(t *testing.T) {
 
 	actual, _ := repository.GetSetlist(artist, minSongs)
 
-	assert.Equal(t, actual, expectedSetlist())
+	assert.Equal(t, expectedSetlist(), actual)
 }
 
 func TestGetSetlistRetrievesErrorWhenMinSongsNotReached(t *testing.T) {

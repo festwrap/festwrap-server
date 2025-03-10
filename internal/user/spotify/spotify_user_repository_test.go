@@ -97,7 +97,7 @@ func TestGetCurrentUserIdSendsRequestWithProperOptions(t *testing.T) {
 	_, err := repository.GetCurrentUserId(defaultContext())
 
 	assert.Nil(t, err)
-	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
+	assert.Equal(t, expectedHttpOptions(), sender.GetSendArgs())
 }
 
 func TestGetCurrentUserReturnsErrorOnSendError(t *testing.T) {
@@ -117,7 +117,7 @@ func TestGetCurrentUserCallsDeserializeWithSendResponseBody(t *testing.T) {
 
 	assert.Nil(t, err)
 	deserializer := repository.GetDeserializer().(*serialization.FakeDeserializer[spotifyUserResponse])
-	assert.Equal(t, deserializer.GetArgs(), defaultResponse())
+	assert.Equal(t, defaultResponse(), deserializer.GetArgs())
 }
 
 func TestGetCurrentUserReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
@@ -141,5 +141,5 @@ func TestGetCurrentUserReturnsFirstSongFoundIntegration(t *testing.T) {
 
 	expected := "my_id"
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }

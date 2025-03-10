@@ -217,7 +217,7 @@ func TestAddSongsSerializesInputSongs(t *testing.T) {
 
 	expected := SpotifySongs{Uris: []string{"uri1", "uri2"}}
 	actual := repository.GetSongSerializer().(*serialization.FakeSerializer[SpotifySongs]).GetArgs()
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestAddSongsReturnsErrorOnNonSerializationError(t *testing.T) {
@@ -237,7 +237,7 @@ func TestAddSongsSendsRequestUsingProperOptions(t *testing.T) {
 	repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
-	assert.Equal(t, actual, expectedAddSongsHttpOptions())
+	assert.Equal(t, expectedAddSongsHttpOptions(), actual)
 }
 
 func TestAddSongsReturnsErrorOnSendError(t *testing.T) {
@@ -256,7 +256,7 @@ func TestAddSongsSerializesInputPlaylist(t *testing.T) {
 
 	expected := SpotifyPlaylist{Name: "my-playlist", Description: "some playlist", IsPublic: false}
 	actual := repository.GetPlaylistCreateSerializer().(*serialization.FakeSerializer[SpotifyPlaylist]).GetArgs()
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
@@ -276,7 +276,7 @@ func TestCreatePlaylistSendsCreateRequestWithOptions(t *testing.T) {
 	repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
-	assert.Equal(t, actual, expectedCreatePlaylistHttpOptions())
+	assert.Equal(t, expectedCreatePlaylistHttpOptions(), actual)
 }
 
 func TestCreatePlaylistReturnsErrorOnDeserializationError(t *testing.T) {
@@ -299,7 +299,7 @@ func TestCreatePlaylistReturnsIdFromDeserializedResponse(t *testing.T) {
 
 	actual, _ := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
-	assert.Equal(t, actual, deserialized.Id)
+	assert.Equal(t, deserialized.Id, actual)
 }
 
 func TestCreatePlaylistReturnsErrorOnSendError(t *testing.T) {
@@ -317,7 +317,7 @@ func TestSearchPlaylistSendsCreateRequestWithOptions(t *testing.T) {
 	repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
-	assert.Equal(t, actual, expectedSearchPlaylistHttpOptions())
+	assert.Equal(t, expectedSearchPlaylistHttpOptions(), actual)
 }
 
 func TestSearchPlaylistReturnsErrorOnSendError(t *testing.T) {
@@ -346,7 +346,7 @@ func TestSearchPlaylistReturnsDeserializedContent(t *testing.T) {
 	actual, err := repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
 	assert.Nil(t, err)
-	assert.Equal(t, actual, searchedFilteredPlaylists())
+	assert.Equal(t, searchedFilteredPlaylists(), actual)
 }
 
 func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
@@ -359,7 +359,7 @@ func TestAddSongsPlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository.AddSongs(defaultContext(), addSongsPlaylistId, songsToAdd())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
-	assert.Equal(t, actual, expectedAddSongsHttpOptions())
+	assert.Equal(t, expectedAddSongsHttpOptions(), actual)
 }
 
 func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
@@ -372,7 +372,7 @@ func TestCreatePlaylistSendsOptionsUsingSerializerIntegration(t *testing.T) {
 	repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	actual := repository.GetHTTPSender().(*httpsender.FakeHTTPSender).GetSendArgs()
-	assert.Equal(t, actual, expectedCreatePlaylistHttpOptions())
+	assert.Equal(t, expectedCreatePlaylistHttpOptions(), actual)
 }
 
 func TestCreatePlaylistReturnsResultsUsingDeserializerIntegration(t *testing.T) {
@@ -389,7 +389,7 @@ func TestCreatePlaylistReturnsResultsUsingDeserializerIntegration(t *testing.T) 
 	id, err := repository.CreatePlaylist(defaultContext(), playlistToCreate())
 
 	assert.Nil(t, err)
-	assert.Equal(t, id, createPlaylistId)
+	assert.Equal(t, createPlaylistId, id)
 }
 
 func TestSearchPlaylistReturnsResultsUsingDeserializerIntegration(t *testing.T) {
@@ -405,7 +405,7 @@ func TestSearchPlaylistReturnsResultsUsingDeserializerIntegration(t *testing.T) 
 
 	actual, err := repository.SearchPlaylist(defaultContext(), searchPlaylistName, searchPlaylistLimit)
 
-	assert.Equal(t, actual, searchedFilteredPlaylists())
+	assert.Equal(t, searchedFilteredPlaylists(), actual)
 	assert.Nil(t, err)
 }
 

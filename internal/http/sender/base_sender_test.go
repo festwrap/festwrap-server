@@ -59,7 +59,7 @@ func TestSendRequestHasProvidedMethod(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := string(options.GetMethod())
-	assert.Equal(t, actual, expected.Method)
+	assert.Equal(t, expected.Method, actual)
 	assert.Nil(t, err)
 }
 
@@ -70,7 +70,7 @@ func TestSendRequestHasProvidedUrl(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := options.GetUrl()
-	assert.Equal(t, actual, expected.URL.String())
+	assert.Equal(t, expected.URL.String(), actual)
 	assert.Nil(t, err)
 }
 
@@ -81,7 +81,7 @@ func TestSendRequestHasProvidedBody(t *testing.T) {
 
 	expected := client.GetRequestArg()
 	actual := options.GetBody()
-	assert.Equal(t, actual, readBodyFromRequest(t, expected))
+	assert.Equal(t, readBodyFromRequest(t, expected), actual)
 	assert.Nil(t, err)
 }
 
@@ -107,8 +107,8 @@ func TestSendRequestUsesHeaders(t *testing.T) {
 
 	_, err := sender.Send(options)
 
-	expected := client.GetRequestArg()
-	assertHeadersMatch(t, headers, expected.Header)
+	actual := client.GetRequestArg()
+	assertHeadersMatch(t, headers, actual.Header)
 	assert.Nil(t, err)
 }
 
@@ -165,7 +165,7 @@ func TestSendRequestReturnsResponseBody(t *testing.T) {
 
 	body, err := sender.Send(options)
 
-	assert.Equal(t, string(*body), string(defaultResponseBody()))
+	assert.Equal(t, string(defaultResponseBody()), string(*body))
 	assert.Nil(t, err)
 }
 

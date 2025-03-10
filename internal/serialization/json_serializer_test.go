@@ -14,7 +14,7 @@ func TestBaseSerializerReturnsExpectedOutput(t *testing.T) {
 
 	expected := serializableObjectBytes()
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestBaseSerializerReturnsErrorOnNonSerializableObject(t *testing.T) {
