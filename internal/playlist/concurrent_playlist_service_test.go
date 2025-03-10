@@ -118,7 +118,7 @@ func TestCreatePlaylistRepositoryCalledWithArgs(t *testing.T) {
 	actual := playlistRepository.GetCreatePlaylistArgs()
 	expected := CreatePlaylistArgs{Context: defaultContext(), Playlist: defaultPlaylist()}
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
@@ -129,7 +129,7 @@ func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
 
 	actual, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 	assert.Nil(t, err)
 }
 
@@ -156,7 +156,7 @@ func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
 	actual := setlistRepository.GetGetSetlistArgs()
 	expected := setlist.GetSetlistArgs{Artist: artist, MinSongs: minSongs}
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
@@ -179,7 +179,7 @@ func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
 	actual := songRepository.GetGetSongArgs()
 	expected := defaultGetSongArgs()
 	assert.Nil(t, err)
-	if !testtools.HaveSameElements(actual, expected) {
+	if !testtools.HaveSameElements(expected, actual) {
 		t.Errorf("Expected called songs %v, found %v", expected, actual)
 	}
 }
@@ -194,7 +194,7 @@ func TestAddSetlistAddsSongsFetched(t *testing.T) {
 	actual := playlistRepository.GetAddSongArgs()
 	expected := defaultAddSongsArgs()
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
@@ -207,7 +207,7 @@ func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
 	actual := playlistRepository.GetAddSongArgs()
 	expected := addSongsArgsWithErrors()
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {

@@ -156,7 +156,7 @@ func TestExistingUpdateBuilderReturnsDeserializedContent(t *testing.T) {
 	expected := playlistUpdate()
 	assert.Equal(t, expected, actual)
 	assert.Nil(t, err)
-	assert.Equal(t, deserializer.GetArgs(), existingPlaylistUpdateBody())
+	assert.Equal(t, existingPlaylistUpdateBody(), deserializer.GetArgs())
 }
 
 func TestNewUpdateBuilderReturnsExpectedUpdate(t *testing.T) {

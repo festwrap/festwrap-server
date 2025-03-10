@@ -14,7 +14,7 @@ func TestJsonDeserializerProducesExpectedResult(t *testing.T) {
 
 	expected := serializableObject()
 	assert.Nil(t, err)
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func TestJsonDeserializerReturnsErrorOnNonJsonInput(t *testing.T) {

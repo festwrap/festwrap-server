@@ -93,7 +93,7 @@ func TestGetSongSendsRequestWithProperOptions(t *testing.T) {
 	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.Nil(t, err)
-	assert.Equal(t, sender.GetSendArgs(), expectedHttpOptions())
+	assert.Equal(t, expectedHttpOptions(), sender.GetSendArgs())
 }
 
 func TestGetSongReturnsErrorOnSendError(t *testing.T) {
@@ -114,7 +114,7 @@ func TestGetSongCallsDeserializeWithSendResponseBody(t *testing.T) {
 	_, err := repository.GetSong(defaultContext(), defaultArtist(), defaultTitle())
 
 	assert.Nil(t, err)
-	assert.Equal(t, deserializer.GetArgs(), defaultResponse())
+	assert.Equal(t, defaultResponse(), deserializer.GetArgs())
 }
 
 func TestGetSongReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
@@ -147,7 +147,7 @@ func TestGetSongReturnsFirstSongFound(t *testing.T) {
 
 	expected := song.NewSong(defaultDeserializedResponse().Tracks.Songs[0].Uri)
 	assert.Nil(t, err)
-	assert.Equal(t, *actual, expected)
+	assert.Equal(t, expected, *actual)
 }
 
 func TestGetSongReturnErrorWhenInvalidToken(t *testing.T) {
@@ -194,5 +194,5 @@ func TestGetSongReturnsFirstSongFoundIntegration(t *testing.T) {
 
 	expected := song.NewSong("spotify:track:4rH1kFLYW0b28UNRyn7dK3")
 	assert.Nil(t, err)
-	assert.Equal(t, *actual, expected)
+	assert.Equal(t, expected, *actual)
 }

@@ -84,7 +84,7 @@ func TestBadRequestIfNameNotProvided(t *testing.T) {
 
 	handler.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusBadRequest)
+	assert.Equal(t, http.StatusBadRequest, writer.Code)
 }
 
 func TestLimitStatusCodeDependingOnValue(t *testing.T) {
@@ -125,7 +125,7 @@ func TestLimitStatusCodeDependingOnValue(t *testing.T) {
 
 			handler.ServeHTTP(writer, request)
 
-			assert.Equal(t, writer.Code, test.status)
+			assert.Equal(t, test.status, writer.Code)
 		})
 	}
 }
@@ -139,9 +139,9 @@ func TestSearcherCalledWithParams(t *testing.T) {
 	handler.ServeHTTP(httptest.NewRecorder(), request)
 
 	actual := searcher.GetSearchArgs()
-	assert.Equal(t, actual.Context, request.Context())
-	assert.Equal(t, fmt.Sprint(actual.Limit), defaultQueryParams()["limit"])
-	assert.Equal(t, actual.Name, defaultQueryParams()["name"])
+	assert.Equal(t, request.Context(), actual.Context)
+	assert.Equal(t, defaultQueryParams()["limit"], fmt.Sprint(actual.Limit))
+	assert.Equal(t, defaultQueryParams()["name"], actual.Name)
 }
 
 func TestSearchReturnsInternalErrorOnEncoderError(t *testing.T) {
@@ -152,7 +152,7 @@ func TestSearchReturnsInternalErrorOnEncoderError(t *testing.T) {
 
 	handler.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 }
 
 func TestSearchReturnsExpectedResult(t *testing.T) {
@@ -162,6 +162,6 @@ func TestSearchReturnsExpectedResult(t *testing.T) {
 
 	handler.ServeHTTP(writer, request)
 
-	assert.Equal(t, writer.Code, http.StatusOK)
-	assert.Equal(t, unmarshalSearchResponse(t, writer.Body.Bytes()), defaultResults())
+	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, defaultResults(), unmarshalSearchResponse(t, writer.Body.Bytes()))
 }

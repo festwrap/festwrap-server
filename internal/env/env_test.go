@@ -21,7 +21,7 @@ func TestGetEnvReturnsDefaultValueIfDoesntExist(t *testing.T) {
 		defaultValue := "something"
 		value, _ := GetEnvWithDefault("MY_KEY", defaultValue)
 
-		assert.Equal(t, value, defaultValue)
+		assert.Equal(t, defaultValue, value)
 	})
 }
 
@@ -32,7 +32,7 @@ func TestGetEnvReturnsExistingEnvVariable(t *testing.T) {
 		os.Setenv(key, value)
 		actual, _ := GetEnvWithDefault(key, 0)
 
-		assert.Equal(t, actual, 42)
+		assert.Equal(t, 42, actual)
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestGetEnvReturnsExistingEnvVariable(t *testing.T) {
 		os.Setenv(key, value)
 		actual, _ := GetEnvWithDefault(key, "")
 
-		assert.Equal(t, actual, value)
+		assert.Equal(t, value, actual)
 	})
 }
 
