@@ -3,89 +3,61 @@ package spotify
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 
 	types "festwrap/internal"
 	"festwrap/internal/artist"
 	httpsender "festwrap/internal/http/sender"
-	"festwrap/internal/serialization"
 	"festwrap/internal/testtools"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func defaultSearchName() string {
-	return "Movements"
-}
+const (
+	searchName = "Movements"
+	limit      = 2
+	tokenKey   = types.ContextKey("myKey")
+	authToken  = "some_token"
+)
 
-func defaultLimit() int {
-	return 2
-}
-
-func defaultTokenKey() types.ContextKey {
-	return "myKey"
-}
-
-func defaultContext() context.Context {
+func testContext() context.Context {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, defaultTokenKey(), "some_token")
+	ctx = context.WithValue(ctx, tokenKey, authToken)
 	return ctx
 }
 
-func expectedHttpOptions() httpsender.HTTPRequestOptions {
-	url := "https://api.spotify.com/v1/search?limit=2&q=artist%3AMovements&type=artist"
+func searchArtistHttpOptions() httpsender.HTTPRequestOptions {
+	url := fmt.Sprintf(
+		"https://api.spotify.com/v1/search?limit=%d&q=artist%%3A%s&type=artist",
+		limit,
+		searchName,
+	)
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
-		map[string]string{"Authorization": "Bearer some_token"},
+		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", authToken)},
 	)
 	return options
 }
 
-func defaultResponse() []byte {
-	return []byte(`
-		{
-			"artists":
-			{
-				"items":[
-					{"name":"Movements"},
-					{"name":"The Movement","images":[{"url":"https://some.url1"}, {"url":https://some.url2"}]}
-				]
-			}
-		}
-	`)
-}
+func artistSearchResponse(t *testing.T) *[]byte {
+	t.Helper()
 
-func integrationResponse(t *testing.T) []byte {
 	path := filepath.Join(testtools.GetParentDir(t), "testdata", "spotify_artist_search_response.json")
-	return testtools.LoadTestDataOrError(t, path)
+	result := testtools.LoadTestDataOrError(t, path)
+	return &result
 }
 
-func defaultDeserializedResponse() spotifyResponse {
-	return spotifyResponse{
-		Artists: spotifyArtists{
-			ArtistItems: []spotifyArtist{
-				{Name: "Movements"},
-				{
-					Name: "The Movement",
-					Images: []spotifyImage{
-						{Url: "https://some.url1"},
-						{Url: "https://some.url2"},
-					},
-				},
-			},
-		},
-	}
+func artistSearchEmptyResponse(t *testing.T) *[]byte {
+	t.Helper()
+
+	path := filepath.Join(testtools.GetParentDir(t), "testdata", "spotify_artist_search_empty_response.json")
+	result := testtools.LoadTestDataOrError(t, path)
+	return &result
 }
 
-func defaultArtists() []artist.Artist {
-	return []artist.Artist{
-		artist.NewArtist("Movements"),
-		artist.NewArtistWithImageUri("The Movement", "https://some.url2"),
-	}
-}
-
-func integrationArtists() []artist.Artist {
+func searchedArtists() []artist.Artist {
 	return []artist.Artist{
 		artist.NewArtistWithImageUri(
 			"The Beatles",
@@ -104,42 +76,34 @@ func integrationArtists() []artist.Artist {
 	}
 }
 
-func defaultSender() *httpsender.FakeHTTPSender {
+func sender(t *testing.T) *httpsender.FakeHTTPSender {
 	sender := &httpsender.FakeHTTPSender{}
-	response := defaultResponse()
-	sender.SetResponse(&response)
+	sender.SetResponse(artistSearchResponse(t))
 	return sender
-}
-
-func defaultDeserializer() *serialization.FakeDeserializer[spotifyResponse] {
-	deserializer := &serialization.FakeDeserializer[spotifyResponse]{}
-	deserializer.SetResponse(defaultDeserializedResponse())
-	return deserializer
 }
 
 func spotifySongRepository(sender httpsender.HTTPRequestSender) SpotifyArtistRepository {
 	repository := NewSpotifyArtistRepository(sender)
-	repository.SetDeserializer(defaultDeserializer())
-	repository.SetTokenKey(defaultTokenKey())
-	return *repository
+	repository.SetTokenKey(tokenKey)
+	return repository
 }
 
 func TestSearchArtistSendsRequestWithProperOptions(t *testing.T) {
-	sender := defaultSender()
-	repository := spotifySongRepository(sender)
+	testSender := sender(t)
+	repository := spotifySongRepository(testSender)
 
-	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(testContext(), searchName, limit)
 
 	assert.Nil(t, err)
-	assert.Equal(t, expectedHttpOptions(), sender.GetSendArgs())
+	assert.Equal(t, searchArtistHttpOptions(), testSender.GetSendArgs())
 }
 
 func TestSearchArtistReturnsErrorOnWrongKeyType(t *testing.T) {
-	ctx := defaultContext()
-	ctx = context.WithValue(ctx, defaultTokenKey(), 42)
-	repository := spotifySongRepository(defaultSender())
+	ctx := testContext()
+	ctx = context.WithValue(ctx, tokenKey, 42)
+	repository := spotifySongRepository(sender(t))
 
-	_, err := repository.SearchArtist(ctx, defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(ctx, searchName, limit)
 
 	assert.NotNil(t, err)
 }
@@ -149,63 +113,36 @@ func TestSearchArtistReturnsErrorOnSendError(t *testing.T) {
 	sender.SetError(errors.New("test error"))
 	repository := spotifySongRepository(sender)
 
-	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(testContext(), searchName, limit)
 
 	assert.NotNil(t, err)
 }
 
-func TestSearchArtistCallsDeserializeWithSendResponseBody(t *testing.T) {
-	repository := spotifySongRepository(defaultSender())
-	deserializer := defaultDeserializer()
-	repository.SetDeserializer(deserializer)
+func TestSearchArtistsReturnsErrorOnInvalidBody(t *testing.T) {
+	sender := &httpsender.FakeHTTPSender{}
+	invalidBody := []byte("{some_invalid_json}")
+	sender.SetResponse(&invalidBody)
+	repository := spotifySongRepository(sender)
 
-	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
-
-	assert.Nil(t, err)
-	assert.Equal(t, defaultResponse(), deserializer.GetArgs())
-}
-
-func TestSearchArtistsReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
-	repository := spotifySongRepository(defaultSender())
-	deserializer := defaultDeserializer()
-	deserializer.SetError(errors.New("test error"))
-	repository.SetDeserializer(deserializer)
-
-	_, err := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
+	_, err := repository.SearchArtist(testContext(), searchName, limit)
 
 	assert.NotNil(t, err)
-}
-
-func TestSearchArtistReturnsDeserializedArtists(t *testing.T) {
-	repository := spotifySongRepository(defaultSender())
-
-	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
-
-	assert.Equal(t, artists, defaultArtists())
 }
 
 func TestSearchArtistReturnsEmptyIfNoneFound(t *testing.T) {
-	repository := spotifySongRepository(defaultSender())
-	deserializer := defaultDeserializer()
-	emptyResponse := spotifyResponse{Artists: spotifyArtists{ArtistItems: []spotifyArtist{}}}
-	deserializer.SetResponse(emptyResponse)
-	repository.SetDeserializer(deserializer)
+	sender := &httpsender.FakeHTTPSender{}
+	sender.SetResponse(artistSearchEmptyResponse(t))
+	repository := spotifySongRepository(sender)
 
-	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
+	artists, _ := repository.SearchArtist(testContext(), searchName, limit)
 
 	assert.Equal(t, []artist.Artist{}, artists)
 }
 
-func TestSearchArtistReturnsDeserializedArtistsIntegration(t *testing.T) {
-	testtools.SkipOnShortRun(t)
+func TestSearchArtistReturnsArtists(t *testing.T) {
+	repository := spotifySongRepository(sender(t))
 
-	sender := defaultSender()
-	response := integrationResponse(t)
-	sender.SetResponse(&response)
-	repository := NewSpotifyArtistRepository(sender)
-	repository.SetTokenKey(defaultTokenKey())
+	artists, _ := repository.SearchArtist(testContext(), searchName, limit)
 
-	artists, _ := repository.SearchArtist(defaultContext(), defaultSearchName(), defaultLimit())
-
-	assert.Equal(t, integrationArtists(), artists)
+	assert.Equal(t, artists, searchedArtists())
 }

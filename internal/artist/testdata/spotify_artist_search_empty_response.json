@@ -1,0 +1,11 @@
+{
+    "artists": {
+      "href": "https://api.spotify.com/v1/search?query=artist%3AThe+Beatles&type=artist&locale=ca-ES%2Cca%3Bq%3D0.9%2Cen%3Bq%3D0.8%2Ces%3Bq%3D0.7&offset=0&limit=5",
+      "items": [],
+      "limit": 5,
+      "next": null,
+      "offset": 0,
+      "previous": null,
+      "total": 0
+    }
+  }
