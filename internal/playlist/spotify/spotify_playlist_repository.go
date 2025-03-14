@@ -159,34 +159,6 @@ func (r *SpotifyPlaylistRepository) GetHTTPSender() httpsender.HTTPRequestSender
 	return r.httpSender
 }
 
-func (r *SpotifyPlaylistRepository) SetHTTPSender(httpSender httpsender.HTTPRequestSender) {
-	r.httpSender = httpSender
-}
-
-func (r *SpotifyPlaylistRepository) SetSongSerializer(serializer serialization.Serializer[SpotifySongs]) {
-	r.songsSerializer = serializer
-}
-
-func (r *SpotifyPlaylistRepository) GetSongSerializer() serialization.Serializer[SpotifySongs] {
-	return r.songsSerializer
-}
-
-func (r *SpotifyPlaylistRepository) GetPlaylistCreateSerializer() serialization.Serializer[SpotifyPlaylist] {
-	return r.playlistCreateSerializer
-}
-
-func (r *SpotifyPlaylistRepository) SetPlaylistCreateSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
-	r.playlistCreateSerializer = serializer
-}
-
-func (r *SpotifyPlaylistRepository) SetPlaylistSearchDeserializer(deserializer serialization.Deserializer[SpotifySearchPlaylistResponse]) {
-	r.playlistSearchDeserializer = deserializer
-}
-
-func (r *SpotifyPlaylistRepository) SetPlaylistCreateDeserializer(deserializer serialization.Deserializer[SpotifyCreatePlaylistResponse]) {
-	r.playlistCreateDeserializer = deserializer
-}
-
 func (r *SpotifyPlaylistRepository) addSongsHttpOptions(
 	playlistId string, body []byte, token string,
 ) httpsender.HTTPRequestOptions {
@@ -225,4 +197,8 @@ func (r *SpotifyPlaylistRepository) GetSpotifyBaseHeaders(token string) map[stri
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Content-Type":  "application/json",
 	}
+}
+
+func (r *SpotifyPlaylistRepository) SetPlaylistCreateSerializer(serializer serialization.Serializer[SpotifyPlaylist]) {
+	r.playlistCreateSerializer = serializer
 }

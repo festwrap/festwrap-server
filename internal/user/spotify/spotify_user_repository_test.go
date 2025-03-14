@@ -5,56 +5,41 @@ import (
 	"errors"
 	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
-	"festwrap/internal/serialization"
-	"festwrap/internal/testtools"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func defaultTokenKey() types.ContextKey {
-	return "myKey"
-}
+const (
+	tokenKey = types.ContextKey("myKey")
+	token    = "some_token"
+)
 
-func defaultContext() context.Context {
+func testContext() context.Context {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, defaultTokenKey(), "some_token")
+	ctx = context.WithValue(ctx, tokenKey, token)
 	return ctx
 }
 
-func defaultResponse() []byte {
-	return []byte(`{"id":"my_id"}`)
-}
-
-func defaultDeserializedResponse() spotifyUserResponse {
-	return spotifyUserResponse{UserId: "userId"}
-}
-
-func defaultSender() *httpsender.FakeHTTPSender {
+func userIdSender() *httpsender.FakeHTTPSender {
 	sender := &httpsender.FakeHTTPSender{}
-	response := defaultResponse()
+	response := []byte(`{"id":"my_id"}`)
 	sender.SetResponse(&response)
 	return sender
 }
 
-func defaultDeserializer() *serialization.FakeDeserializer[spotifyUserResponse] {
-	deserializer := &serialization.FakeDeserializer[spotifyUserResponse]{}
-	deserializer.SetResponse(defaultDeserializedResponse())
-	return deserializer
-}
-
 func spotifyUserRepository(sender httpsender.HTTPRequestSender) SpotifyUserRepository {
 	repository := NewSpotifyUserRepository(sender)
-	repository.SetDeserializer(defaultDeserializer())
-	repository.SetTokenKey(defaultTokenKey())
+	repository.SetTokenKey(tokenKey)
 	return repository
 }
 
-func expectedHttpOptions() httpsender.HTTPRequestOptions {
+func getUserHttpOptions() httpsender.HTTPRequestOptions {
 	url := "https://api.spotify.com/v1/me"
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
 	options.SetHeaders(
-		map[string]string{"Authorization": "Bearer some_token"},
+		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)},
 	)
 	return options
 }
@@ -81,7 +66,7 @@ func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 			t.Parallel()
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, test.tokenKey, test.tokenVal)
-			repository := spotifyUserRepository(defaultSender())
+			repository := spotifyUserRepository(userIdSender())
 			repository.SetTokenKey(test.repositoryTokenKey)
 
 			_, err := repository.GetCurrentUserId(ctx)
@@ -91,13 +76,13 @@ func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 }
 
 func TestGetCurrentUserIdSendsRequestWithProperOptions(t *testing.T) {
-	sender := defaultSender()
+	sender := userIdSender()
 	repository := spotifyUserRepository(sender)
 
-	_, err := repository.GetCurrentUserId(defaultContext())
+	_, err := repository.GetCurrentUserId(testContext())
 
 	assert.Nil(t, err)
-	assert.Equal(t, expectedHttpOptions(), sender.GetSendArgs())
+	assert.Equal(t, getUserHttpOptions(), sender.GetSendArgs())
 }
 
 func TestGetCurrentUserReturnsErrorOnSendError(t *testing.T) {
@@ -105,41 +90,28 @@ func TestGetCurrentUserReturnsErrorOnSendError(t *testing.T) {
 	sender.SetError(errors.New("test error"))
 	repository := spotifyUserRepository(sender)
 
-	_, err := repository.GetCurrentUserId(defaultContext())
+	_, err := repository.GetCurrentUserId(testContext())
 
 	assert.NotNil(t, err)
 }
 
-func TestGetCurrentUserCallsDeserializeWithSendResponseBody(t *testing.T) {
-	repository := spotifyUserRepository(defaultSender())
+func TestGetCurrentUserReturnsErrorOnNonJsonUserIdBody(t *testing.T) {
+	sender := userIdSender()
+	nonJsonResponse := []byte("{non_json")
+	sender.SetResponse(&nonJsonResponse)
+	repository := spotifyUserRepository(sender)
 
-	_, err := repository.GetCurrentUserId(defaultContext())
-
-	assert.Nil(t, err)
-	deserializer := repository.GetDeserializer().(*serialization.FakeDeserializer[spotifyUserResponse])
-	assert.Equal(t, defaultResponse(), deserializer.GetArgs())
-}
-
-func TestGetCurrentUserReturnsErrorOnResponseBodyDeserializationError(t *testing.T) {
-	deserializer := defaultDeserializer()
-	deserializer.SetError(errors.New("test error"))
-	repository := spotifyUserRepository(defaultSender())
-	repository.SetDeserializer(deserializer)
-
-	_, err := repository.GetCurrentUserId(defaultContext())
+	_, err := repository.GetCurrentUserId(testContext())
 
 	assert.NotNil(t, err)
 }
 
-func TestGetCurrentUserReturnsFirstSongFoundIntegration(t *testing.T) {
-	testtools.SkipOnShortRun(t)
+func TestGetCurrentUserReturnsUserId(t *testing.T) {
+	repository := spotifyUserRepository(userIdSender())
 
-	repository := spotifyUserRepository(defaultSender())
-	repository.SetDeserializer(serialization.NewJsonDeserializer[spotifyUserResponse]())
-
-	actual, err := repository.GetCurrentUserId(defaultContext())
+	actual, err := repository.GetCurrentUserId(testContext())
 
 	expected := "my_id"
-	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
+	assert.Nil(t, err)
 }

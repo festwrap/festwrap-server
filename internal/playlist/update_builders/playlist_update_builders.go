@@ -57,10 +57,6 @@ func (b *ExistingPlaylistUpdateBuilder) Build(request *http.Request) (playlist.P
 	return update, nil
 }
 
-func (b *ExistingPlaylistUpdateBuilder) SetDeserializer(deserializer serialization.Deserializer[ExistingPlaylistUpdate]) {
-	b.deserializer = deserializer
-}
-
 func NewNewPlaylistUpdateBuilder(playlistService playlist.PlaylistService) NewPlaylistUpdateBuilder {
 	return NewPlaylistUpdateBuilder{
 		playlistService: playlistService,
@@ -94,8 +90,4 @@ func (b *NewPlaylistUpdateBuilder) Build(request *http.Request) (playlist.Playli
 		playlistArtists[i] = playlist.PlaylistArtist{Name: artist.Name}
 	}
 	return playlist.PlaylistUpdate{PlaylistId: playlistId, Artists: playlistArtists}, nil
-}
-
-func (b *NewPlaylistUpdateBuilder) SetDeserializer(deserializer serialization.Deserializer[NewPlaylistUpdate]) {
-	b.deserializer = deserializer
 }

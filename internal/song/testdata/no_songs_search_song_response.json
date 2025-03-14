@@ -1,0 +1,11 @@
+{
+    "tracks": {
+        "href": "https://api.spotify.com/v1/search?query=track%3Agoodbye+artist%3Atoe&type=track&offset=0&limit=5",
+        "items": [],
+        "limit": 5,
+        "next": null,
+        "offset": 0,
+        "previous": null,
+        "total": 0
+    }
+}

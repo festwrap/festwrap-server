@@ -18,9 +18,9 @@ type SpotifyArtistRepository struct {
 	httpSender   httpsender.HTTPRequestSender
 }
 
-func NewSpotifyArtistRepository(httpSender httpsender.HTTPRequestSender) *SpotifyArtistRepository {
+func NewSpotifyArtistRepository(httpSender httpsender.HTTPRequestSender) SpotifyArtistRepository {
 	deserializer := serialization.NewJsonDeserializer[spotifyResponse]()
-	return &SpotifyArtistRepository{
+	return SpotifyArtistRepository{
 		tokenKey:     "token",
 		host:         "api.spotify.com",
 		deserializer: deserializer,
