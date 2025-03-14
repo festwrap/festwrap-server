@@ -55,14 +55,6 @@ func (r SpotifyUserRepository) getCurrentUserIdHTTPOptions(accessToken string) h
 	return httpOptions
 }
 
-func (r *SpotifyUserRepository) GetDeserializer() serialization.Deserializer[spotifyUserResponse] {
-	return r.deserializer
-}
-
-func (r *SpotifyUserRepository) SetDeserializer(deserializer serialization.Deserializer[spotifyUserResponse]) {
-	r.deserializer = deserializer
-}
-
 func (r *SpotifyUserRepository) SetTokenKey(key types.ContextKey) {
 	r.tokenKey = key
 }
