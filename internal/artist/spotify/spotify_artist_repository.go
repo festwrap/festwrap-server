@@ -72,7 +72,7 @@ func (r *SpotifyArtistRepository) createSetlistHttpOptions(
 func (r *SpotifyArtistRepository) getSearchUrl(artistName string, limit int) string {
 	queryParams := url.Values{}
 	queryParams.Set("type", "artist")
-	queryParams.Set("q", fmt.Sprintf("artist:%s", artistName))
+	queryParams.Set("q", artistName)
 	queryParams.Set("limit", fmt.Sprint(limit))
 	return fmt.Sprintf("https://%s/v1/search?%s", r.host, queryParams.Encode())
 }

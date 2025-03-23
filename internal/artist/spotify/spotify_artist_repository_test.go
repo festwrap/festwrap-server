@@ -30,7 +30,7 @@ func testContext() context.Context {
 
 func searchArtistHttpOptions() httpsender.HTTPRequestOptions {
 	url := fmt.Sprintf(
-		"https://api.spotify.com/v1/search?limit=%d&q=artist%%3A%s&type=artist",
+		"https://api.spotify.com/v1/search?limit=%d&q=%s&type=artist",
 		limit,
 		searchName,
 	)
