@@ -182,3 +182,13 @@ func TestUpdatePlaylistHandlerShouldReturnResponseIfEnabled(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdatePlaylistHandlerReturnsGivenStatus(t *testing.T) {
+	status := http.StatusContinue
+	handler, request, writer := setup(t)
+	handler.SetSuccessStatusCode(status)
+
+	handler.ServeHTTP(writer, request)
+
+	assert.Equal(t, status, writer.Code)
+}

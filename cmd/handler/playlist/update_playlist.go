@@ -24,6 +24,7 @@ type UpdatePlaylistHandler struct {
 	maxArtists            int
 	returnResponse        bool
 	responseEncoder       serialization.Encoder[UpdatePlaylistResponse]
+	successStatusCode     int
 }
 
 func NewUpdatePlaylistHandler(
@@ -39,6 +40,7 @@ func NewUpdatePlaylistHandler(
 		maxArtists:            5,
 		returnResponse:        false,
 		responseEncoder:       &responseEncoder,
+		successStatusCode:     http.StatusCreated,
 	}
 }
 
@@ -59,6 +61,7 @@ func NewUpdateNewPlaylistHandler(
 	builder := builders.NewNewPlaylistUpdateBuilder(playlistService)
 	handler := NewUpdatePlaylistHandler(playlistService, &builder, logger)
 	handler.ReturnResponse(true)
+	handler.SetSuccessStatusCode(http.StatusOK)
 	return handler
 }
 
@@ -87,7 +90,7 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	statusCode := http.StatusCreated
+	statusCode := h.successStatusCode
 	if errors > 0 && errors < len(update.Artists) {
 		statusCode = http.StatusMultiStatus
 	} else if errors > 0 {
@@ -124,4 +127,8 @@ func (h *UpdatePlaylistHandler) SetMaxArtists(limit int) {
 
 func (h *UpdatePlaylistHandler) ReturnResponse(flag bool) {
 	h.returnResponse = flag
+}
+
+func (h *UpdatePlaylistHandler) SetSuccessStatusCode(status int) {
+	h.successStatusCode = status
 }
