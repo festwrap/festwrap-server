@@ -3,6 +3,7 @@ package playlist
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -151,4 +152,43 @@ func TestUpdatePlaylistHandlerStatusOnPartialErrors(t *testing.T) {
 	handler.ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusMultiStatus, writer.Code)
+}
+
+func TestUpdatePlaylistHandlerShouldReturnResponseIfEnabled(t *testing.T) {
+	tests := map[string]struct {
+		returnResponse bool
+		expected       string
+	}{
+		"enabled": {
+			returnResponse: true,
+			expected:       fmt.Sprintf("{\"playlist\":{\"id\":\"%s\"}}\n", playlistId),
+		},
+		"disabled": {
+			returnResponse: false,
+			expected:       "",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			handler, request, writer := setup(t)
+			handler.ReturnResponse(test.returnResponse)
+
+			handler.ServeHTTP(writer, request)
+
+			assert.Equal(t, http.StatusCreated, writer.Code)
+			assert.Equal(t, test.expected, writer.Body.String())
+		})
+	}
+}
+
+func TestUpdatePlaylistHandlerReturnsGivenStatus(t *testing.T) {
+	status := http.StatusContinue
+	handler, request, writer := setup(t)
+	handler.SetSuccessStatusCode(status)
+
+	handler.ServeHTTP(writer, request)
+
+	assert.Equal(t, status, writer.Code)
 }

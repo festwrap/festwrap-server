@@ -4,15 +4,27 @@ import (
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
 	builders "festwrap/internal/playlist/update_builders"
+	"festwrap/internal/serialization"
 	"fmt"
 	"net/http"
 )
+
+type Playlist struct {
+	Id string `json:"id"`
+}
+
+type UpdatePlaylistResponse struct {
+	Playlist Playlist `json:"playlist"`
+}
 
 type UpdatePlaylistHandler struct {
 	playlistService       playlist.PlaylistService
 	logger                logging.Logger
 	playlistUpdateBuilder playlist.PlaylistUpdateBuilder
 	maxArtists            int
+	returnResponse        bool
+	responseEncoder       serialization.Encoder[UpdatePlaylistResponse]
+	successStatusCode     int
 }
 
 func NewUpdatePlaylistHandler(
@@ -20,11 +32,15 @@ func NewUpdatePlaylistHandler(
 	playlistUpdateBuilder playlist.PlaylistUpdateBuilder,
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
+	responseEncoder := serialization.NewJsonEncoder[UpdatePlaylistResponse]()
 	return UpdatePlaylistHandler{
 		playlistService:       playlistService,
 		logger:                logger,
 		playlistUpdateBuilder: playlistUpdateBuilder,
 		maxArtists:            5,
+		returnResponse:        false,
+		responseEncoder:       &responseEncoder,
+		successStatusCode:     http.StatusCreated,
 	}
 }
 
@@ -34,12 +50,8 @@ func NewUpdateExistingPlaylistHandler(
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
 	builder := builders.NewExistingPlaylistUpdateBuilder(pathId)
-	return UpdatePlaylistHandler{
-		playlistService:       playlistService,
-		logger:                logger,
-		playlistUpdateBuilder: &builder,
-		maxArtists:            5,
-	}
+	handler := NewUpdatePlaylistHandler(playlistService, &builder, logger)
+	return handler
 }
 
 func NewUpdateNewPlaylistHandler(
@@ -47,12 +59,10 @@ func NewUpdateNewPlaylistHandler(
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
 	builder := builders.NewNewPlaylistUpdateBuilder(playlistService)
-	return UpdatePlaylistHandler{
-		playlistService:       playlistService,
-		logger:                logger,
-		playlistUpdateBuilder: &builder,
-		maxArtists:            5,
-	}
+	handler := NewUpdatePlaylistHandler(playlistService, &builder, logger)
+	handler.ReturnResponse(true)
+	handler.SetSuccessStatusCode(http.StatusOK)
+	return handler
 }
 
 func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -80,14 +90,23 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	statusCode := http.StatusCreated
+	statusCode := h.successStatusCode
 	if errors > 0 && errors < len(update.Artists) {
 		statusCode = http.StatusMultiStatus
 	} else if errors > 0 {
 		statusCode = http.StatusInternalServerError
 	}
-
 	w.WriteHeader(statusCode)
+
+	if h.returnResponse {
+		response := UpdatePlaylistResponse{Playlist: Playlist{Id: update.PlaylistId}}
+		if err = h.responseEncoder.Encode(w, response); err != nil {
+			message := fmt.Sprintf("encoding error: could not encode response: %v", err)
+			h.logger.Error(message)
+			http.Error(w, "unexpected error: could not encode response", http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func (h *UpdatePlaylistHandler) SetPlaylistUpdateBuilder(builder playlist.PlaylistUpdateBuilder) {
@@ -104,4 +123,12 @@ func (h *UpdatePlaylistHandler) SetPlaylistService(service playlist.PlaylistServ
 
 func (h *UpdatePlaylistHandler) SetMaxArtists(limit int) {
 	h.maxArtists = limit
+}
+
+func (h *UpdatePlaylistHandler) ReturnResponse(flag bool) {
+	h.returnResponse = flag
+}
+
+func (h *UpdatePlaylistHandler) SetSuccessStatusCode(status int) {
+	h.successStatusCode = status
 }
