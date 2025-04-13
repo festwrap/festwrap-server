@@ -30,6 +30,7 @@ type UpdatePlaylistHandler struct {
 func NewUpdatePlaylistHandler(
 	playlistService playlist.PlaylistService,
 	playlistUpdateBuilder playlist.PlaylistUpdateBuilder,
+	successStatusCode int,
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
 	responseEncoder := serialization.NewJsonEncoder[UpdatePlaylistResponse]()
@@ -40,7 +41,7 @@ func NewUpdatePlaylistHandler(
 		maxArtists:            5,
 		returnResponse:        false,
 		responseEncoder:       &responseEncoder,
-		successStatusCode:     http.StatusCreated,
+		successStatusCode:     successStatusCode,
 	}
 }
 
@@ -50,7 +51,7 @@ func NewUpdateExistingPlaylistHandler(
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
 	builder := builders.NewExistingPlaylistUpdateBuilder(pathId)
-	handler := NewUpdatePlaylistHandler(playlistService, &builder, logger)
+	handler := NewUpdatePlaylistHandler(playlistService, &builder, http.StatusOK, logger)
 	return handler
 }
 
@@ -59,9 +60,8 @@ func NewUpdateNewPlaylistHandler(
 	logger logging.Logger,
 ) UpdatePlaylistHandler {
 	builder := builders.NewNewPlaylistUpdateBuilder(playlistService)
-	handler := NewUpdatePlaylistHandler(playlistService, &builder, logger)
+	handler := NewUpdatePlaylistHandler(playlistService, &builder, http.StatusCreated, logger)
 	handler.ReturnResponse(true)
-	handler.SetSuccessStatusCode(http.StatusOK)
 	return handler
 }
 
@@ -97,6 +97,9 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		statusCode = http.StatusInternalServerError
 	}
 	w.WriteHeader(statusCode)
+
+	message := fmt.Sprintf("updated playlist with id: %s and artists: %v", update.PlaylistId, update.Artists)
+	h.logger.Info(message)
 
 	if h.returnResponse {
 		response := UpdatePlaylistResponse{Playlist: Playlist{Id: update.PlaylistId}}

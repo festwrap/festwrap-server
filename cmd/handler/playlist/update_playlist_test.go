@@ -20,6 +20,8 @@ import (
 const (
 	playlistId     = "someId"
 	playlistIdPath = "playlistId"
+
+	statusCode = http.StatusOK
 )
 
 func updateArtists() []playlist.PlaylistArtist {
@@ -68,7 +70,7 @@ func setup(t *testing.T) (UpdatePlaylistHandler, *http.Request, *httptest.Respon
 
 	playlistService := alwaysSuccessPlaylistService(request)
 
-	handler := NewUpdatePlaylistHandler(playlistService, &builder, logging.NoopLogger{})
+	handler := NewUpdatePlaylistHandler(playlistService, &builder, statusCode, logging.NoopLogger{})
 	return handler, request, writer
 }
 
@@ -131,7 +133,7 @@ func TestUpdatePlaylistHandlerStatusOnNoErrors(t *testing.T) {
 
 	handler.ServeHTTP(writer, request)
 
-	assert.Equal(t, http.StatusCreated, writer.Code)
+	assert.Equal(t, statusCode, writer.Code)
 }
 
 func TestUpdatePlaylistHandlerStatusOnAllFailures(t *testing.T) {
@@ -177,7 +179,7 @@ func TestUpdatePlaylistHandlerShouldReturnResponseIfEnabled(t *testing.T) {
 
 			handler.ServeHTTP(writer, request)
 
-			assert.Equal(t, http.StatusCreated, writer.Code)
+			assert.Equal(t, statusCode, writer.Code)
 			assert.Equal(t, test.expected, writer.Body.String())
 		})
 	}
