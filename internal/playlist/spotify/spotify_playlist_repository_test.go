@@ -123,7 +123,7 @@ func createPlaylistHttpOptions() httpsender.HTTPRequestOptions {
 	url := fmt.Sprintf("https://api.spotify.com/v1/users/%s/playlists", userId)
 	options := httpsender.NewHTTPRequestOptions(url, httpsender.POST, 201)
 	options.SetHeaders(authHeaders())
-	createPlaylistBody := []byte(`{"name":"my-playlist","description":"some playlist","is_public":false}`)
+	createPlaylistBody := []byte(`{"name":"my-playlist","description":"some playlist","public":false}`)
 	options.SetBody(createPlaylistBody)
 	return options
 }
