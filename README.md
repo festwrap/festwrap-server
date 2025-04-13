@@ -95,3 +95,8 @@ curl -X PUT --location 'http://localhost:8080/playlists' \
       --header 'Content-Type: application/json' \
 --data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>","description":"<playlist_description>","isPublic":<true_false>}}
 ```
+
+> [!IMPORTANT]
+> `public` refers to whether the playlist is publicly shown in your profile.
+> However, the playlist is still publicly available given the playlist id.
+> See [this](https://community.spotify.com/t5/Spotify-for-Developers/Api-to-create-a-private-playlist-doesn-t-work/td-p/5407807) for more details.
