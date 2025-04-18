@@ -7,6 +7,7 @@ import (
 	"festwrap/internal/serialization"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type Playlist struct {
@@ -25,6 +26,7 @@ type UpdatePlaylistHandler struct {
 	returnResponse        bool
 	responseEncoder       serialization.Encoder[UpdatePlaylistResponse]
 	successStatusCode     int
+	addSetlistSleepMs     int
 }
 
 func NewUpdatePlaylistHandler(
@@ -42,6 +44,7 @@ func NewUpdatePlaylistHandler(
 		returnResponse:        false,
 		responseEncoder:       &responseEncoder,
 		successStatusCode:     successStatusCode,
+		addSetlistSleepMs:     0,
 	}
 }
 
@@ -81,7 +84,12 @@ func (h *UpdatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	errors := 0
-	for _, artist := range update.Artists {
+	for i, artist := range update.Artists {
+		if i > 0 {
+			// Sleep to avoid hitting Setlistfm rate limit
+			time.Sleep(time.Duration(h.addSetlistSleepMs) * time.Millisecond)
+		}
+
 		err := h.playlistService.AddSetlist(r.Context(), update.PlaylistId, artist.Name)
 		if err != nil {
 			message := fmt.Sprintf("could not add songs for %s to playlist %s: %v", artist.Name, update.PlaylistId, err)
@@ -134,4 +142,8 @@ func (h *UpdatePlaylistHandler) ReturnResponse(flag bool) {
 
 func (h *UpdatePlaylistHandler) SetSuccessStatusCode(status int) {
 	h.successStatusCode = status
+}
+
+func (h *UpdatePlaylistHandler) SetAddSetlistSleep(sleepMs int) {
+	h.addSetlistSleepMs = sleepMs
 }
