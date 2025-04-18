@@ -46,6 +46,8 @@ func main() {
 	timeoutSeconds := GetEnvWithDefaultOrFail[int]("FESTWRAP_TIMEOUT_SECONDS", 5)
 	setlistfmApiKey := GetEnvStringOrFail("FESTWRAP_SETLISTFM_APIKEY")
 	maxSetlistFMNumSearchPages := GetEnvWithDefaultOrFail[int]("FESTWRAP_SETLISTFM_NUM_SEARCH_PAGES", 3)
+	maxUpdateArtists := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_UPDATE_ARTISTS", 5)
+	addSetlistSleepMs := GetEnvWithDefaultOrFail[int]("FESTWRAP_ADD_SETLIST_SLEEP_MS", 550)
 
 	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger := logging.NewBaseLogger(slogLogger)
@@ -82,9 +84,13 @@ func main() {
 		songRepository,
 	)
 	existingPlaylistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
+	existingPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
+	existingPlaylistUpdateHandler.SetAddSetlistSleep(addSetlistSleepMs)
 	mux.HandleFunc("/playlists/{playlistId}", existingPlaylistUpdateHandler.ServeHTTP)
 
 	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
+	newPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
+	newPlaylistUpdateHandler.SetAddSetlistSleep(addSetlistSleepMs)
 	mux.HandleFunc(
 		"/playlists",
 		middleware.NewUserIdMiddleware(&newPlaylistUpdateHandler, userRepository).ServeHTTP,
