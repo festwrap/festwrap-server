@@ -21,6 +21,8 @@ import (
 	"festwrap/internal/setlist/setlistfm"
 	spotifysongs "festwrap/internal/song/spotify"
 	spotifyusers "festwrap/internal/user/spotify"
+
+	"github.com/gorilla/mux"
 )
 
 func GetEnvWithDefaultOrFail[T env.EnvValue](key string, defaultValue T) T {
@@ -59,12 +61,12 @@ func main() {
 	baseHttpClient := httpclient.NewBaseHTTPClient(httpClient)
 	httpSender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
 
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	artistRepository := spotifyArtists.NewSpotifyArtistRepository(&httpSender)
 	artistSearcher := search.NewFunctionSearcher(artistRepository.SearchArtist)
 	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
-	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP)
+	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP).Methods(http.MethodGet)
 
 	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(&httpSender)
 	playlistSearcher := search.NewFunctionSearcher(playlistRepository.SearchPlaylist)
@@ -73,7 +75,7 @@ func main() {
 	mux.HandleFunc(
 		"/playlists/search",
 		middleware.NewUserIdMiddleware(&searchPlaylistsHandler, userRepository).ServeHTTP,
-	)
+	).Methods(http.MethodGet)
 
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(setlistfmApiKey, &httpSender)
 	setlistRepository.SetMaxPages(maxSetlistFMNumSearchPages)
@@ -86,7 +88,9 @@ func main() {
 	existingPlaylistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
 	existingPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
 	existingPlaylistUpdateHandler.SetAddSetlistSleep(addSetlistSleepMs)
-	mux.HandleFunc("/playlists/{playlistId}", existingPlaylistUpdateHandler.ServeHTTP)
+	mux.HandleFunc("/playlists/{playlistId}", existingPlaylistUpdateHandler.ServeHTTP).
+		Name("playlistId").
+		Methods(http.MethodPut)
 
 	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
 	newPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
@@ -94,7 +98,7 @@ func main() {
 	mux.HandleFunc(
 		"/playlists",
 		middleware.NewUserIdMiddleware(&newPlaylistUpdateHandler, userRepository).ServeHTTP,
-	)
+	).Methods(http.MethodPost)
 
 	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 	server := &http.Server{
