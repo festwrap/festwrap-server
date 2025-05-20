@@ -62,6 +62,7 @@ func main() {
 	httpSender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
 
 	mux := mux.NewRouter()
+	mux.Use(middleware.NewAuthTokenExtractor().Middleware)
 
 	artistRepository := spotifyArtists.NewSpotifyArtistRepository(&httpSender)
 	artistSearcher := search.NewFunctionSearcher(artistRepository.SearchArtist)
@@ -100,10 +101,9 @@ func main() {
 		middleware.NewUserIdMiddleware(&newPlaylistUpdateHandler, userRepository).ServeHTTP,
 	).Methods(http.MethodPost)
 
-	wrappedMux := middleware.NewAuthTokenMiddleware(mux)
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
-		Handler: wrappedMux,
+		Handler: mux,
 	}
 
 	server.ListenAndServe()
