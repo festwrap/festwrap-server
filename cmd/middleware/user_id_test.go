@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,16 +26,10 @@ func defaultUserIdKey() types.ContextKey {
 	return userIdKey
 }
 
-func defaultContext() context.Context {
-	ctx := context.Background()
-	context.WithValue(ctx, "some key", "some value")
-	return ctx
-}
-
-func userIdMiddlewareTestSetup() (UserIdMiddleware, *http.Request, *httptest.ResponseRecorder) {
+func userIdExtractorTestSetup() (UserIdExtractor, *http.Request, *httptest.ResponseRecorder) {
 	userRepository := user.FakeUserRepository{}
 	userRepository.SetGetCurrentIdValue(user.GetCurrentIdValue{UserId: "some_id", Err: nil})
-	middleware := NewUserIdMiddleware(GetUserIdHandler{}, &userRepository)
+	middleware := NewUserIdExtractor(&userRepository)
 	middleware.SetUserIdKey(defaultUserIdKey())
 	request := httptest.NewRequest("GET", "http://example.com", nil)
 	writer := httptest.NewRecorder()
@@ -44,37 +37,37 @@ func userIdMiddlewareTestSetup() (UserIdMiddleware, *http.Request, *httptest.Res
 }
 
 func TestGetUserIdCallsRepositoryWithRequestContext(t *testing.T) {
-	middleware, request, writer := userIdMiddlewareTestSetup()
+	extractor, request, writer := userIdExtractorTestSetup()
 
-	middleware.ServeHTTP(writer, request)
+	extractor.Middleware(GetUserIdHandler{}).ServeHTTP(writer, request)
 
-	fakeRepository := middleware.GetUserRepository().(*user.FakeUserRepository)
+	fakeRepository := extractor.GetUserRepository().(*user.FakeUserRepository)
 	assert.Equal(t, request.Context(), fakeRepository.GetGetCurrentIdArgs().Context)
 }
 
 func TestGetUserReturnsInternalErrorOnRepositoryError(t *testing.T) {
-	middleware, request, writer := userIdMiddlewareTestSetup()
+	extractor, request, writer := userIdExtractorTestSetup()
 	userRepository := user.FakeUserRepository{}
 	userRepository.SetGetCurrentIdValue(user.GetCurrentIdValue{UserId: "", Err: errors.New("test error")})
-	middleware.SetUserRepository(&userRepository)
+	extractor.SetUserRepository(&userRepository)
 
-	middleware.ServeHTTP(writer, request)
+	extractor.Middleware(GetUserIdHandler{}).ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusInternalServerError, writer.Result().StatusCode)
 }
 
 func TestUserIsPlacedInExpectedContextKey(t *testing.T) {
-	middleware, request, writer := userIdMiddlewareTestSetup()
+	extractor, request, writer := userIdExtractorTestSetup()
 
-	middleware.ServeHTTP(writer, request)
+	extractor.Middleware(GetUserIdHandler{}).ServeHTTP(writer, request)
 
 	assert.Equal(t, "some_id", writer.Body.String())
 }
 
 func TestUserIdMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
-	middleware, request, writer := userIdMiddlewareTestSetup()
+	extractor, request, writer := userIdExtractorTestSetup()
 
-	middleware.ServeHTTP(writer, request)
+	extractor.Middleware(GetUserIdHandler{}).ServeHTTP(writer, request)
 
 	assert.Equal(t, http.StatusContinue, writer.Code)
 }

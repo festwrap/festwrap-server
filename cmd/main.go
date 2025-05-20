@@ -72,11 +72,11 @@ func main() {
 	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(&httpSender)
 	playlistSearcher := search.NewFunctionSearcher(playlistRepository.SearchPlaylist)
 	userRepository := spotifyusers.NewSpotifyUserRepository(&httpSender)
+	userIdExtractor := middleware.NewUserIdExtractor(userRepository)
 	searchPlaylistsHandler := search.NewSearchHandler(&playlistSearcher, "playlists", logger)
-	mux.HandleFunc(
+	mux.Handle(
 		"/playlists/search",
-		middleware.NewUserIdMiddleware(&searchPlaylistsHandler, userRepository).ServeHTTP,
-	).Methods(http.MethodGet)
+		userIdExtractor.Middleware(http.HandlerFunc(searchPlaylistsHandler.ServeHTTP))).Methods(http.MethodGet)
 
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(setlistfmApiKey, &httpSender)
 	setlistRepository.SetMaxPages(maxSetlistFMNumSearchPages)
@@ -96,10 +96,9 @@ func main() {
 	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
 	newPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
 	newPlaylistUpdateHandler.SetAddSetlistSleep(addSetlistSleepMs)
-	mux.HandleFunc(
+	mux.Handle(
 		"/playlists",
-		middleware.NewUserIdMiddleware(&newPlaylistUpdateHandler, userRepository).ServeHTTP,
-	).Methods(http.MethodPost)
+		userIdExtractor.Middleware(http.HandlerFunc(newPlaylistUpdateHandler.ServeHTTP))).Methods(http.MethodPost)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
