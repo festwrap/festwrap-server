@@ -23,12 +23,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func setupLogger() logging.Logger {
+	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	return logging.NewBaseLogger(slogLogger)
+}
+
 func main() {
 
 	config := ReadConfig()
-
-	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	logger := logging.NewBaseLogger(slogLogger)
+	logger := setupLogger()
 
 	httpClient := &http.Client{
 		Transport: &http.Transport{MaxConnsPerHost: config.MaxConnsPerHost},
