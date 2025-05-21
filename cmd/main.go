@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"festwrap/cmd/handler/search"
 	"festwrap/cmd/middleware"
 	spotifyArtists "festwrap/internal/artist/spotify"
-	"festwrap/internal/env"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/logging"
@@ -25,38 +23,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func GetEnvWithDefaultOrFail[T env.EnvValue](key string, defaultValue T) T {
-	variable, err := env.GetEnvWithDefault[T](key, defaultValue)
-	if err != nil {
-		log.Fatalf("Could not read variable %s", key)
-	}
-	return variable
-}
-
-func GetEnvStringOrFail(key string) string {
-	variable := os.Getenv(key)
-	if variable == "" {
-		log.Fatalf("Could not read variable %s", key)
-	}
-	return variable
-}
-
 func main() {
 
-	port := GetEnvWithDefaultOrFail[string]("FESTWRAP_PORT", "8080")
-	maxConnsPerHost := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_CONNS_PER_HOST", 10)
-	timeoutSeconds := GetEnvWithDefaultOrFail[int]("FESTWRAP_TIMEOUT_SECONDS", 5)
-	setlistfmApiKey := GetEnvStringOrFail("FESTWRAP_SETLISTFM_APIKEY")
-	maxSetlistFMNumSearchPages := GetEnvWithDefaultOrFail[int]("FESTWRAP_SETLISTFM_NUM_SEARCH_PAGES", 3)
-	maxUpdateArtists := GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_UPDATE_ARTISTS", 5)
-	addSetlistSleepMs := GetEnvWithDefaultOrFail[int]("FESTWRAP_ADD_SETLIST_SLEEP_MS", 550)
+	config := ReadConfig()
 
 	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger := logging.NewBaseLogger(slogLogger)
 
 	httpClient := &http.Client{
-		Transport: &http.Transport{MaxConnsPerHost: maxConnsPerHost},
-		Timeout:   time.Duration(timeoutSeconds) * time.Second,
+		Transport: &http.Transport{MaxConnsPerHost: config.MaxConnsPerHost},
+		Timeout:   time.Duration(config.TimeoutSeconds) * time.Second,
 	}
 	baseHttpClient := httpclient.NewBaseHTTPClient(httpClient)
 	httpSender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
@@ -64,11 +40,13 @@ func main() {
 	mux := mux.NewRouter()
 	mux.Use(middleware.NewAuthTokenExtractor().Middleware)
 
+	// Set search artist endpoint
 	artistRepository := spotifyArtists.NewSpotifyArtistRepository(&httpSender)
 	artistSearcher := search.NewFunctionSearcher(artistRepository.SearchArtist)
 	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP).Methods(http.MethodGet)
 
+	// Set search playlist endpoint
 	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(&httpSender)
 	playlistSearcher := search.NewFunctionSearcher(playlistRepository.SearchPlaylist)
 	userRepository := spotifyusers.NewSpotifyUserRepository(&httpSender)
@@ -78,8 +56,9 @@ func main() {
 		"/playlists/search",
 		userIdExtractor.Middleware(http.HandlerFunc(searchPlaylistsHandler.ServeHTTP))).Methods(http.MethodGet)
 
-	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(setlistfmApiKey, &httpSender)
-	setlistRepository.SetMaxPages(maxSetlistFMNumSearchPages)
+	// Set update existing playlist endpoint
+	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, &httpSender)
+	setlistRepository.SetMaxPages(config.MaxSetlistFMNumSearchPages)
 	songRepository := spotifysongs.NewSpotifySongRepository(&httpSender)
 	playlistService := playlist.NewConcurrentPlaylistService(
 		&playlistRepository,
@@ -87,21 +66,22 @@ func main() {
 		songRepository,
 	)
 	existingPlaylistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
-	existingPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
-	existingPlaylistUpdateHandler.SetAddSetlistSleep(addSetlistSleepMs)
+	existingPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
+	existingPlaylistUpdateHandler.SetAddSetlistSleep(config.AddSetlistSleepMs)
 	mux.HandleFunc("/playlists/{playlistId}", existingPlaylistUpdateHandler.ServeHTTP).
 		Name("playlistId").
 		Methods(http.MethodPut)
 
+	// Set create new playlist endpoint
 	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
-	newPlaylistUpdateHandler.SetMaxArtists(maxUpdateArtists)
-	newPlaylistUpdateHandler.SetAddSetlistSleep(addSetlistSleepMs)
+	newPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
+	newPlaylistUpdateHandler.SetAddSetlistSleep(config.AddSetlistSleepMs)
 	mux.Handle(
 		"/playlists",
 		userIdExtractor.Middleware(http.HandlerFunc(newPlaylistUpdateHandler.ServeHTTP))).Methods(http.MethodPost)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%s", config.Port),
 		Handler: mux,
 	}
 

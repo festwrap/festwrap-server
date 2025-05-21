@@ -33,7 +33,7 @@ make run-tests
 To run the API locally, you can type:
 
 ```shell
-go run cmd/main.go
+go run ./cmd
 ```
 
 ### Run the app container
