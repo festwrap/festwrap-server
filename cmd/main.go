@@ -28,31 +28,35 @@ func setupLogger() logging.Logger {
 	return logging.NewBaseLogger(slogLogger)
 }
 
-func main() {
-
-	config := ReadConfig()
-	logger := setupLogger()
-
+func setupHTTPSender(config Config) httpsender.HTTPRequestSender {
 	httpClient := &http.Client{
 		Transport: &http.Transport{MaxConnsPerHost: config.MaxConnsPerHost},
 		Timeout:   time.Duration(config.TimeoutSeconds) * time.Second,
 	}
 	baseHttpClient := httpclient.NewBaseHTTPClient(httpClient)
-	httpSender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
+	sender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
+	return &sender
+}
+
+func main() {
+
+	config := ReadConfig()
+	logger := setupLogger()
+	httpSender := setupHTTPSender(config)
 
 	mux := mux.NewRouter()
 	mux.Use(middleware.NewAuthTokenExtractor().Middleware)
 
 	// Set search artist endpoint
-	artistRepository := spotifyArtists.NewSpotifyArtistRepository(&httpSender)
+	artistRepository := spotifyArtists.NewSpotifyArtistRepository(httpSender)
 	artistSearcher := search.NewFunctionSearcher(artistRepository.SearchArtist)
 	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP).Methods(http.MethodGet)
 
 	// Set search playlist endpoint
-	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(&httpSender)
+	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(httpSender)
 	playlistSearcher := search.NewFunctionSearcher(playlistRepository.SearchPlaylist)
-	userRepository := spotifyusers.NewSpotifyUserRepository(&httpSender)
+	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
 	userIdExtractor := middleware.NewUserIdExtractor(userRepository)
 	searchPlaylistsHandler := search.NewSearchHandler(&playlistSearcher, "playlists", logger)
 	mux.Handle(
@@ -60,9 +64,9 @@ func main() {
 		userIdExtractor.Middleware(http.HandlerFunc(searchPlaylistsHandler.ServeHTTP))).Methods(http.MethodGet)
 
 	// Set update existing playlist endpoint
-	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, &httpSender)
+	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, httpSender)
 	setlistRepository.SetMaxPages(config.MaxSetlistFMNumSearchPages)
-	songRepository := spotifysongs.NewSpotifySongRepository(&httpSender)
+	songRepository := spotifysongs.NewSpotifySongRepository(httpSender)
 	playlistService := playlist.NewConcurrentPlaylistService(
 		&playlistRepository,
 		setlistRepository,
