@@ -9,31 +9,32 @@ import (
 )
 
 // Extracts the Bearer Auth token in the header and stores in the context variable with the given key
-type AuthTokenMiddleware struct {
+type AuthTokenExtractor struct {
 	tokenKey types.ContextKey
-	handler  http.Handler
 }
 
-func NewAuthTokenMiddleware(handler http.Handler) AuthTokenMiddleware {
-	return AuthTokenMiddleware{tokenKey: types.ContextKey("token"), handler: handler}
+func NewAuthTokenExtractor() AuthTokenExtractor {
+	return AuthTokenExtractor{tokenKey: types.ContextKey("token")}
 }
 
-func (m AuthTokenMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Missing authorization header", http.StatusBadRequest)
-		return
-	} else if !strings.HasPrefix(authHeader, "Bearer ") {
-		http.Error(w, "Unexpected authorization header format", http.StatusUnprocessableEntity)
-		return
-	}
+func (m AuthTokenExtractor) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Missing authorization header", http.StatusBadRequest)
+			return
+		} else if !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Unexpected authorization header format", http.StatusUnprocessableEntity)
+			return
+		}
 
-	token := strings.TrimPrefix(authHeader, "Bearer ")
-	ctxWithToken := context.WithValue(r.Context(), m.tokenKey, token)
-	requestWithToken := r.WithContext(ctxWithToken)
-	m.handler.ServeHTTP(w, requestWithToken)
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		ctxWithToken := context.WithValue(r.Context(), m.tokenKey, token)
+		requestWithToken := r.WithContext(ctxWithToken)
+		next.ServeHTTP(w, requestWithToken)
+	})
 }
 
-func (m *AuthTokenMiddleware) SetTokenKey(key types.ContextKey) {
+func (m *AuthTokenExtractor) SetTokenKey(key types.ContextKey) {
 	m.tokenKey = key
 }

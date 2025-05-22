@@ -8,36 +8,37 @@ import (
 	"festwrap/internal/user"
 )
 
-type UserIdMiddleware struct {
+type UserIdExtractor struct {
 	userIdKey      types.ContextKey
 	userRepository user.UserRepository
-	handler        http.Handler
 }
 
 // Adds the current user identifier into the context by using the provided user repository
-func NewUserIdMiddleware(handler http.Handler, userRepository user.UserRepository) UserIdMiddleware {
-	return UserIdMiddleware{userIdKey: types.ContextKey("user_id"), userRepository: userRepository, handler: handler}
+func NewUserIdExtractor(userRepository user.UserRepository) UserIdExtractor {
+	return UserIdExtractor{userIdKey: types.ContextKey("user_id"), userRepository: userRepository}
 }
 
-func (m UserIdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	currentUserId, err := m.userRepository.GetCurrentUserId(r.Context())
-	if err != nil {
-		http.Error(w, "Unexpected error: could not retrieve user id", http.StatusInternalServerError)
-	}
+func (m UserIdExtractor) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		currentUserId, err := m.userRepository.GetCurrentUserId(r.Context())
+		if err != nil {
+			http.Error(w, "Unexpected error: could not retrieve user id", http.StatusInternalServerError)
+		}
 
-	ctxWithUserId := context.WithValue(r.Context(), m.userIdKey, currentUserId)
-	requestWithUserId := r.WithContext(ctxWithUserId)
-	m.handler.ServeHTTP(w, requestWithUserId)
+		ctxWithUserId := context.WithValue(r.Context(), m.userIdKey, currentUserId)
+		requestWithUserId := r.WithContext(ctxWithUserId)
+		next.ServeHTTP(w, requestWithUserId)
+	})
 }
 
-func (m *UserIdMiddleware) SetUserIdKey(key types.ContextKey) {
+func (m *UserIdExtractor) SetUserIdKey(key types.ContextKey) {
 	m.userIdKey = key
 }
 
-func (m UserIdMiddleware) GetUserRepository() user.UserRepository {
+func (m UserIdExtractor) GetUserRepository() user.UserRepository {
 	return m.userRepository
 }
 
-func (m *UserIdMiddleware) SetUserRepository(repository user.UserRepository) {
+func (m *UserIdExtractor) SetUserRepository(repository user.UserRepository) {
 	m.userRepository = repository
 }

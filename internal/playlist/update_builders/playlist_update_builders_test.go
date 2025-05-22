@@ -12,6 +12,7 @@ import (
 	"festwrap/internal/playlist"
 	mocks "festwrap/internal/playlist/mocks"
 
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,9 +80,21 @@ func buildRequest(t *testing.T, playlistId string, body []byte) *http.Request {
 
 	request := httptest.NewRequest("GET", requestUrl.String(), bytes.NewBuffer(body))
 	if playlistId != "" {
-		request.SetPathValue(playlistIdPath, playlistId)
+		request = mux.SetURLVars(request, map[string]string{
+			playlistIdPath: playlistId,
+		})
 	}
 	return request
+}
+
+func existingPlaylistUpdateRequest(t *testing.T) *http.Request {
+	t.Helper()
+	return buildRequest(t, playlistId, existingPlaylistUpdateBody())
+}
+
+func newPlaylistUpdateRequest(t *testing.T) *http.Request {
+	t.Helper()
+	return buildRequest(t, "", newPlaylistUpdateBody())
 }
 
 func TestExistingUpdateBuilderReturnsErrorIfPlaylistIdNotProvided(t *testing.T) {
@@ -121,7 +134,7 @@ func TestBuildersReturnErrorOnIncorrectBody(t *testing.T) {
 }
 
 func TestExistingUpdateBuilderReturnsUpdate(t *testing.T) {
-	request := buildRequest(t, playlistId, existingPlaylistUpdateBody())
+	request := existingPlaylistUpdateRequest(t)
 	builder := NewExistingPlaylistUpdateBuilder(playlistIdPath)
 
 	actual, err := builder.Build(request)
@@ -131,8 +144,8 @@ func TestExistingUpdateBuilderReturnsUpdate(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestNewUpdateBuilderReturnsErrorOnPlaylistCration(t *testing.T) {
-	request := buildRequest(t, playlistId, newPlaylistUpdateBody())
+func TestNewUpdateBuilderReturnsErrorOnPlaylistCreation(t *testing.T) {
+	request := newPlaylistUpdateRequest(t)
 	builder := NewNewPlaylistUpdateBuilder(playlistErrorService())
 
 	_, err := builder.Build(request)
@@ -141,7 +154,7 @@ func TestNewUpdateBuilderReturnsErrorOnPlaylistCration(t *testing.T) {
 }
 
 func TestNewUpdateBuilderReturnsUpdate(t *testing.T) {
-	request := buildRequest(t, playlistId, newPlaylistUpdateBody())
+	request := newPlaylistUpdateRequest(t)
 	builder := NewNewPlaylistUpdateBuilder(playlistService())
 
 	actual, err := builder.Build(request)

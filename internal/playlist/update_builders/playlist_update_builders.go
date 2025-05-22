@@ -8,6 +8,8 @@ import (
 
 	"festwrap/internal/playlist"
 	"festwrap/internal/serialization"
+
+	"github.com/gorilla/mux"
 )
 
 type PlaylistUpdateBuilder interface {
@@ -32,7 +34,7 @@ func NewExistingPlaylistUpdateBuilder(pathId string) ExistingPlaylistUpdateBuild
 }
 
 func (b *ExistingPlaylistUpdateBuilder) Build(request *http.Request) (playlist.PlaylistUpdate, error) {
-	playlistId := request.PathValue(b.pathId)
+	playlistId := mux.Vars(request)[b.pathId]
 	if playlistId == "" {
 		return playlist.PlaylistUpdate{}, fmt.Errorf("could not find playlist id in %s", b.pathId)
 	}
