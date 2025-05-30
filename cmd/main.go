@@ -31,7 +31,7 @@ func setupLogger() logging.Logger {
 func setupHTTPSender(config Config) httpsender.HTTPRequestSender {
 	httpClient := &http.Client{
 		Transport: &http.Transport{MaxConnsPerHost: config.MaxConnsPerHost},
-		Timeout:   time.Duration(config.TimeoutSeconds) * time.Second,
+		Timeout:   time.Duration(config.HttpClientTimeoutSeconds) * time.Second,
 	}
 	baseHttpClient := httpclient.NewBaseHTTPClient(httpClient)
 	sender := httpsender.NewBaseHTTPRequestSender(&baseHttpClient)
