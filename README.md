@@ -28,12 +28,14 @@ make run-tests
 
 ## Running the API
 
+You need a Setlistfm API key to run the server. It can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
+
 ### Run the app
 
 To run the API locally, you can type:
 
 ```shell
-go run ./cmd
+FESTWRAP_SETLISTFM_APIKEY=<setlistfm_key> go run ./cmd
 ```
 
 ### Run the app container
@@ -49,8 +51,6 @@ Then start the container:
 ```shell
 FESTWRAP_SETLISTFM_APIKEY=<setlistfm_key> make run-server
 ```
-
-The Setlistfm API key can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
 
 To stop the container:
 
