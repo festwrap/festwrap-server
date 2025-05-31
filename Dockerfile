@@ -20,4 +20,4 @@ COPY internal ./internal
 
 EXPOSE $PORT
 
-CMD ["go", "run", "/app/cmd/main.go"]
+CMD ["go", "run", "/app/cmd"]
