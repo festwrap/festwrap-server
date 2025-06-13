@@ -16,16 +16,9 @@ type CreatePlaylistArgs struct {
 	Playlist Playlist
 }
 
-type SearchPlaylistArgs struct {
-	Context      context.Context
-	PlaylistName string
-	Limit        int
-}
-
 type FakePlaylistRepository struct {
 	addSongArgs        AddSongsArgs
 	createPlaylistArgs CreatePlaylistArgs
-	searchPlaylistArgs SearchPlaylistArgs
 	searchedPlaylists  []Playlist
 	createdPlaylistId  string
 	err                error
@@ -38,13 +31,6 @@ func NewFakePlaylistRepository() FakePlaylistRepository {
 func (s *FakePlaylistRepository) CreatePlaylist(ctx context.Context, playlist Playlist) (string, error) {
 	s.createPlaylistArgs = CreatePlaylistArgs{Context: ctx, Playlist: playlist}
 	return s.createdPlaylistId, s.err
-}
-
-func (s *FakePlaylistRepository) SearchPlaylist(
-	ctx context.Context, playlistName string, limit int,
-) ([]Playlist, error) {
-	s.searchPlaylistArgs = SearchPlaylistArgs{Context: ctx, PlaylistName: playlistName, Limit: limit}
-	return s.searchedPlaylists, s.err
 }
 
 func (s *FakePlaylistRepository) AddSongs(ctx context.Context, playlistId string, songs []song.Song) error {
@@ -62,10 +48,6 @@ func (s *FakePlaylistRepository) GetAddSongArgs() AddSongsArgs {
 
 func (s *FakePlaylistRepository) GetCreatePlaylistArgs() CreatePlaylistArgs {
 	return s.createPlaylistArgs
-}
-
-func (s *FakePlaylistRepository) GetSearchPlaylistArgs() SearchPlaylistArgs {
-	return s.searchPlaylistArgs
 }
 
 func (s *FakePlaylistRepository) SetSearchedPlaylists(playlists []Playlist) {

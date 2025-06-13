@@ -48,16 +48,6 @@ func NewUpdatePlaylistHandler(
 	}
 }
 
-func NewUpdateExistingPlaylistHandler(
-	pathId string,
-	playlistService playlist.PlaylistService,
-	logger logging.Logger,
-) UpdatePlaylistHandler {
-	builder := builders.NewExistingPlaylistUpdateBuilder(pathId)
-	handler := NewUpdatePlaylistHandler(playlistService, &builder, http.StatusOK, logger)
-	return handler
-}
-
 func NewUpdateNewPlaylistHandler(
 	playlistService playlist.PlaylistService,
 	logger logging.Logger,
