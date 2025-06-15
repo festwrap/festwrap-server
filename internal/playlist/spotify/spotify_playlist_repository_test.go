@@ -16,14 +16,12 @@ import (
 )
 
 const (
-	addSongsPlaylistId  = "testId"
-	createPlaylistId    = "someId"
-	searchPlaylistName  = "searchPlaylist"
-	searchPlaylistLimit = 5
-	token               = "abcdefg12345" // gitleaks:allow
-	tokenKey            = "token"
-	userId              = "qrRwLBFxQL9fknW8NzBn4JprRNgS"
-	userIdKey           = "userId"
+	addSongsPlaylistId = "testId"
+	createPlaylistId   = "someId"
+	token              = "abcdefg12345" // gitleaks:allow
+	tokenKey           = "token"
+	userId             = "qrRwLBFxQL9fknW8NzBn4JprRNgS"
+	userIdKey          = "userId"
 )
 
 func emptyResponseSender() *httpsender.FakeHTTPSender {
@@ -53,55 +51,12 @@ func createPlaylistSender() *httpsender.FakeHTTPSender {
 	return &sender
 }
 
-func searchPlaylistSender() *httpsender.FakeHTTPSender {
-	sender := httpsender.FakeHTTPSender{}
-	response := searchedPlaylistsResponseBody()
-	sender.SetResponse(&response)
-	return &sender
-}
-
-func searchedPlaylistsResponseBody() []byte {
-	return []byte(`
-		{
-			"playlists": {
-				"items": [
-					{
-						"id":"id1",
-						"name":"first playlist",
-						"description":"First description",
-						"public":true,
-						"owner":{"id":"qrRwLBFxQL9fknW8NzBn4JprRNgS"}
-					},
-					{
-						"id":"id2",
-						"name":"second playlist",
-						"description":"Second description",
-						"public":false,
-						"owner":{"id":"another_owner_id"}
-					}
-				]
-			}
-		}
-	`)
-}
-
 func songsToAdd() []song.Song {
 	return []song.Song{song.NewSong("uri1"), song.NewSong("uri2")}
 }
 
 func playlistToCreate() playlist.Playlist {
 	return playlist.Playlist{Id: createPlaylistId, Name: "my-playlist", Description: "some playlist", IsPublic: false}
-}
-
-func searchedPlaylists() []playlist.Playlist {
-	return []playlist.Playlist{
-		{
-			Id:          "id1",
-			Name:        "first playlist",
-			Description: "First description",
-			IsPublic:    true,
-		},
-	}
 }
 
 func testContext() context.Context {
@@ -125,17 +80,6 @@ func createPlaylistHttpOptions() httpsender.HTTPRequestOptions {
 	options.SetHeaders(authHeaders())
 	createPlaylistBody := []byte(`{"name":"my-playlist","description":"some playlist","public":false}`)
 	options.SetBody(createPlaylistBody)
-	return options
-}
-
-func searchPlaylistHttpOptions() httpsender.HTTPRequestOptions {
-	url := fmt.Sprintf(
-		"https://api.spotify.com/v1/search?limit=%d&q=%s&type=playlist",
-		searchPlaylistLimit,
-		searchPlaylistName,
-	)
-	options := httpsender.NewHTTPRequestOptions(url, httpsender.GET, 200)
-	options.SetHeaders(authHeaders())
 	return options
 }
 
@@ -233,41 +177,6 @@ func TestCreatePlaylistReturnsCreatedPlaylistId(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestSearchPlaylistSendsRequestWithOptions(t *testing.T) {
-	sender := searchPlaylistSender()
-	repository := spotifyPlaylistRepository(sender)
-
-	repository.SearchPlaylist(testContext(), searchPlaylistName, searchPlaylistLimit)
-
-	actual := sender.GetSendArgs()
-	assert.Equal(t, searchPlaylistHttpOptions(), actual)
-}
-
-func TestSearchPlaylistReturnsErrorOnSendError(t *testing.T) {
-	repository := spotifyPlaylistRepository(errorSender())
-
-	_, err := repository.SearchPlaylist(testContext(), searchPlaylistName, searchPlaylistLimit)
-
-	assert.NotNil(t, err)
-}
-
-func TestSearchPlaylistReturnsErrorIfSenderResponseIsNotJson(t *testing.T) {
-	repository := spotifyPlaylistRepository(nonJsonResponseSender())
-
-	_, err := repository.SearchPlaylist(testContext(), searchPlaylistName, searchPlaylistLimit)
-
-	assert.NotNil(t, err)
-}
-
-func TestSearchPlaylistReturnsSearchedPlaylists(t *testing.T) {
-	repository := spotifyPlaylistRepository(searchPlaylistSender())
-
-	actual, err := repository.SearchPlaylist(testContext(), searchPlaylistName, searchPlaylistLimit)
-
-	assert.Equal(t, searchedPlaylists(), actual)
-	assert.Nil(t, err)
-}
-
 func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 	tests := map[string]struct {
 		repositoryTokenKey types.ContextKey
@@ -298,9 +207,6 @@ func TestRepositoryMethodsReturnErrorWhenInvalidToken(t *testing.T) {
 
 			_, err = repository.CreatePlaylist(ctx, playlistToCreate())
 			assert.NotNil(t, err)
-
-			_, err = repository.SearchPlaylist(ctx, searchPlaylistName, searchPlaylistLimit)
-			assert.NotNil(t, err)
 		})
 	}
 }
@@ -330,10 +236,7 @@ func TestRepositoryMethodsReturnErrorWhenInvalidUserId(t *testing.T) {
 			repository := spotifyPlaylistRepository(emptyResponseSender())
 			repository.SetUserIdKey(test.repositoryUserIdKey)
 
-			_, err := repository.SearchPlaylist(ctx, searchPlaylistName, searchPlaylistLimit)
-			assert.NotNil(t, err)
-
-			_, err = repository.CreatePlaylist(ctx, playlistToCreate())
+			_, err := repository.CreatePlaylist(ctx, playlistToCreate())
 			assert.NotNil(t, err)
 		})
 	}

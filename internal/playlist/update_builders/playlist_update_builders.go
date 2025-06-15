@@ -2,61 +2,20 @@ package update_builders
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 
 	"festwrap/internal/playlist"
 	"festwrap/internal/serialization"
-
-	"github.com/gorilla/mux"
 )
 
 type PlaylistUpdateBuilder interface {
 	Build(request *http.Request) (playlist.PlaylistUpdate, error)
 }
 
-type ExistingPlaylistUpdateBuilder struct {
-	pathId       string
-	deserializer serialization.Deserializer[ExistingPlaylistUpdate]
-}
-
 type NewPlaylistUpdateBuilder struct {
 	playlistService playlist.PlaylistService
 	deserializer    serialization.Deserializer[NewPlaylistUpdate]
-}
-
-func NewExistingPlaylistUpdateBuilder(pathId string) ExistingPlaylistUpdateBuilder {
-	return ExistingPlaylistUpdateBuilder{
-		pathId:       pathId,
-		deserializer: serialization.NewJsonDeserializer[ExistingPlaylistUpdate](),
-	}
-}
-
-func (b *ExistingPlaylistUpdateBuilder) Build(request *http.Request) (playlist.PlaylistUpdate, error) {
-	playlistId := mux.Vars(request)[b.pathId]
-	if playlistId == "" {
-		return playlist.PlaylistUpdate{}, fmt.Errorf("could not find playlist id in %s", b.pathId)
-	}
-
-	defer request.Body.Close()
-	requestBody, err := io.ReadAll(request.Body)
-	if err != nil {
-		return playlist.PlaylistUpdate{}, errors.New("could read body from request")
-	}
-
-	var artists ExistingPlaylistUpdate
-	err = b.deserializer.Deserialize(requestBody, &artists)
-	if err != nil {
-		return playlist.PlaylistUpdate{}, errors.New("failed to deserialize playlist artists: " + err.Error())
-	}
-
-	updateArtists := make([]playlist.PlaylistArtist, len(artists.Artists))
-	for i, artist := range artists.Artists {
-		updateArtists[i] = playlist.PlaylistArtist{Name: artist.Name}
-	}
-	update := playlist.PlaylistUpdate{PlaylistId: playlistId, Artists: updateArtists}
-	return update, nil
 }
 
 func NewNewPlaylistUpdateBuilder(playlistService playlist.PlaylistService) NewPlaylistUpdateBuilder {

@@ -21,10 +21,6 @@ const (
 	playlistIdPath = "playlistId"
 )
 
-func existingPlaylistUpdateBody() []byte {
-	return []byte(`{"artists":[{"name":"Silverstein"},{"name":"Chinese Football"}]}`)
-}
-
 func newPlaylistUpdateBody() []byte {
 	return []byte(`{
         "playlist": {
@@ -87,61 +83,19 @@ func buildRequest(t *testing.T, playlistId string, body []byte) *http.Request {
 	return request
 }
 
-func existingPlaylistUpdateRequest(t *testing.T) *http.Request {
-	t.Helper()
-	return buildRequest(t, playlistId, existingPlaylistUpdateBody())
-}
-
 func newPlaylistUpdateRequest(t *testing.T) *http.Request {
 	t.Helper()
 	return buildRequest(t, "", newPlaylistUpdateBody())
 }
 
-func TestExistingUpdateBuilderReturnsErrorIfPlaylistIdNotProvided(t *testing.T) {
-	request := buildRequest(t, "", existingPlaylistUpdateBody())
-	builder := NewExistingPlaylistUpdateBuilder(playlistIdPath)
+func TestNewUpdateBuilderReturnsErrorOnIncorrectBody(t *testing.T) {
+	invalidBody := []byte("`some_incorrect_body}")
+	request := buildRequest(t, playlistId, invalidBody)
+	builder := NewNewPlaylistUpdateBuilder(playlistService())
 
 	_, err := builder.Build(request)
 
 	assert.NotNil(t, err)
-}
-
-func TestBuildersReturnErrorOnIncorrectBody(t *testing.T) {
-	existingPlaylistBuilder := NewExistingPlaylistUpdateBuilder(playlistIdPath)
-	newPlaylistBuilder := NewNewPlaylistUpdateBuilder(playlistService())
-	tests := map[string]struct {
-		builder PlaylistUpdateBuilder
-	}{
-		"existing playlist builder": {
-			builder: &existingPlaylistBuilder,
-		},
-		"new playlist builder": {
-			builder: &newPlaylistBuilder,
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			invalidBody := []byte("`some_incorrect_body}")
-			request := buildRequest(t, playlistId, invalidBody)
-
-			_, err := test.builder.Build(request)
-
-			assert.NotNil(t, err)
-		})
-	}
-}
-
-func TestExistingUpdateBuilderReturnsUpdate(t *testing.T) {
-	request := existingPlaylistUpdateRequest(t)
-	builder := NewExistingPlaylistUpdateBuilder(playlistIdPath)
-
-	actual, err := builder.Build(request)
-
-	expected := playlistUpdate()
-	assert.Equal(t, expected, actual)
-	assert.Nil(t, err)
 }
 
 func TestNewUpdateBuilderReturnsErrorOnPlaylistCreation(t *testing.T) {

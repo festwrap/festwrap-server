@@ -53,17 +53,8 @@ func main() {
 	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP).Methods(http.MethodGet)
 
-	// Set search playlist endpoint
+	// Set create new playlist endpoint
 	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(httpSender)
-	playlistSearcher := search.NewFunctionSearcher(playlistRepository.SearchPlaylist)
-	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
-	userIdExtractor := middleware.NewUserIdExtractor(userRepository)
-	searchPlaylistsHandler := search.NewSearchHandler(&playlistSearcher, "playlists", logger)
-	mux.Handle(
-		"/playlists/search",
-		userIdExtractor.Middleware(http.HandlerFunc(searchPlaylistsHandler.ServeHTTP))).Methods(http.MethodGet)
-
-	// Set update existing playlist endpoint
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, httpSender)
 	setlistRepository.SetMaxPages(config.MaxSetlistFMNumSearchPages)
 	songRepository := spotifysongs.NewSpotifySongRepository(httpSender)
@@ -72,17 +63,11 @@ func main() {
 		setlistRepository,
 		songRepository,
 	)
-	existingPlaylistUpdateHandler := playlisthandler.NewUpdateExistingPlaylistHandler("playlistId", &playlistService, logger)
-	existingPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
-	existingPlaylistUpdateHandler.SetAddSetlistSleep(config.AddSetlistSleepMs)
-	mux.HandleFunc("/playlists/{playlistId}", existingPlaylistUpdateHandler.ServeHTTP).
-		Name("playlistId").
-		Methods(http.MethodPut)
-
-	// Set create new playlist endpoint
 	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
 	newPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
 	newPlaylistUpdateHandler.SetAddSetlistSleep(config.AddSetlistSleepMs)
+	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
+	userIdExtractor := middleware.NewUserIdExtractor(userRepository)
 	mux.Handle(
 		"/playlists",
 		userIdExtractor.Middleware(http.HandlerFunc(newPlaylistUpdateHandler.ServeHTTP))).Methods(http.MethodPost)
