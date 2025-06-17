@@ -1,14 +1,20 @@
-package middleware
+package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	types "festwrap/internal"
+	"festwrap/internal/logging"
 
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	accessToken = "clientToken"
 )
 
 type GetTokenHandler struct{}
@@ -25,41 +31,40 @@ func defaultTokenKey() types.ContextKey {
 }
 
 func tokenAuthExtractorTestSetup() (AuthTokenExtractor, *http.Request, *httptest.ResponseRecorder) {
-	middleware := NewAuthTokenExtractor()
+	authClient := AuthClientMock{}
+	authClient.Mock.On("GetAccessToken").Return(accessToken, nil)
+	middleware := NewAuthTokenExtractor(&authClient, logging.NoopLogger{})
+	middleware.SetTokenKey(defaultTokenKey())
 	request := httptest.NewRequest("GET", "http://example.com", nil)
 	writer := httptest.NewRecorder()
 	return middleware, request, writer
 }
 
-func TestBadRequestErrorOnMissingAuthHeader(t *testing.T) {
-	extractor, request, writer := tokenAuthExtractorTestSetup()
-
-	extractor.Middleware(GetTokenHandler{}).ServeHTTP(writer, request)
-
-	assert.Equal(t, http.StatusBadRequest, writer.Code)
+func errorAuthClient() AuthClient {
+	authClient := AuthClientMock{}
+	authClient.Mock.On("GetAccessToken").Return("", errors.New("test auth client error"))
+	return &authClient
 }
 
-func TestUnprocessableEntityErrorOnWronglyFormattedAuthHeader(t *testing.T) {
+func TestInternalErrorOnAuthClientError(t *testing.T) {
 	extractor, request, writer := tokenAuthExtractorTestSetup()
-	request.Header.Set("Authorization", "something")
+	extractor.SetAuthClient(errorAuthClient())
 
 	extractor.Middleware(GetTokenHandler{}).ServeHTTP(writer, request)
 
-	assert.Equal(t, http.StatusUnprocessableEntity, writer.Code)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 }
 
 func TestTokenIsPlacedInExpectedContextKey(t *testing.T) {
 	extractor, request, writer := tokenAuthExtractorTestSetup()
-	request.Header.Set("Authorization", "Bearer 1234")
 
 	extractor.Middleware(GetTokenHandler{}).ServeHTTP(writer, request)
 
-	assert.Equal(t, "1234", writer.Body.String())
+	assert.Equal(t, accessToken, writer.Body.String())
 }
 
 func TestMiddlewareReturnsStatusCodeofTheHandler(t *testing.T) {
 	extractor, request, writer := tokenAuthExtractorTestSetup()
-	request.Header.Set("Authorization", "Bearer 1234")
 
 	extractor.Middleware(GetTokenHandler{}).ServeHTTP(writer, request)
 

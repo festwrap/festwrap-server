@@ -9,11 +9,16 @@ import (
 type Config struct {
 	Port                       string
 	MaxConnsPerHost            int
-	SetlistfmApiKey            string
 	MaxSetlistFMNumSearchPages int
 	MaxUpdateArtists           int
 	AddSetlistSleepMs          int
 	HttpClientTimeoutSeconds   int
+
+	SetlistfmApiKey string
+
+	SpotifyClientId     string
+	SpotifyClientSecret string
+	SpotifyRefreshToken string
 }
 
 func ReadConfig() Config {
@@ -25,6 +30,9 @@ func ReadConfig() Config {
 		MaxUpdateArtists:           GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_UPDATE_ARTISTS", 5),
 		AddSetlistSleepMs:          GetEnvWithDefaultOrFail[int]("FESTWRAP_ADD_SETLIST_SLEEP_MS", 550),
 		HttpClientTimeoutSeconds:   GetEnvWithDefaultOrFail[int]("FESTWRAP_HTTP_CLIENT_TIMEOUT_S", 5),
+		SpotifyClientId:            GetEnvStringOrFail("SPOTIFY_CLIENT_ID"),
+		SpotifyClientSecret:        GetEnvStringOrFail("SPOTIFY_CLIENT_SECRET"),
+		SpotifyRefreshToken:        GetEnvStringOrFail("SPOTIFY_REFRESH_TOKEN"),
 	}
 }
 

@@ -10,6 +10,8 @@ import (
 	playlisthandler "festwrap/cmd/handler/playlist"
 	"festwrap/cmd/handler/search"
 	"festwrap/cmd/middleware"
+	auth "festwrap/cmd/middleware/auth"
+	spotifyauth "festwrap/cmd/middleware/auth/spotify"
 	spotifyArtists "festwrap/internal/artist/spotify"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
@@ -45,7 +47,10 @@ func main() {
 	httpSender := setupHTTPSender(config)
 
 	mux := mux.NewRouter()
-	mux.Use(middleware.NewAuthTokenExtractor().Middleware)
+	spotifyAuthClient := spotifyauth.NewSpotifyAuthClient(
+		httpSender, config.SpotifyRefreshToken, config.SpotifyClientId, config.SpotifyClientSecret,
+	)
+	mux.Use(auth.NewAuthTokenExtractor(&spotifyAuthClient, logger).Middleware)
 
 	// Set search artist endpoint
 	artistRepository := spotifyArtists.NewSpotifyArtistRepository(httpSender)
