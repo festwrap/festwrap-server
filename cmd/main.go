@@ -77,5 +77,6 @@ func main() {
 		Handler: mux,
 	}
 
+	logger.Info(fmt.Sprintf("Starting server at port %s", config.Port))
 	server.ListenAndServe()
 }
