@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	types "festwrap/internal"
+	"festwrap/internal/logging"
 	"festwrap/internal/user"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func defaultUserIdKey() types.ContextKey {
 func userIdExtractorTestSetup() (UserIdExtractor, *http.Request, *httptest.ResponseRecorder) {
 	userRepository := user.FakeUserRepository{}
 	userRepository.SetGetCurrentIdValue(user.GetCurrentIdValue{UserId: "some_id", Err: nil})
-	middleware := NewUserIdExtractor(&userRepository)
+	middleware := NewUserIdExtractor(&userRepository, logging.NoopLogger{})
 	middleware.SetUserIdKey(defaultUserIdKey())
 	request := httptest.NewRequest("GET", "http://example.com", nil)
 	writer := httptest.NewRecorder()

@@ -3,11 +3,18 @@ IMAGE_NAME ?= "festwrap-server"
 IMAGE_TAG ?= "latest"
 CONTAINER_NAME ?= "festwrap-server"
 PORT ?= 8080
+ENV_VARS := $(shell cat .env | xargs)
 
 .PHONY: pre-commit-install
 pre-commit-install:
 	pre-commit install
 	pre-commit install --hook-type commit-msg
+
+
+.PHONY: run-server
+run-local-server:
+	@export $(ENV_VARS) && go run ./cmd
+
 
 .PHONY: run-unit-tests
 run-unit-tests:

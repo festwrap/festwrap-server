@@ -37,8 +37,8 @@ func (c *BaseHTTPRequestSender) Send(options HTTPRequestOptions) (*[]byte, error
 
 	if response.StatusCode != options.GetExpectedStatusCode() {
 		errorMsg := fmt.Sprintf(
-			"request with options %v failed. Expected status code %d, found %d",
-			options,
+			"request to %s failed. Expected status code %d, found %d",
+			options.url,
 			options.GetExpectedStatusCode(),
 			response.StatusCode,
 		)
