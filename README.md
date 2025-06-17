@@ -35,8 +35,16 @@ You need a Setlistfm API key to run the server. It can be requested [here](https
 To run the API locally, you can type:
 
 ```shell
-FESTWRAP_SETLISTFM_APIKEY=<setlistfm_key> go run ./cmd
+make run-local-server
 ```
+
+You will need to make sure you have added the corresponding required variables in `.env`. Make a copy from the template:
+
+```shell
+cp .env.template .env
+```
+
+And then fill accordingly.
 
 ### Run the app container
 
