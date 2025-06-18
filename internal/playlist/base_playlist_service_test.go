@@ -111,7 +111,7 @@ func testSetup() (FakePlaylistRepository, setlist.FakeSetlistRepository, song.Fa
 
 func TestCreatePlaylistRepositoryCalledWithArgs(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	_, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
@@ -125,7 +125,7 @@ func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	expected := "some random id"
 	playlistRepository.SetCreatedPlaylistId(expected)
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	actual, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
@@ -136,7 +136,7 @@ func TestCreatePlaylistReturnsPlaylistIdOnSuccess(t *testing.T) {
 func TestCreatePlaylistReturnsErrorIfRepositoryErrors(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	playlistRepository.SetError(errors.New("test error"))
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	_, err := service.CreatePlaylist(defaultContext(), defaultPlaylist())
 
@@ -148,7 +148,7 @@ func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
 	minSongs := 6
 	playlistRepository, setlistRepository, songRepository := testSetup()
 
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 	service.SetMinSongs(minSongs)
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), artist)
@@ -163,7 +163,7 @@ func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	returnError := errors.New("test error")
 	setlistRepository.SetError(returnError)
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
@@ -172,7 +172,7 @@ func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
 
 func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
@@ -187,7 +187,7 @@ func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
 func TestAddSetlistAddsSongsFetched(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	songRepository.SetSongs(defaultSongs())
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
@@ -200,7 +200,7 @@ func TestAddSetlistAddsSongsFetched(t *testing.T) {
 func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	songRepository.SetSongs(songsWithErrors())
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultContext(), "myPlaylist", defaultArtist())
 
@@ -213,7 +213,7 @@ func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
 func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	songRepository.SetSongs(errorSongs())
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 
@@ -223,7 +223,7 @@ func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
 func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	setlistRepository.SetReturnValue(emptySetlist())
-	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
+	service := NewBasePlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
 	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
 

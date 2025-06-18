@@ -63,12 +63,12 @@ func main() {
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, httpSender)
 	setlistRepository.SetMaxPages(config.MaxSetlistFMNumSearchPages)
 	songRepository := spotifysongs.NewSpotifySongRepository(httpSender)
-	playlistService := playlist.NewConcurrentPlaylistService(
+	playlistService := playlist.NewBasePlaylistService(
 		&playlistRepository,
 		setlistRepository,
 		songRepository,
 	)
-	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
+	newPlaylistUpdateHandler := playlisthandler.NewCreatePlaylistHandler(&playlistService, logger)
 	newPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
 	newPlaylistUpdateHandler.SetAddSetlistSleep(config.AddSetlistSleepMs)
 	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
