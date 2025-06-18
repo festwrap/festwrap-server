@@ -2,12 +2,12 @@ package spotify
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	types "festwrap/internal"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/playlist"
-	"festwrap/internal/playlist/errors"
 	"festwrap/internal/serialization"
 	"festwrap/internal/song"
 )
@@ -39,24 +39,24 @@ func NewSpotifyPlaylistRepository(httpSender httpsender.HTTPRequestSender) Spoti
 
 func (r *SpotifyPlaylistRepository) AddSongs(ctx context.Context, playlistId string, songs []song.Song) error {
 	if len(songs) == 0 {
-		return errors.NewCannotAddSongsToPlaylistError("no songs provided")
+		return errors.New("no songs provided")
 	}
 
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return errors.NewCannotAddSongsToPlaylistError("Could not retrieve token from context")
+		return errors.New("could not retrieve token from context")
 	}
 
 	body, err := r.songsSerializer.Serialize(NewSpotifySongs(songs))
 	if err != nil {
 		errorMsg := fmt.Sprintf("could not serialize songs: %v", err.Error())
-		return errors.NewCannotAddSongsToPlaylistError(errorMsg)
+		return errors.New(errorMsg)
 	}
 
 	httpOptions := r.addSongsHttpOptions(playlistId, body, token)
 	_, err = r.httpSender.Send(httpOptions)
 	if err != nil {
-		return errors.NewCannotAddSongsToPlaylistError(err.Error())
+		return errors.New(err.Error())
 	}
 
 	return nil
@@ -65,12 +65,12 @@ func (r *SpotifyPlaylistRepository) AddSongs(ctx context.Context, playlistId str
 func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist playlist.Playlist) (string, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return "", errors.NewCannotCreatePlaylistError("Could not retrieve token from context")
+		return "", errors.New("could not retrieve token from context")
 	}
 
 	userId, ok := ctx.Value(r.userIdKey).(string)
 	if !ok {
-		return "", errors.NewCannotCreatePlaylistError("Could not retrieve user id from context")
+		return "", errors.New("could not retrieve user id from context")
 	}
 
 	body, err := r.playlistCreateSerializer.Serialize(
@@ -81,20 +81,19 @@ func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist
 		},
 	)
 	if err != nil {
-		errorMsg := fmt.Sprintf("could not serialize playlist: %v", err.Error())
-		return "", errors.NewCannotCreatePlaylistError(errorMsg)
+		return "", fmt.Errorf("could not serialize playlist: %v", err.Error())
 	}
 
 	httpOptions := r.createPlaylistOptions(userId, body, token)
 	response, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return "", errors.NewCannotCreatePlaylistError(err.Error())
+		return "", errors.New(err.Error())
 	}
 
 	var parsedResponse SpotifyCreatePlaylistResponse
 	err = r.playlistCreateDeserializer.Deserialize(*response, &parsedResponse)
 	if err != nil {
-		return "", errors.NewCannotCreatePlaylistError(err.Error())
+		return "", errors.New(err.Error())
 	}
 
 	return parsedResponse.Id, nil

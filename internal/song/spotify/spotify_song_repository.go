@@ -2,6 +2,7 @@ package spotify
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -9,7 +10,6 @@ import (
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
 	"festwrap/internal/song"
-	"festwrap/internal/song/errors"
 )
 
 type SpotifySongRepository struct {
@@ -31,24 +31,24 @@ func NewSpotifySongRepository(httpSender httpsender.HTTPRequestSender) *SpotifyS
 func (r *SpotifySongRepository) GetSong(ctx context.Context, artist string, title string) (*song.Song, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return nil, errors.NewCannotRetrieveSongError("Could not retrieve token from context")
+		return nil, errors.New("could not retrieve token from context")
 	}
 
 	httpOptions := r.createSongHttpOptions(artist, title, token)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveSongError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	var response spotifyResponse
 	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveSongError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	if len(response.Tracks.Songs) == 0 {
 		errorMsg := fmt.Sprintf("No songs found for song %s (%s)", title, artist)
-		return nil, errors.NewCannotRetrieveSongError(errorMsg)
+		return nil, errors.New(errorMsg)
 	}
 
 	// We assume the first result is the most trusted one
