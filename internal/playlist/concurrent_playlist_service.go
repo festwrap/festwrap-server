@@ -2,10 +2,13 @@ package playlist
 
 import (
 	"context"
+	"errors"
 
+	"festwrap/internal/logging"
 	"festwrap/internal/setlist"
 	"festwrap/internal/song"
 	"fmt"
+	"time"
 )
 
 type FetchSongResult struct {
@@ -18,26 +21,65 @@ type ConcurrentPlaylistService struct {
 	setlistRepository  setlist.SetlistRepository
 	songRepository     song.SongRepository
 	minSongs           int
+	addSetlistSleepMs  int
+	logger             logging.Logger
 }
 
 func NewConcurrentPlaylistService(
 	playlistRepository PlaylistRepository,
 	setlistRepository setlist.SetlistRepository,
 	songRepository song.SongRepository,
+	logger logging.Logger,
 ) ConcurrentPlaylistService {
 	return ConcurrentPlaylistService{
 		playlistRepository: playlistRepository,
 		setlistRepository:  setlistRepository,
 		songRepository:     songRepository,
+		logger:             logger,
 		minSongs:           4,
+		addSetlistSleepMs:  0,
 	}
 }
 
-func (s *ConcurrentPlaylistService) CreatePlaylist(ctx context.Context, playlist PlaylistDetails) (string, error) {
-	return s.playlistRepository.CreatePlaylist(ctx, playlist)
+func (s *ConcurrentPlaylistService) CreatePlaylistWithArtists(
+	ctx context.Context,
+	playlist PlaylistDetails,
+	artists []string,
+) (PlaylistCreation, error) {
+	playlistId, err := s.playlistRepository.CreatePlaylist(ctx, playlist)
+	if err != nil {
+		return PlaylistCreation{}, errors.New("could not create playlist")
+	}
+
+	errors := 0
+	for i, artist := range artists {
+		if i > 0 {
+			// Sleep to avoid hitting Setlistfm rate limit
+			time.Sleep(time.Duration(s.addSetlistSleepMs) * time.Millisecond)
+		}
+
+		err := s.addSetlistToPlaylist(ctx, playlistId, artist)
+		if err != nil {
+			message := fmt.Sprintf("could not add songs for %s to playlist %s: %v", artist, playlistId, err)
+			s.logger.Warn(message)
+			errors += 1
+		}
+	}
+	if errors == len(artists) {
+		s.logger.Error(fmt.Sprintf("could not add any of artists %v to playlist %s", artists, playlistId))
+		return PlaylistCreation{}, fmt.Errorf("all artists failed to be added to playlist %s", playlistId)
+	}
+
+	var status CreationStatus
+	if errors == 0 {
+		status = Success
+	} else {
+		status = PartialFailure
+	}
+	return PlaylistCreation{PlaylistId: playlistId, Status: status}, nil
 }
 
-func (s *ConcurrentPlaylistService) AddSetlist(ctx context.Context, playlistId string, artist string) error {
+func (s *ConcurrentPlaylistService) addSetlistToPlaylist(ctx context.Context, playlistId string, artist string) error {
 	setlist, err := s.setlistRepository.GetSetlist(artist, s.minSongs)
 	if err != nil {
 		return err
@@ -57,7 +99,7 @@ func (s *ConcurrentPlaylistService) AddSetlist(ctx context.Context, playlistId s
 	}
 
 	if len(songs) == 0 {
-		return fmt.Errorf("no songs to add to playlist %s", playlistId)
+		return fmt.Errorf("no songs to add to playlist %s for artist %s", playlistId, artist)
 	}
 
 	err = s.playlistRepository.AddSongs(ctx, playlistId, songs)
