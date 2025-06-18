@@ -28,7 +28,19 @@ make run-tests
 
 ## Running the API
 
-You need a Setlistfm API key to run the server. It can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
+Before you start, make sure you have added the corresponding required variables in `.env`. Make a copy from the template:
+
+```shell
+cp .env.template .env
+```
+
+Here are the variables you will need to fill:
+
+- `SPOTIFY_CLIENT_ID`: Your Spotify app client id. Follow [these instructions](https://developer.spotify.com/documentation/web-api/tutorials/getting-started#create-an-app) to create your app.
+- `SPOTIFY_CLIENT_SECRET`: Your Spotify app client secret. See previous variable for instructions.
+- `SPOTIFY_REFRESH_TOKEN`: Spotify refresh token. See [these instructions](https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens) on how to obtain it.
+- `FESTWRAP_SETLISTFM_APIKEY`: Your Setlistfm API key. It can be requested [here](https://api.setlist.fm/docs/1.0/index.html) for free for non-commercial projects as this one.
+
 
 ### Run the app
 
@@ -37,14 +49,6 @@ To run the API locally, you can type:
 ```shell
 make run-local-server
 ```
-
-You will need to make sure you have added the corresponding required variables in `.env`. Make a copy from the template:
-
-```shell
-cp .env.template .env
-```
-
-And then fill accordingly.
 
 ### Run the app container
 
@@ -57,7 +61,7 @@ make build-image
 Then start the container:
 
 ```shell
-FESTWRAP_SETLISTFM_APIKEY=<setlistfm_key> make run-server
+make run-server
 ```
 
 To stop the container:
@@ -68,20 +72,10 @@ make stop-server
 
 ## Calling the API
 
-All endpoints require passing a Spotify token to authenticate. Note that this expire after some hours, so they need to be refreshed. This can be obtained following instructions in [here](../frontend/README.md).
-
 ### Artists search
 
 ```shell
-curl --location 'http://localhost:8080/artists/search?name=<artist>' \
-      --header 'Authorization: Bearer <token>'
-```
-
-### Playlist search
-
-```shell
-curl --location 'http://localhost:8080/playlists/search?name=<playlist>' \
-      --header 'Authorization: Bearer <token>'
+curl --location 'http://localhost:8080/artists/search?name=<artist>'
 ```
 
 ### Add songs
@@ -90,18 +84,16 @@ For adding setlists to existing playlists:
 
 ```shell
 curl -X POST --location 'http://localhost:8080/playlists/<playlist_id>' \
-      --header 'Authorization: Bearer <token>'
       --header 'Content-Type: application/json' \
---data '{"artists":[{"name": "<artist_name>"}]}
+      --data '{"artists":[{"name": "<artist_name>"}]}
 ```
 
 For creating a new playlist with setlists:
 
 ```shell
 curl -X PUT --location 'http://localhost:8080/playlists' \
-      --header 'Authorization: Bearer <token>'
       --header 'Content-Type: application/json' \
---data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>","description":"<playlist_description>","isPublic":<true_false>}}
+      --data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>","description":"<playlist_description>","isPublic":<true_false>}}
 ```
 
 > [!IMPORTANT]
