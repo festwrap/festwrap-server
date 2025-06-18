@@ -9,7 +9,7 @@ import (
 )
 
 type FetchSongResult struct {
-	Song *song.Song
+	Song song.Song
 	Err  error
 }
 
@@ -52,7 +52,7 @@ func (s *ConcurrentPlaylistService) AddSetlist(ctx context.Context, playlistId s
 	for i := 0; i < len(setlist.GetSongs()); i++ {
 		result := <-ch
 		if result.Err == nil {
-			songs = append(songs, *result.Song)
+			songs = append(songs, result.Song)
 		}
 	}
 

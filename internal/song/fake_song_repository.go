@@ -24,7 +24,7 @@ func NewFakeSongRepository() FakeSongRepository {
 	}
 }
 
-func (r *FakeSongRepository) GetSong(ctx context.Context, artist string, title string) (*Song, error) {
+func (r *FakeSongRepository) GetSong(ctx context.Context, artist string, title string) (Song, error) {
 	return r.repository.GetSong(ctx, artist, title)
 }
 
@@ -42,12 +42,12 @@ type WrappedFakeSongRepository struct {
 	mutex       sync.Mutex
 }
 
-func (w *WrappedFakeSongRepository) GetSong(ctx context.Context, artist string, title string) (*Song, error) {
+func (w *WrappedFakeSongRepository) GetSong(ctx context.Context, artist string, title string) (Song, error) {
 	w.getSongArgs = append(w.getSongArgs, GetSongArgs{Context: ctx, Artist: artist, Title: title})
 	return w.popSongLeft()
 }
 
-func (w *WrappedFakeSongRepository) popSongLeft() (*Song, error) {
+func (w *WrappedFakeSongRepository) popSongLeft() (Song, error) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
@@ -60,9 +60,9 @@ func (w *WrappedFakeSongRepository) popSongLeft() (*Song, error) {
 
 	switch result := top.(type) {
 	case Song:
-		return &result, nil
+		return result, nil
 	case error:
-		return nil, result
+		return Song{}, result
 	default:
 		message := fmt.Sprintf("Fake repository should only return errors or songs. Found %v", top)
 		panic(message)

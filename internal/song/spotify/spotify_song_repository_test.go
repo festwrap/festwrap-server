@@ -104,7 +104,7 @@ func TestGetSongReturnsFirstSongFound(t *testing.T) {
 	actual, err := repository.GetSong(testContext(), artist, songTitle)
 
 	expected := song.NewSong("spotify:track:4rH1kFLYW0b28UNRyn7dK3")
-	assert.Equal(t, expected, *actual)
+	assert.Equal(t, expected, actual)
 	assert.Nil(t, err)
 }
 
