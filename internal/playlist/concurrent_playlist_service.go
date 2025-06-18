@@ -33,7 +33,7 @@ func NewConcurrentPlaylistService(
 	}
 }
 
-func (s *ConcurrentPlaylistService) CreatePlaylist(ctx context.Context, playlist Playlist) (string, error) {
+func (s *ConcurrentPlaylistService) CreatePlaylist(ctx context.Context, playlist PlaylistDetails) (string, error) {
 	return s.playlistRepository.CreatePlaylist(ctx, playlist)
 }
 

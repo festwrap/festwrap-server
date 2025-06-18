@@ -12,20 +12,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	playlistId          = "myPlaylist"
+	artistName          = "myArtist"
+	playlistName        = "My playlist"
+	playlistDescription = "Some playlist"
+	isPlaylistPublic    = true
+)
+
 func defaultContext() context.Context {
 	return context.Background()
 }
 
-func defaultPlaylist() Playlist {
-	return Playlist{Id: defaultPlaylistId(), Name: "My playlist", Description: "Some playlist", IsPublic: true}
-}
-
-func defaultPlaylistId() string {
-	return "myPlaylist"
-}
-
-func defaultArtist() string {
-	return "myArtist"
+func defaultPlaylist() PlaylistDetails {
+	return PlaylistDetails{Name: playlistName, Description: playlistDescription, IsPublic: isPlaylistPublic}
 }
 
 func defaultSongs() []interface{} {
@@ -54,24 +54,24 @@ func defaultSetlist() setlist.Setlist {
 		setlist.NewSong("My song"),
 		setlist.NewSong("My other song"),
 	}
-	return setlist.NewSetlist(defaultArtist(), songs)
+	return setlist.NewSetlist(artistName, songs)
 }
 
 func emptySetlist() setlist.Setlist {
-	return setlist.NewSetlist(defaultArtist(), []setlist.Song{})
+	return setlist.NewSetlist(artistName, []setlist.Song{})
 }
 
 func defaultGetSongArgs() []song.GetSongArgs {
 	return []song.GetSongArgs{
-		{Context: defaultContext(), Artist: defaultArtist(), Title: "My song"},
-		{Context: defaultContext(), Artist: defaultArtist(), Title: "My other song"},
+		{Context: defaultContext(), Artist: artistName, Title: "My song"},
+		{Context: defaultContext(), Artist: artistName, Title: "My other song"},
 	}
 }
 
 func defaultAddSongsArgs() AddSongsArgs {
 	return AddSongsArgs{
 		Context:    defaultContext(),
-		PlaylistId: defaultPlaylistId(),
+		PlaylistId: playlistId,
 		Songs: []song.Song{
 			song.NewSong("some_uri"),
 			song.NewSong("another_uri"),
@@ -82,7 +82,7 @@ func defaultAddSongsArgs() AddSongsArgs {
 func addSongsArgsWithErrors() AddSongsArgs {
 	return AddSongsArgs{
 		Context:    defaultContext(),
-		PlaylistId: defaultPlaylistId(),
+		PlaylistId: playlistId,
 		Songs: []song.Song{
 			song.NewSong("another_uri"),
 		},
@@ -144,14 +144,14 @@ func TestCreatePlaylistReturnsErrorIfRepositoryErrors(t *testing.T) {
 }
 
 func TestAddSetlistSetlistRepositoryCalledWithArgs(t *testing.T) {
-	artist := defaultArtist()
+	artist := artistName
 	minSongs := 6
 	playlistRepository, setlistRepository, songRepository := testSetup()
 
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 	service.SetMinSongs(minSongs)
 
-	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), artist)
+	err := service.AddSetlist(defaultContext(), playlistId, artist)
 
 	actual := setlistRepository.GetGetSetlistArgs()
 	expected := setlist.GetSetlistArgs{Artist: artist, MinSongs: minSongs}
@@ -165,7 +165,7 @@ func TestAddSetlistReturnsErrorOnSetlistRepositoryError(t *testing.T) {
 	setlistRepository.SetError(returnError)
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
+	err := service.AddSetlist(defaultContext(), playlistId, artistName)
 
 	assert.NotNil(t, err)
 }
@@ -174,7 +174,7 @@ func TestAddSetlistSongRepositoryCalledWithSetlistSongs(t *testing.T) {
 	playlistRepository, setlistRepository, songRepository := testSetup()
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
+	err := service.AddSetlist(defaultContext(), playlistId, artistName)
 
 	actual := songRepository.GetGetSongArgs()
 	expected := defaultGetSongArgs()
@@ -189,7 +189,7 @@ func TestAddSetlistAddsSongsFetched(t *testing.T) {
 	songRepository.SetSongs(defaultSongs())
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
+	err := service.AddSetlist(defaultContext(), playlistId, artistName)
 
 	actual := playlistRepository.GetAddSongArgs()
 	expected := defaultAddSongsArgs()
@@ -202,7 +202,7 @@ func TestAddSetlistAddsOnlySongsFetchedWithoutError(t *testing.T) {
 	songRepository.SetSongs(songsWithErrors())
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.AddSetlist(defaultContext(), "myPlaylist", defaultArtist())
+	err := service.AddSetlist(defaultContext(), "myPlaylist", artistName)
 
 	actual := playlistRepository.GetAddSongArgs()
 	expected := addSongsArgsWithErrors()
@@ -215,7 +215,7 @@ func TestAddSetlistSetlistRaisesErrorIfSetlistEmpty(t *testing.T) {
 	songRepository.SetSongs(errorSongs())
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
+	err := service.AddSetlist(defaultContext(), playlistId, artistName)
 
 	assert.NotNil(t, err)
 }
@@ -225,7 +225,7 @@ func TestAddSetlistSetlistRaisesErrorIfNoSongsFound(t *testing.T) {
 	setlistRepository.SetReturnValue(emptySetlist())
 	service := NewConcurrentPlaylistService(&playlistRepository, &setlistRepository, &songRepository)
 
-	err := service.AddSetlist(defaultContext(), defaultPlaylistId(), defaultArtist())
+	err := service.AddSetlist(defaultContext(), playlistId, artistName)
 
 	assert.NotNil(t, err)
 }

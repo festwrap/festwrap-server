@@ -16,8 +16,8 @@ type NewPlaylist struct {
 	IsPublic    bool   `json:"isPublic"`
 }
 
-func (p NewPlaylist) toPlaylist() playlist.Playlist {
-	return playlist.Playlist{
+func (p NewPlaylist) toPlaylist() playlist.PlaylistDetails {
+	return playlist.PlaylistDetails{
 		Name:        p.Name,
 		Description: p.Description,
 		IsPublic:    p.IsPublic,

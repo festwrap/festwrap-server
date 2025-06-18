@@ -6,6 +6,6 @@ import (
 )
 
 type PlaylistRepository interface {
-	CreatePlaylist(ctx context.Context, playlist Playlist) (string, error)
+	CreatePlaylist(ctx context.Context, playlist PlaylistDetails) (string, error)
 	AddSongs(ctx context.Context, playlistId string, songs []song.Song) error
 }

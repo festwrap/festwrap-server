@@ -13,7 +13,7 @@ type AddSongsArgs struct {
 
 type CreatePlaylistArgs struct {
 	Context  context.Context
-	Playlist Playlist
+	Playlist PlaylistDetails
 }
 
 type FakePlaylistRepository struct {
@@ -28,7 +28,7 @@ func NewFakePlaylistRepository() FakePlaylistRepository {
 	return FakePlaylistRepository{searchedPlaylists: []Playlist{}}
 }
 
-func (s *FakePlaylistRepository) CreatePlaylist(ctx context.Context, playlist Playlist) (string, error) {
+func (s *FakePlaylistRepository) CreatePlaylist(ctx context.Context, playlist PlaylistDetails) (string, error) {
 	s.createPlaylistArgs = CreatePlaylistArgs{Context: ctx, Playlist: playlist}
 	return s.createdPlaylistId, s.err
 }
