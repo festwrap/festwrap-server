@@ -2,9 +2,10 @@ package spotify
 
 import (
 	"context"
+	"errors"
+
 	types "festwrap/internal"
 	"festwrap/internal/artist"
-	"festwrap/internal/artist/errors"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
 	"fmt"
@@ -39,19 +40,19 @@ func (r *SpotifyArtistRepository) SetDeserializer(deserializer serialization.Des
 func (r *SpotifyArtistRepository) SearchArtist(ctx context.Context, name string, limit int) ([]artist.Artist, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return nil, errors.NewCannotRetrieveArtistsError("Could not retrieve token from context")
+		return nil, errors.New("could not retrieve token from context")
 	}
 
 	httpOptions := r.createSetlistHttpOptions(name, limit, token)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	var response spotifyResponse
 	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveArtistsError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	return response.GetArtists(), nil

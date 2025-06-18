@@ -2,7 +2,7 @@ package playlist
 
 import (
 	"context"
-	"festwrap/internal/playlist/errors"
+
 	"festwrap/internal/setlist"
 	"festwrap/internal/song"
 	"fmt"
@@ -57,8 +57,7 @@ func (s *ConcurrentPlaylistService) AddSetlist(ctx context.Context, playlistId s
 	}
 
 	if len(songs) == 0 {
-		message := fmt.Sprintf("No songs to add to playlist %s", playlistId)
-		return errors.NewCannotAddSongsToPlaylistError(message)
+		return fmt.Errorf("no songs to add to playlist %s", playlistId)
 	}
 
 	err = s.playlistRepository.AddSongs(ctx, playlistId, songs)

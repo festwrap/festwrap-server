@@ -2,7 +2,6 @@ package spotify
 
 import (
 	"festwrap/internal/artist"
-	"festwrap/internal/artist/errors"
 	"fmt"
 )
 
@@ -18,7 +17,7 @@ type spotifyArtist struct {
 func (a spotifyArtist) GetSmallestImageUri() (string, error) {
 	nImages := len(a.Images)
 	if nImages == 0 {
-		return "", errors.NewImageNotFoundError(fmt.Sprintf("Could not find image for artist %s", a.Name))
+		return "", fmt.Errorf("could not find image for artist %s", a.Name)
 	}
 	return a.Images[nImages-1].Url, nil
 }
