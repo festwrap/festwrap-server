@@ -62,7 +62,7 @@ func (r *SpotifyPlaylistRepository) AddSongs(ctx context.Context, playlistId str
 	return nil
 }
 
-func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist playlist.Playlist) (string, error) {
+func (r *SpotifyPlaylistRepository) CreatePlaylist(ctx context.Context, playlist playlist.PlaylistDetails) (string, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
 		return "", errors.New("could not retrieve token from context")

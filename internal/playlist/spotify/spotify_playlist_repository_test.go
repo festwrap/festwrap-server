@@ -55,8 +55,8 @@ func songsToAdd() []song.Song {
 	return []song.Song{song.NewSong("uri1"), song.NewSong("uri2")}
 }
 
-func playlistToCreate() playlist.Playlist {
-	return playlist.Playlist{Id: createPlaylistId, Name: "my-playlist", Description: "some playlist", IsPublic: false}
+func playlistToCreate() playlist.PlaylistDetails {
+	return playlist.PlaylistDetails{Name: "my-playlist", Description: "some playlist", IsPublic: false}
 }
 
 func testContext() context.Context {

@@ -28,32 +28,32 @@ func NewSpotifySongRepository(httpSender httpsender.HTTPRequestSender) *SpotifyS
 	}
 }
 
-func (r *SpotifySongRepository) GetSong(ctx context.Context, artist string, title string) (*song.Song, error) {
+func (r *SpotifySongRepository) GetSong(ctx context.Context, artist string, title string) (song.Song, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return nil, errors.New("could not retrieve token from context")
+		return song.Song{}, errors.New("could not retrieve token from context")
 	}
 
 	httpOptions := r.createSongHttpOptions(artist, title, token)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return song.Song{}, errors.New(err.Error())
 	}
 
 	var response spotifyResponse
 	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return song.Song{}, errors.New(err.Error())
 	}
 
 	if len(response.Tracks.Songs) == 0 {
 		errorMsg := fmt.Sprintf("No songs found for song %s (%s)", title, artist)
-		return nil, errors.New(errorMsg)
+		return song.Song{}, errors.New(errorMsg)
 	}
 
 	// We assume the first result is the most trusted one
 	result := song.NewSong(response.Tracks.Songs[0].Uri)
-	return &result, nil
+	return result, nil
 }
 
 func (r *SpotifySongRepository) SetDeserializer(deserializer serialization.Deserializer[spotifyResponse]) {
