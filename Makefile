@@ -3,7 +3,8 @@ IMAGE_NAME ?= "festwrap-server"
 IMAGE_TAG ?= "latest"
 CONTAINER_NAME ?= "festwrap-server"
 PORT ?= 8080
-ENV_VARS := $(shell cat .env | xargs)
+ENV_FILE ?= ".env"
+ENV_VARS := $(shell cat ${ENV_FILE} | xargs)
 
 .PHONY: pre-commit-install
 pre-commit-install:
@@ -11,7 +12,7 @@ pre-commit-install:
 	pre-commit install --hook-type commit-msg
 
 
-.PHONY: run-server
+.PHONY: run-local-server
 run-local-server:
 	@export $(ENV_VARS) && go run ./cmd
 
@@ -39,12 +40,11 @@ build-image:
 
 .PHONE: run-server
 run-server:
-	@docker run --name $(CONTAINER_NAME) \
-        -d \
-		-e FESTWRAP_PORT=$(PORT) \
-		-e FESTWRAP_SETLISTFM_APIKEY=$(FESTWRAP_SETLISTFM_APIKEY) \
-        -p $(PORT):$(PORT) \
-        -t ${IMAGE_NAME}:${IMAGE_TAG}
+	docker run --name $(CONTAINER_NAME) \
+		-d \
+		--env-file ${ENV_FILE} \
+		-p $(PORT):$(PORT) \
+		-t ${IMAGE_NAME}:${IMAGE_TAG}
 
 
 .PHONE: stop-server
