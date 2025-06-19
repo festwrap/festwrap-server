@@ -33,15 +33,15 @@ func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deseria
 	r.deserializer = deserializer
 }
 
-func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.Setlist, error) {
+func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (setlist.Setlist, error) {
 
 	page := 1
-	var setlist *setlist.Setlist
+	var resultSetlist *setlist.Setlist
 	var err error
 
 	for page <= r.maxPages {
-		setlist, err = r.getFirstSetlistFromPage(artist, page, minSongs)
-		resultOrErrorFound := setlist != nil || err != nil
+		resultSetlist, err = r.getFirstSetlistFromPage(artist, page, minSongs)
+		resultOrErrorFound := resultSetlist != nil || err != nil
 		if resultOrErrorFound {
 			break
 		} else {
@@ -49,11 +49,11 @@ func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.
 		}
 	}
 
-	if setlist == nil {
+	if resultSetlist == nil {
 		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
+		return setlist.Setlist{}, errors.NewCannotRetrieveSetlistError(errorMsg)
 	} else {
-		return setlist, nil
+		return *resultSetlist, nil
 	}
 }
 
