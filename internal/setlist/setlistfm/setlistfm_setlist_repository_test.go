@@ -50,7 +50,7 @@ func getSetlistHttpOptions(page int) httpsender.HTTPRequestOptions {
 	return options
 }
 
-func expectedSetlist() *setlist.Setlist {
+func expectedSetlist() setlist.Setlist {
 	songs := []setlist.Song{
 		setlist.NewSong("Walk of Life"),
 		setlist.NewSong("Anna"),
@@ -63,7 +63,7 @@ func expectedSetlist() *setlist.Setlist {
 		setlist.NewSong("Layla"),
 	}
 	setlist := setlist.NewSetlist("The Menzingers", songs)
-	return &setlist
+	return setlist
 }
 
 func TestGetSetlistSenderCalledWithProperOptions(t *testing.T) {

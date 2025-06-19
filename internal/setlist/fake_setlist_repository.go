@@ -19,9 +19,9 @@ func NewFakeSetlistRepository() FakeSetlistRepository {
 	return FakeSetlistRepository{}
 }
 
-func (s *FakeSetlistRepository) GetSetlist(artist string, minSongs int) (*Setlist, error) {
+func (s *FakeSetlistRepository) GetSetlist(artist string, minSongs int) (Setlist, error) {
 	s.getArgs = GetSetlistArgs{Artist: artist, MinSongs: minSongs}
-	return &s.getValue.response, s.getValue.err
+	return s.getValue.response, s.getValue.err
 }
 
 func (s *FakeSetlistRepository) GetGetSetlistArgs() GetSetlistArgs {

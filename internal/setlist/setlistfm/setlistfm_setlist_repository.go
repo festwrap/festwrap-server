@@ -1,13 +1,13 @@
 package setlistfm
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
 	"festwrap/internal/setlist"
-	"festwrap/internal/setlist/errors"
 )
 
 type SetlistFMRepository struct {
@@ -33,15 +33,15 @@ func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deseria
 	r.deserializer = deserializer
 }
 
-func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.Setlist, error) {
+func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (setlist.Setlist, error) {
 
 	page := 1
-	var setlist *setlist.Setlist
+	var resultSetlist *setlist.Setlist
 	var err error
 
 	for page <= r.maxPages {
-		setlist, err = r.getFirstSetlistFromPage(artist, page, minSongs)
-		resultOrErrorFound := setlist != nil || err != nil
+		resultSetlist, err = r.getFirstSetlistFromPage(artist, page, minSongs)
+		resultOrErrorFound := resultSetlist != nil || err != nil
 		if resultOrErrorFound {
 			break
 		} else {
@@ -49,11 +49,10 @@ func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (*setlist.
 		}
 	}
 
-	if setlist == nil {
-		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
-		return nil, errors.NewCannotRetrieveSetlistError(errorMsg)
+	if resultSetlist == nil {
+		return setlist.Setlist{}, fmt.Errorf("could not find setlist for artist %s", artist)
 	} else {
-		return setlist, nil
+		return *resultSetlist, nil
 	}
 }
 
@@ -61,13 +60,13 @@ func (r *SetlistFMRepository) getFirstSetlistFromPage(artist string, page int, m
 	httpOptions := r.createSetlistHttpOptions(artist, page)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	var response setlistFMResponse
 	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	setlist := response.findSetlistWithMinSongs(minSongs)
