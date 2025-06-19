@@ -1,13 +1,13 @@
 package setlistfm
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
 	"festwrap/internal/setlist"
-	"festwrap/internal/setlist/errors"
 )
 
 type SetlistFMRepository struct {
@@ -50,8 +50,7 @@ func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (setlist.S
 	}
 
 	if resultSetlist == nil {
-		errorMsg := fmt.Sprintf("Could not find setlist for artist %s", artist)
-		return setlist.Setlist{}, errors.NewCannotRetrieveSetlistError(errorMsg)
+		return setlist.Setlist{}, fmt.Errorf("could not find setlist for artist %s", artist)
 	} else {
 		return *resultSetlist, nil
 	}
@@ -61,13 +60,13 @@ func (r *SetlistFMRepository) getFirstSetlistFromPage(artist string, page int, m
 	httpOptions := r.createSetlistHttpOptions(artist, page)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	var response setlistFMResponse
 	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
-		return nil, errors.NewCannotRetrieveSetlistError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	setlist := response.findSetlistWithMinSongs(minSongs)
