@@ -33,12 +33,12 @@ run-integration-tests:
 run-tests: run-unit-tests run-integration-tests
 
 
-.PHONE: build-image
+.PHONY: build-image
 build-image:
 	docker build -f Dockerfile -t ${IMAGE_NAME}:${IMAGE_TAG} .
 
 
-.PHONE: run-server
+.PHONY: run-server
 run-server:
 	docker run --name $(CONTAINER_NAME) \
 		-d \
@@ -47,6 +47,6 @@ run-server:
 		-t ${IMAGE_NAME}:${IMAGE_TAG}
 
 
-.PHONE: stop-server
+.PHONY: stop-server
 stop-server:
 	@docker container stop $(CONTAINER_NAME) && docker container rm $(CONTAINER_NAME)
