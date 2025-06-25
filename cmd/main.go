@@ -83,5 +83,8 @@ func main() {
 	}
 
 	logger.Info(fmt.Sprintf("Starting server at port %s", config.Port))
-	server.ListenAndServe()
+	err := server.ListenAndServe()
+	if err != nil {
+		logger.Error(fmt.Sprintf("could not start server %v", err))
+	}
 }
