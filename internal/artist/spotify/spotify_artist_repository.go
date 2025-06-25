@@ -46,13 +46,13 @@ func (r *SpotifyArtistRepository) SearchArtist(ctx context.Context, name string,
 	httpOptions := r.createSetlistHttpOptions(name, limit, token)
 	responseBody, err := r.httpSender.Send(httpOptions)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
 
 	var response spotifyResponse
 	err = r.deserializer.Deserialize(*responseBody, &response)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
 
 	return response.GetArtists(), nil
