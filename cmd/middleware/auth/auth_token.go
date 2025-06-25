@@ -26,7 +26,6 @@ func NewAuthTokenExtractor(authClient AuthClient, logger logging.Logger) AuthTok
 
 func (m AuthTokenExtractor) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Getting access token")
 		accessToken, err := m.authClient.GetAccessToken()
 		if err != nil {
 			m.logger.Error(fmt.Sprintf("could not obtain access token: %v", err))
