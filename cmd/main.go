@@ -12,11 +12,11 @@ import (
 	"festwrap/cmd/middleware"
 	auth "festwrap/cmd/middleware/auth"
 	spotifyauth "festwrap/cmd/middleware/auth/spotify"
+	services "festwrap/cmd/services"
 	spotifyArtists "festwrap/internal/artist/spotify"
 	httpclient "festwrap/internal/http/client"
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/logging"
-	"festwrap/internal/playlist"
 	spotifyplaylists "festwrap/internal/playlist/spotify"
 	"festwrap/internal/setlist/setlistfm"
 	spotifysongs "festwrap/internal/song/spotify"
@@ -63,14 +63,15 @@ func main() {
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, httpSender)
 	setlistRepository.SetMaxPages(config.MaxSetlistFMNumSearchPages)
 	songRepository := spotifysongs.NewSpotifySongRepository(httpSender)
-	playlistService := playlist.NewConcurrentPlaylistService(
+	playlistService := services.NewBasePlaylistService(
 		&playlistRepository,
 		setlistRepository,
 		songRepository,
+		logger,
 	)
-	newPlaylistUpdateHandler := playlisthandler.NewUpdateNewPlaylistHandler(&playlistService, logger)
+	playlistService.SetAddSetlistSleep(config.AddSetlistSleepMs)
+	newPlaylistUpdateHandler := playlisthandler.NewCreatePlaylistHandler(&playlistService, logger)
 	newPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
-	newPlaylistUpdateHandler.SetAddSetlistSleep(config.AddSetlistSleepMs)
 	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
 	userIdExtractor := middleware.NewUserIdExtractor(userRepository, logger)
 	mux.Handle(
