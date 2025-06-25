@@ -40,7 +40,7 @@ func (r *SpotifyArtistRepository) SetDeserializer(deserializer serialization.Des
 func (r *SpotifyArtistRepository) SearchArtist(ctx context.Context, name string, limit int) ([]artist.Artist, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return nil, errors.New("could not retrieve token from context")
+		return nil, errors.New("could not retrieve token from context while searching for artist")
 	}
 
 	httpOptions := r.createSetlistHttpOptions(name, limit, token)
