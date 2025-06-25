@@ -1,5 +1,5 @@
 package spotify
 
-type SpotifyCreatePlaylistResponse struct {
+type spotifyCreatePlaylistResponse struct {
 	Id string `json:"id"`
 }

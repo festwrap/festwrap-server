@@ -29,10 +29,6 @@ func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequ
 	}
 }
 
-func (r *SetlistFMRepository) SetDeserializer(deserializer serialization.Deserializer[setlistFMResponse]) {
-	r.deserializer = deserializer
-}
-
 func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (setlist.Setlist, error) {
 
 	page := 1

@@ -133,7 +133,7 @@ func TestAddSongsReturnsNoError(t *testing.T) {
 
 func TestCreatePlaylistReturnsErrorOnPlaylistSerializationError(t *testing.T) {
 	repository := spotifyPlaylistRepository(createPlaylistSender())
-	serializer := serialization.FakeSerializer[SpotifyPlaylist]{}
+	serializer := serialization.FakeSerializer[spotifyPlaylist]{}
 	serializer.SetError(errors.New("test error"))
 	repository.SetPlaylistCreateSerializer(&serializer)
 

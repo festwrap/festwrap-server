@@ -4,14 +4,14 @@ import (
 	"festwrap/internal/song"
 )
 
-type SpotifySongs struct {
+type spotifySongs struct {
 	Uris []string `json:"uris"`
 }
 
-func NewSpotifySongs(songs []song.Song) SpotifySongs {
+func NewSpotifySongs(songs []song.Song) spotifySongs {
 	songUris := []string{}
 	for _, currentSong := range songs {
 		songUris = append(songUris, currentSong.GetUri())
 	}
-	return SpotifySongs{Uris: songUris}
+	return spotifySongs{Uris: songUris}
 }
