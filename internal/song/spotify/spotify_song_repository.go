@@ -31,7 +31,7 @@ func NewSpotifySongRepository(httpSender httpsender.HTTPRequestSender) *SpotifyS
 func (r *SpotifySongRepository) GetSong(ctx context.Context, artist string, title string) (song.Song, error) {
 	token, ok := ctx.Value(r.tokenKey).(string)
 	if !ok {
-		return song.Song{}, errors.New("could not retrieve token from context")
+		return song.Song{}, errors.New("could not retrieve token from context when retrieving song")
 	}
 
 	httpOptions := r.createSongHttpOptions(artist, title, token)
@@ -47,8 +47,7 @@ func (r *SpotifySongRepository) GetSong(ctx context.Context, artist string, titl
 	}
 
 	if len(response.Tracks.Songs) == 0 {
-		errorMsg := fmt.Sprintf("No songs found for song %s (%s)", title, artist)
-		return song.Song{}, errors.New(errorMsg)
+		return song.Song{}, fmt.Errorf("no songs found for song %s (%s)", title, artist)
 	}
 
 	// We assume the first result is the most trusted one
