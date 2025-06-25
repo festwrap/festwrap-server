@@ -84,7 +84,6 @@ func (s *BasePlaylistService) SetAddSetlistSleep(sleepMs int) {
 func (s *BasePlaylistService) addSetlistToPlaylist(ctx context.Context, playlistId string, artist string) error {
 	setlist, err := s.setlistRepository.GetSetlist(artist, s.minSongs)
 	if err != nil {
-		fmt.Println("Setlist error")
 		return err
 	}
 
@@ -100,8 +99,6 @@ func (s *BasePlaylistService) addSetlistToPlaylist(ctx context.Context, playlist
 			songs = append(songs, result.Song)
 		}
 	}
-
-	fmt.Println(setlist.GetSongs())
 
 	if len(songs) == 0 {
 		return fmt.Errorf("no songs to add to playlist %s for artist %s", playlistId, artist)
