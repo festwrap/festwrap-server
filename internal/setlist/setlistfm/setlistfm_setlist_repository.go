@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	httpsender "festwrap/internal/http/sender"
 	"festwrap/internal/serialization"
@@ -11,21 +12,23 @@ import (
 )
 
 type SetlistFMRepository struct {
-	host         string
-	apiKey       string
-	deserializer serialization.Deserializer[setlistFMResponse]
-	httpSender   httpsender.HTTPRequestSender
-	maxPages     int
+	host            string
+	apiKey          string
+	deserializer    serialization.Deserializer[setlistFMResponse]
+	httpSender      httpsender.HTTPRequestSender
+	maxPages        int
+	nextPageSleepMs int
 }
 
 func NewSetlistFMSetlistRepository(apiKey string, httpSender httpsender.HTTPRequestSender) *SetlistFMRepository {
 	deserializer := serialization.NewJsonDeserializer[setlistFMResponse]()
 	return &SetlistFMRepository{
-		host:         "api.setlist.fm",
-		apiKey:       apiKey,
-		deserializer: &deserializer,
-		httpSender:   httpSender,
-		maxPages:     1,
+		host:            "api.setlist.fm",
+		apiKey:          apiKey,
+		deserializer:    &deserializer,
+		httpSender:      httpSender,
+		maxPages:        1,
+		nextPageSleepMs: 0,
 	}
 }
 
@@ -42,6 +45,8 @@ func (r *SetlistFMRepository) GetSetlist(artist string, minSongs int) (setlist.S
 			break
 		} else {
 			page += 1
+			// Sleep to avoid hitting Setlistfm rate limit
+			time.Sleep(time.Duration(r.nextPageSleepMs) * time.Millisecond)
 		}
 	}
 
@@ -64,7 +69,6 @@ func (r *SetlistFMRepository) getFirstSetlistFromPage(artist string, page int, m
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
-
 	setlist := response.findSetlistWithMinSongs(minSongs)
 	return setlist, nil
 }
@@ -91,4 +95,8 @@ func (r *SetlistFMRepository) getSetlistFullUrl(artist string, page int) string 
 
 func (r *SetlistFMRepository) SetMaxPages(maxPages int) {
 	r.maxPages = maxPages
+}
+
+func (r *SetlistFMRepository) SetNextPageSleep(sleepMs int) {
+	r.nextPageSleepMs = sleepMs
 }

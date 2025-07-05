@@ -62,6 +62,7 @@ func main() {
 	playlistRepository := spotifyplaylists.NewSpotifyPlaylistRepository(httpSender)
 	setlistRepository := setlistfm.NewSetlistFMSetlistRepository(config.SetlistfmApiKey, httpSender)
 	setlistRepository.SetMaxPages(config.MaxSetlistFMNumSearchPages)
+	setlistRepository.SetNextPageSleep(config.NextPageSleepMs)
 	songRepository := spotifysongs.NewSpotifySongRepository(httpSender)
 	playlistService := services.NewBasePlaylistService(
 		&playlistRepository,
