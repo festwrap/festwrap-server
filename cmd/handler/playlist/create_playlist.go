@@ -51,6 +51,7 @@ func (h *CreatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	artists := newPlaylistRequest.Artists
+	h.logger.Info(fmt.Sprintf("creating playlist with artists: %v", artists))
 	if len(artists) == 0 || len(artists) > h.maxArtists {
 		message := fmt.Sprintf("validation error: number of artists must be between 1 and %d", h.maxArtists)
 		h.logger.Warn(message)
