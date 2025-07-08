@@ -10,22 +10,24 @@ import (
 )
 
 type SearchHandler[T any] struct {
-	encoder      serialization.Encoder[[]T]
-	defaultLimit int
-	maxLimit     int
-	searcher     Searcher[T]
-	entityType   string
-	logger       logging.Logger
+	encoder       serialization.Encoder[[]T]
+	defaultLimit  int
+	maxLimit      int
+	searcher      Searcher[T]
+	entityType    string
+	maxNameLength int
+	logger        logging.Logger
 }
 
 func NewSearchHandler[T any](searcher Searcher[T], entityType string, logger logging.Logger) SearchHandler[T] {
 	return SearchHandler[T]{
-		encoder:      serialization.NewJsonEncoder[[]T](),
-		searcher:     searcher,
-		entityType:   entityType,
-		maxLimit:     10,
-		defaultLimit: 5,
-		logger:       logger,
+		encoder:       serialization.NewJsonEncoder[[]T](),
+		searcher:      searcher,
+		entityType:    entityType,
+		maxLimit:      10,
+		defaultLimit:  5,
+		logger:        logger,
+		maxNameLength: 50,
 	}
 }
 
@@ -33,6 +35,17 @@ func (h *SearchHandler[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		message := fmt.Sprintf("Validation error: %s name was not provided", h.entityType)
+		h.logger.Warn(message)
+		http.Error(w, message, http.StatusBadRequest)
+		return
+	}
+
+	if len(name) > h.maxNameLength {
+		message := fmt.Sprintf(
+			"Validation error: %s name length should be in interval [1, %d]",
+			h.entityType,
+			h.maxNameLength,
+		)
 		h.logger.Warn(message)
 		http.Error(w, message, http.StatusBadRequest)
 		return
@@ -103,4 +116,8 @@ func (h *SearchHandler[T]) SetMaxLimit(limit int) {
 
 func (h *SearchHandler[T]) SetDefaultLimit(limit int) {
 	h.defaultLimit = limit
+}
+
+func (h *SearchHandler[T]) SetMaxNameLength(length int) {
+	h.maxNameLength = length
 }
