@@ -19,10 +19,11 @@ import (
 )
 
 const (
-	playlistId             = "someId"
-	playlistName           = "my playlist"
-	requestBodyString      = `{"playlist": {"name": "my playlist"}, "artists":[{"name":"Comeback Kid"}, {"name":"Municipal Waste"}]}`
-	emptyArtistsBodyString = `{"playlist": {"name": "my playlist"}, "artists":[]}`
+	playlistId                = "someId"
+	playlistName              = "my playlist"
+	requestBodyString         = `{"playlist": {"name": "my playlist"}, "artists":[{"name":"Comeback Kid"}, {"name":"Municipal Waste"}]}`
+	emptyArtistsBodyString    = `{"playlist": {"name": "my playlist"}, "artists":[]}`
+	emptyArtistNameBodyString = `{"playlist": {"name": "my playlist"}, "artists":[{"name":""}, {"name":"Municipal Waste"}]}`
 )
 
 func playlistArtists() []string {
@@ -82,18 +83,31 @@ func TestCreatePlaylistHandlerReturnsErrorOnIncorrectRequestBody(t *testing.T) {
 
 }
 
-func TestCreatePlaylistHandlerReturnsErrorIfArtistsOutOfBounds(t *testing.T) {
+func TestCreatePlaylistHandlerReturnsErrorOnInvalidRequest(t *testing.T) {
 	tests := map[string]struct {
-		requestBody string
-		maxArtists  int
+		requestBody         string
+		maxArtists          int
+		maxArtistNameLength int
 	}{
 		"no artists": {
-			requestBody: emptyArtistsBodyString,
-			maxArtists:  5,
+			requestBody:         emptyArtistsBodyString,
+			maxArtists:          5,
+			maxArtistNameLength: 50,
 		},
 		"more artists than limit": {
-			requestBody: requestBodyString,
-			maxArtists:  1,
+			requestBody:         requestBodyString,
+			maxArtists:          1,
+			maxArtistNameLength: 50,
+		},
+		"artist length exceeds limit": {
+			requestBody:         requestBodyString,
+			maxArtists:          1,
+			maxArtistNameLength: 5,
+		},
+		"empty artist name": {
+			requestBody:         emptyArtistNameBodyString,
+			maxArtists:          5,
+			maxArtistNameLength: 50,
 		},
 	}
 	for name, test := range tests {
@@ -101,6 +115,7 @@ func TestCreatePlaylistHandlerReturnsErrorIfArtistsOutOfBounds(t *testing.T) {
 			t.Parallel()
 
 			handler, _, writer := setup(t)
+			handler.SetMaxArtistNameLength(test.maxArtistNameLength)
 			request := buildRequest(t, []byte(test.requestBody))
 			handler.SetMaxArtists(test.maxArtists)
 

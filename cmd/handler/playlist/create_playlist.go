@@ -14,6 +14,7 @@ type CreatePlaylistHandler struct {
 	playlistService     services.PlaylistService
 	logger              logging.Logger
 	maxArtists          int
+	maxArtistNameLength int
 	requestDeserializer serialization.Deserializer[NewPlaylistRequest]
 	responseEncoder     serialization.Encoder[CreatePlaylistResponse]
 }
@@ -28,6 +29,7 @@ func NewCreatePlaylistHandler(
 		playlistService:     playlistService,
 		logger:              logger,
 		maxArtists:          5,
+		maxArtistNameLength: 50,
 		requestDeserializer: &requestDeserializer,
 		responseEncoder:     &responseEncoder,
 	}
@@ -57,6 +59,19 @@ func (h *CreatePlaylistHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.logger.Warn(message)
 		http.Error(w, message, http.StatusBadRequest)
 		return
+	}
+
+	for _, artist := range artists {
+		if len(artist.Name) > h.maxArtistNameLength || len(artist.Name) == 0 {
+			message := fmt.Sprintf(
+				"validation error: artist name '%s' length should be in interval [1, %d]",
+				artist,
+				h.maxArtistNameLength,
+			)
+			h.logger.Warn(message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
 	}
 
 	artistNames := newPlaylistRequest.GetArtistNames()
@@ -106,4 +121,8 @@ func (h *CreatePlaylistHandler) SetPlaylistService(service services.PlaylistServ
 
 func (h *CreatePlaylistHandler) SetMaxArtists(limit int) {
 	h.maxArtists = limit
+}
+
+func (h *CreatePlaylistHandler) SetMaxArtistNameLength(length int) {
+	h.maxArtistNameLength = length
 }
