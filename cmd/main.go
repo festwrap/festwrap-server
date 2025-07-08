@@ -72,7 +72,7 @@ func main() {
 	)
 	playlistService.SetAddSetlistSleep(config.AddSetlistSleepMs)
 	newPlaylistUpdateHandler := playlisthandler.NewCreatePlaylistHandler(&playlistService, logger)
-	newPlaylistUpdateHandler.SetMaxArtists(config.MaxUpdateArtists)
+	newPlaylistUpdateHandler.SetMaxArtists(config.MaxCreateArtists)
 	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
 	userIdExtractor := middleware.NewUserIdExtractor(userRepository, logger)
 	mux.Handle(
