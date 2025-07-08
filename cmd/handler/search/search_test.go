@@ -87,6 +87,16 @@ func TestBadRequestIfNameNotProvided(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 }
 
+func TestBadRequestIfNameTooLong(t *testing.T) {
+	params := defaultQueryParams()
+	writer, request, handler := setup(t, params)
+	handler.SetMaxNameLength(1)
+
+	handler.ServeHTTP(writer, request)
+
+	assert.Equal(t, http.StatusBadRequest, writer.Code)
+}
+
 func TestLimitStatusCodeDependingOnValue(t *testing.T) {
 	tests := map[string]struct {
 		limit    string
