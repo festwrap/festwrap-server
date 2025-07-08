@@ -32,6 +32,12 @@ func emptyResponseBody(t *testing.T) *[]byte {
 	return &response
 }
 
+func closeArtistNameResponseBody(t *testing.T) *[]byte {
+	path := filepath.Join(testtools.GetParentDir(t), "testdata", "close_artist_name_response.json")
+	response := testtools.LoadTestDataOrError(t, path)
+	return &response
+}
+
 func sender(t *testing.T) httpsender.HTTPRequestSender {
 	sender := httpsendermocks.HTTPSenderMock{}
 	sender.On("Send", getSetlistHttpOptions(1)).Return(responseBody(t), nil)
@@ -133,4 +139,29 @@ func TestGetSetlistReturnsResultsFromNextPageIfFirstHasNoResults(t *testing.T) {
 
 	assert.Equal(t, expectedSetlist(), actual)
 	assert.Nil(t, err)
+}
+
+func TestGetSetlistReturnsSetlistFromClosestArtistName(t *testing.T) {
+	sender := httpsendermocks.HTTPSenderMock{}
+	sender.On("Send", getSetlistHttpOptions(1)).Return(closeArtistNameResponseBody(t), nil)
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, &sender)
+	// Set big enough edit distance so all artists are considered
+	repository.SetArtistMaxEditDistance(99)
+
+	actual, err := repository.GetSetlist(artist, minSongs)
+
+	assert.Equal(t, expectedSetlist(), actual)
+	assert.Nil(t, err)
+}
+
+func TestGetSetlistReturnsErrorOnNonMatchingArtist(t *testing.T) {
+	sender := httpsendermocks.HTTPSenderMock{}
+	sender.On("Send", getSetlistHttpOptions(1)).Return(closeArtistNameResponseBody(t), nil)
+	repository := NewSetlistFMSetlistRepository(setlistFMApiKey, &sender)
+	// Make sure edit distance small enough to not match any artist
+	repository.SetArtistMaxEditDistance(1)
+
+	_, err := repository.GetSetlist(artist, minSongs)
+
+	assert.NotNil(t, err)
 }

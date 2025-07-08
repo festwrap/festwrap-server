@@ -39,13 +39,12 @@ type setlistFMResponse struct {
 	Body []setlistFMSetlist `json:"setlist"`
 }
 
-func (s setlistFMResponse) findSetlistWithMinSongs(minSongs int) *setlist.Setlist {
-	var result *setlist.Setlist
+func (s setlistFMResponse) getSetlistsWithMinSongs(minSongs int) []setlist.Setlist {
+	var result []setlist.Setlist
 	for _, set := range s.Body {
 		currentSetlist := setlist.NewSetlist(set.Artist.Name, set.GetSongs())
 		if len(currentSetlist.GetSongs()) >= minSongs {
-			result = &currentSetlist
-			break
+			result = append(result, currentSetlist)
 		}
 	}
 	return result
