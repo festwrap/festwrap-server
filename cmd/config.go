@@ -12,6 +12,7 @@ type Config struct {
 	MaxSetlistFMNumSearchPages int
 	MaxUpdateArtists           int
 	AddSetlistSleepMs          int
+	NextPageSleepMs            int
 	HttpClientTimeoutSeconds   int
 
 	SetlistfmApiKey string
@@ -29,6 +30,7 @@ func ReadConfig() Config {
 		MaxSetlistFMNumSearchPages: GetEnvWithDefaultOrFail[int]("FESTWRAP_SETLISTFM_NUM_SEARCH_PAGES", 3),
 		MaxUpdateArtists:           GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_UPDATE_ARTISTS", 5),
 		AddSetlistSleepMs:          GetEnvWithDefaultOrFail[int]("FESTWRAP_ADD_SETLIST_SLEEP_MS", 550),
+		NextPageSleepMs:            GetEnvWithDefaultOrFail[int]("FESTWRAP_GET_SETLIST_NEXT_PAGE_SLEEP_MS", 550),
 		HttpClientTimeoutSeconds:   GetEnvWithDefaultOrFail[int]("FESTWRAP_HTTP_CLIENT_TIMEOUT_S", 5),
 		SpotifyClientId:            GetEnvStringOrFail("SPOTIFY_CLIENT_ID"),
 		SpotifyClientSecret:        GetEnvStringOrFail("SPOTIFY_CLIENT_SECRET"),
