@@ -11,6 +11,7 @@ type Config struct {
 	MaxConnsPerHost            int
 	MaxSetlistFMNumSearchPages int
 	MaxCreateArtists           int
+	MaxArtistNameLength        int
 	AddSetlistSleepMs          int
 	NextPageSleepMs            int
 	HttpClientTimeoutSeconds   int
@@ -29,6 +30,7 @@ func ReadConfig() Config {
 		SetlistfmApiKey:            GetEnvStringOrFail("FESTWRAP_SETLISTFM_APIKEY"),
 		MaxSetlistFMNumSearchPages: GetEnvWithDefaultOrFail[int]("FESTWRAP_SETLISTFM_NUM_SEARCH_PAGES", 3),
 		MaxCreateArtists:           GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_CREATE_ARTISTS", 5),
+		MaxArtistNameLength:        GetEnvWithDefaultOrFail[int]("FESTWRAP_MAX_ARTIST_NAME_LENGTH", 50),
 		AddSetlistSleepMs:          GetEnvWithDefaultOrFail[int]("FESTWRAP_ADD_SETLIST_SLEEP_MS", 550),
 		NextPageSleepMs:            GetEnvWithDefaultOrFail[int]("FESTWRAP_GET_SETLIST_NEXT_PAGE_SLEEP_MS", 550),
 		HttpClientTimeoutSeconds:   GetEnvWithDefaultOrFail[int]("FESTWRAP_HTTP_CLIENT_TIMEOUT_S", 5),

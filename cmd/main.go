@@ -56,6 +56,7 @@ func main() {
 	artistRepository := spotifyArtists.NewSpotifyArtistRepository(httpSender)
 	artistSearcher := search.NewFunctionSearcher(artistRepository.SearchArtist)
 	searchArtistsHandler := search.NewSearchHandler(&artistSearcher, "artists", logger)
+	searchArtistsHandler.SetMaxNameLength(config.MaxArtistNameLength)
 	mux.HandleFunc("/artists/search", searchArtistsHandler.ServeHTTP).Methods(http.MethodGet)
 
 	// Set create new playlist endpoint
@@ -73,6 +74,7 @@ func main() {
 	playlistService.SetAddSetlistSleep(config.AddSetlistSleepMs)
 	newPlaylistUpdateHandler := playlisthandler.NewCreatePlaylistHandler(&playlistService, logger)
 	newPlaylistUpdateHandler.SetMaxArtists(config.MaxCreateArtists)
+	newPlaylistUpdateHandler.SetMaxArtistNameLength(config.MaxArtistNameLength)
 	userRepository := spotifyusers.NewSpotifyUserRepository(httpSender)
 	userIdExtractor := middleware.NewUserIdExtractor(userRepository, logger)
 	mux.Handle(
