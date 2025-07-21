@@ -88,6 +88,8 @@ func (s *BasePlaylistService) addSetlistToPlaylist(ctx context.Context, playlist
 		return err
 	}
 
+	s.logger.Info(fmt.Sprintf("Found setlist: %s for artist: %s", setlist.GetUrl(), artist))
+
 	songsCount := len(setlist.GetSongs())
 	ch := make(chan FetchSongResult)
 	rankedResults := make([]FetchSongResult, songsCount)

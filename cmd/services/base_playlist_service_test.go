@@ -58,7 +58,7 @@ func (a *TestArtist) SetFirstSongError() {
 }
 
 func (a *TestArtist) SetEmptySetlist() {
-	a.setlist.value = setlist.NewSetlist(a.name, []setlist.Song{})
+	a.setlist.value = setlist.NewSetlist(a.name, []setlist.Song{}, "https://empty_setlist")
 }
 
 func mainTestCase() []TestArtist {
@@ -69,6 +69,7 @@ func mainTestCase() []TestArtist {
 				value: setlist.NewSetlist(
 					"Alexisonfire",
 					[]setlist.Song{setlist.NewSong("Crisis"), setlist.NewSong("Accidents")},
+					"https://alexisonfire",
 				),
 				err: nil,
 			},
@@ -80,7 +81,7 @@ func mainTestCase() []TestArtist {
 		{
 			name: "AFI",
 			setlist: SetlistValue{
-				value: setlist.NewSetlist("AFI", []setlist.Song{setlist.NewSong("Silver and cold")}),
+				value: setlist.NewSetlist("AFI", []setlist.Song{setlist.NewSong("Silver and cold")}, "https://afi"),
 				err:   nil,
 			},
 			songs: []SongResult{{value: song.NewSong("http://some_url3")}},

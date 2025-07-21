@@ -83,23 +83,23 @@
                 "url": "https://www.setlist.fm/setlists/the-menzingers-13d5f175.html"
             },
             "venue": {
-                "id": "bd58102",
-                "name": "Columbia Theater",
+                "id": "1bd76588",
+                "name": "Gruenspan",
                 "city": {
-                    "id": "2950159",
-                    "name": "Berlin",
-                    "state": "Berlin",
-                    "stateCode": "16",
+                    "id": "2911298",
+                    "name": "Hamburg",
+                    "state": "Hamburg",
+                    "stateCode": "04",
                     "coords": {
-                        "lat": 52.5166667,
-                        "long": 13.4
+                        "lat": 53.55,
+                        "long": 10.0
                     },
                     "country": {
                         "code": "DE",
                         "name": "Germany"
                     }
                 },
-                "url": "https://www.setlist.fm/venue/columbia-theater-berlin-germany-bd58102.html"
+                "url": "https://www.setlist.fm/venue/gruenspan-hamburg-germany-1bd76588.html"
             },
             "tour": {
                 "name": "Some Of It Was True Tour"
@@ -160,7 +160,7 @@
                     }
                 ]
             },
-            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/columbia-theater-berlin-germany-3ace9e3.html"
+            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/gruenspan-hamburg-germany-1bacf10c.html"
         },
         {
             "id": "1bacf10c",
@@ -174,23 +174,23 @@
                 "url": "https://www.setlist.fm/setlists/the-menzingers-13d5f175.html"
             },
             "venue": {
-                "id": "1bd76588",
-                "name": "Gruenspan",
+                "id": "bd58102",
+                "name": "Columbia Theater",
                 "city": {
-                    "id": "2911298",
-                    "name": "Hamburg",
-                    "state": "Hamburg",
-                    "stateCode": "04",
+                    "id": "2950159",
+                    "name": "Berlin",
+                    "state": "Berlin",
+                    "stateCode": "16",
                     "coords": {
-                        "lat": 53.55,
-                        "long": 10.0
+                        "lat": 52.5166667,
+                        "long": 13.4
                     },
                     "country": {
                         "code": "DE",
                         "name": "Germany"
                     }
                 },
-                "url": "https://www.setlist.fm/venue/gruenspan-hamburg-germany-1bd76588.html"
+                "url": "https://www.setlist.fm/venue/columbia-theater-berlin-germany-bd58102.html"
             },
             "tour": {
                 "name": "Some Of It Was True Tour"
@@ -226,7 +226,7 @@
                     }
                 ]
             },
-            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/gruenspan-hamburg-germany-1bacf10c.html"
+            "url": "https://www.setlist.fm/setlist/the-menzingers/2024/columbia-theater-berlin-germany-3ace9e3.html"
         }
     ],
     "total": 3,
