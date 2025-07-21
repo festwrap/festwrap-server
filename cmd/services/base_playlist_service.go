@@ -14,6 +14,7 @@ import (
 type FetchSongResult struct {
 	Song song.Song
 	Err  error
+	Rank int
 }
 
 type BasePlaylistService struct {
@@ -87,16 +88,23 @@ func (s *BasePlaylistService) addSetlistToPlaylist(ctx context.Context, playlist
 		return err
 	}
 
+	songsCount := len(setlist.GetSongs())
 	ch := make(chan FetchSongResult)
-	for _, song := range setlist.GetSongs() {
-		go s.fetchSong(ctx, artist, song, ch)
+	rankedResults := make([]FetchSongResult, songsCount)
+	for i, song := range setlist.GetSongs() {
+		go s.fetchSong(ctx, artist, song, i, ch)
+	}
+
+	// Keep songs in the original setlist order
+	for range songsCount {
+		fetchResult := <-ch
+		rankedResults[fetchResult.Rank] = fetchResult
 	}
 
 	songs := []song.Song{}
-	for i := 0; i < len(setlist.GetSongs()); i++ {
-		result := <-ch
-		if result.Err == nil {
-			songs = append(songs, result.Song)
+	for _, fetchResult := range rankedResults {
+		if fetchResult.Err == nil {
+			songs = append(songs, fetchResult.Song)
 		}
 	}
 
@@ -120,8 +128,9 @@ func (s *BasePlaylistService) fetchSong(
 	ctx context.Context,
 	artist string,
 	song setlist.Song,
+	rank int,
 	ch chan<- FetchSongResult,
 ) {
 	songDetails, err := s.songRepository.GetSong(ctx, artist, song.GetTitle())
-	ch <- FetchSongResult{Song: songDetails, Err: err}
+	ch <- FetchSongResult{Song: songDetails, Err: err, Rank: rank}
 }
