@@ -23,6 +23,7 @@ type setlistFMSets struct {
 type setlistFMSetlist struct {
 	Artist setlistfmArtist `json:"artist"`
 	Sets   setlistFMSets   `json:"sets"`
+	Url    string          `json:"url"`
 }
 
 func (s *setlistFMSetlist) GetSongs() []setlist.Song {
@@ -42,7 +43,7 @@ type setlistFMResponse struct {
 func (s setlistFMResponse) getSetlistsWithMinSongs(minSongs int) []setlist.Setlist {
 	var result []setlist.Setlist
 	for _, set := range s.Body {
-		currentSetlist := setlist.NewSetlist(set.Artist.Name, set.GetSongs())
+		currentSetlist := setlist.NewSetlist(set.Artist.Name, set.GetSongs(), set.Url)
 		if len(currentSetlist.GetSongs()) >= minSongs {
 			result = append(result, currentSetlist)
 		}

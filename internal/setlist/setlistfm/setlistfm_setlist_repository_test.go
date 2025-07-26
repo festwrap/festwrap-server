@@ -68,7 +68,8 @@ func expectedSetlist() setlist.Setlist {
 		setlist.NewSong("Casey"),
 		setlist.NewSong("Layla"),
 	}
-	setlist := setlist.NewSetlist("The Menzingers", songs)
+	url := "https://www.setlist.fm/setlist/the-menzingers/2024/gruenspan-hamburg-germany-1bacf10c.html"
+	setlist := setlist.NewSetlist("The Menzingers", songs, url)
 	return setlist
 }
 
