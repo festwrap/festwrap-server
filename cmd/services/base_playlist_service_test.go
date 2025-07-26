@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"festwrap/internal/event"
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
 	playlistmocks "festwrap/internal/playlist/mocks"
@@ -147,6 +148,18 @@ func testPlaylist() playlist.PlaylistDetails {
 	return playlist.PlaylistDetails{Name: playlistName, Description: playlistDescription, IsPublic: isPlaylistPublic}
 }
 
+func playlistCreatedEvent() event.PlaylistCreatedEvent {
+	return event.PlaylistCreatedEvent{
+		Playlist: event.CreatedPlaylist{
+			Id:      playlistId,
+			Name:    playlistName,
+			Artists: testArtistNames(),
+			Type:    event.PLAYLIST_TYPE_SPOTIFY,
+		},
+		CreationStatus: event.PLAYLIST_CREATED_OK,
+	}
+}
+
 func newPlaylistRepositoryMock(artists []TestArtist) *playlistmocks.PlaylistRepositoryMock {
 	repository := playlistmocks.NewPlaylistRepositoryMock()
 	repository.On("CreatePlaylist", testContext(), testPlaylist()).Return(playlistId, nil)
@@ -284,4 +297,23 @@ func TestCreatePlaylistResult(t *testing.T) {
 			assert.Equal(t, test.expectedError, err)
 		})
 	}
+}
+
+func TestCreatePlaylistNotifiesSubjectWithCreateInfo(t *testing.T) {
+	// Configure subject with single observer
+	subject := event.NewBaseNotifier[event.PlaylistCreatedEvent]()
+	fakeObserver := event.NewFakeObserver[event.PlaylistCreatedEvent]()
+	subject.AddObserver(fakeObserver)
+
+	// Configure service with event subject
+	playlistRepository, setlistRepository, songRepository := testSetup(mainTestCase())
+	service := NewBasePlaylistService(
+		playlistRepository, setlistRepository, songRepository, logging.NoopLogger{})
+	service.SetPlaylistCreateNotifier(subject)
+
+	_, err := service.CreatePlaylistWithArtists(testContext(), testPlaylist(), testArtistNames())
+
+	assert.Nil(t, err)
+	assert.Len(t, fakeObserver.GetEvents(), 1)
+	assert.Equal(t, fakeObserver.GetEvents()[0].Event, playlistCreatedEvent())
 }
