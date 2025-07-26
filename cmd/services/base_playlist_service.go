@@ -3,6 +3,7 @@ package playlist
 import (
 	"context"
 
+	"festwrap/internal/event"
 	"festwrap/internal/logging"
 	"festwrap/internal/playlist"
 	"festwrap/internal/setlist"
@@ -17,12 +18,13 @@ type FetchSongResult struct {
 }
 
 type BasePlaylistService struct {
-	playlistRepository playlist.PlaylistRepository
-	setlistRepository  setlist.SetlistRepository
-	songRepository     song.SongRepository
-	minSongs           int
-	addSetlistSleepMs  int
-	logger             logging.Logger
+	playlistRepository       playlist.PlaylistRepository
+	setlistRepository        setlist.SetlistRepository
+	songRepository           song.SongRepository
+	playlistCreationNotifier event.Notifier[event.PlaylistCreatedEvent]
+	minSongs                 int
+	addSetlistSleepMs        int
+	logger                   logging.Logger
 }
 
 func NewBasePlaylistService(
@@ -32,12 +34,13 @@ func NewBasePlaylistService(
 	logger logging.Logger,
 ) BasePlaylistService {
 	return BasePlaylistService{
-		playlistRepository: playlistRepository,
-		setlistRepository:  setlistRepository,
-		songRepository:     songRepository,
-		logger:             logger,
-		minSongs:           4,
-		addSetlistSleepMs:  0,
+		playlistRepository:       playlistRepository,
+		setlistRepository:        setlistRepository,
+		songRepository:           songRepository,
+		playlistCreationNotifier: event.NewBaseNotifier[event.PlaylistCreatedEvent](),
+		logger:                   logger,
+		minSongs:                 4,
+		addSetlistSleepMs:        0,
 	}
 }
 
@@ -74,11 +77,25 @@ func (s *BasePlaylistService) CreatePlaylistWithArtists(
 	} else {
 		status = PartialFailure
 	}
+
+	s.notifyPlaylistCreated(ctx, playlistId, playlist.Name, artists, status)
+
 	return PlaylistCreation{PlaylistId: playlistId, Status: status}, nil
 }
 
 func (s *BasePlaylistService) SetAddSetlistSleep(sleepMs int) {
 	s.addSetlistSleepMs = sleepMs
+}
+
+func (s *BasePlaylistService) SetMinSongs(minSongs int) {
+	s.minSongs = minSongs
+}
+
+func (s *BasePlaylistService) SetPlaylistCreateNotifier(
+	subject event.Notifier[event.PlaylistCreatedEvent],
+) *BasePlaylistService {
+	s.playlistCreationNotifier = subject
+	return s
 }
 
 func (s *BasePlaylistService) addSetlistToPlaylist(ctx context.Context, playlistId string, artist string) error {
@@ -112,10 +129,6 @@ func (s *BasePlaylistService) addSetlistToPlaylist(ctx context.Context, playlist
 	return nil
 }
 
-func (s *BasePlaylistService) SetMinSongs(minSongs int) {
-	s.minSongs = minSongs
-}
-
 func (s *BasePlaylistService) fetchSong(
 	ctx context.Context,
 	artist string,
@@ -124,4 +137,33 @@ func (s *BasePlaylistService) fetchSong(
 ) {
 	songDetails, err := s.songRepository.GetSong(ctx, artist, song.GetTitle())
 	ch <- FetchSongResult{Song: songDetails, Err: err}
+}
+
+func (s *BasePlaylistService) notifyPlaylistCreated(
+	ctx context.Context,
+	playlistId,
+	playlistName string,
+	artists []string,
+	status CreationStatus,
+) {
+	var eventStatus event.PlaylistCreationStatus
+	if status == Success {
+		eventStatus = event.PLAYLIST_CREATED_OK
+	} else if status == PartialFailure {
+		eventStatus = event.PLAYLIST_CREATED_PARTIAL_ERRORS
+	} else {
+		eventStatus = event.PLAYLIST_CREATED_OK
+		s.logger.Error(fmt.Sprintf("unknown playlist creation status: %v. Using ok status as default", status))
+	}
+
+	playlistCreatedEvent := event.PlaylistCreatedEvent{
+		Playlist: event.CreatedPlaylist{
+			Id:      playlistId,
+			Name:    playlistName,
+			Artists: artists,
+			Type:    event.PLAYLIST_TYPE_SPOTIFY,
+		},
+		CreationStatus: eventStatus,
+	}
+	s.playlistCreationNotifier.Notify(event.NewEventWrapper(playlistCreatedEvent))
 }
