@@ -8,7 +8,7 @@ The UI is located in [this other repository](https://github.com/DanielMoraDC/fes
 
 # Local development
 
-Make sure Go 1.24+ and Make are available in your system.
+Make sure Go 1.24+, Make and Docker v2 are available in your system.
 
 We use pre-commit for static code analysis. Make sure hooks are installed (i.e. `brew install pre-commit` in MacOS) before contributing:
 
@@ -26,7 +26,7 @@ make run-tests
 
 # Running the code
 
-## Running the API
+## First time settings
 
 Before you start, make sure you have added the corresponding required variables in `.env`. Make a copy from the template:
 
@@ -52,22 +52,29 @@ make run-local-server
 
 ### Run the app container
 
-To run the app Docker image, first make sure to build the image:
-
-```shell
-make build-image
-```
-
-Then start the container:
+Start the container by typing:
 
 ```shell
 make run-server
 ```
 
-To stop the container:
+To stop the container, run in a separate terminal:
 
 ```shell
 make stop-server
+```
+
+# Supporting services
+
+Running the app locally will also start a set of supporting services/jobs:
+- `pubsub`: local fake of Google Pubsub.
+- `pubsub-consumer`: consumes the messages published into the topics.
+- `pubsub-init`: creates the topics and subscriber group.
+
+In order to see what is being published into pubsub, you can consult the `pubsub-consumer` logs in a separate terminal (note that it takes some time to start):
+
+```shell
+docker logs integration-pubsub-consumer-1 -f
 ```
 
 ## Calling the API
@@ -83,7 +90,7 @@ curl --location 'http://localhost:8080/artists/search?name=<artist>'
 Creating a new playlist with setlists for some artists:
 
 ```shell
-curl -X PUT --location 'http://localhost:8080/playlists' \
+curl -X POST --location 'http://localhost:8080/playlists' \
       --header 'Content-Type: application/json' \
       --data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>"}}'
 ```

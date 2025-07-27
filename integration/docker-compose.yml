@@ -1,0 +1,51 @@
+services:
+
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:${PUSUB_TAG:-emulators}
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:${PUBSUB_PORT} --project=${FESTWRAP_PUBSUB_PROJECT_ID}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PUBSUB_PORT}"]
+      interval: 5s
+      retries: 3
+    ports:
+      - "${PUBSUB_PORT}:${PUBSUB_PORT}"
+    networks:
+      - backing_services
+
+  pubsub-init:
+    image: ${INIT_PUBSUB_IMAGE:-curlimages/curl:latest}
+    depends_on:
+      pubsub:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo "creating playlist creation topic"
+        curl -X PUT "http://pubsub:${PUBSUB_PORT}/v1/projects/${FESTWRAP_PUBSUB_PROJECT_ID}/topics/${FESTWRAP_PUBSUB_CREATE_PLAYLIST_TOPIC}"
+        echo "creating test subscruber"
+        curl -X PUT "http://pubsub:${PUBSUB_PORT}/v1/projects/${FESTWRAP_PUBSUB_PROJECT_ID}/subscriptions/${FESTWRAP_PUBSUB_TEST_SUBSCRIPTION}" \
+          -H "Content-Type: application/json" \
+          -d "{\"topic\": \"projects/${FESTWRAP_PUBSUB_PROJECT_ID}/topics/${FESTWRAP_PUBSUB_CREATE_PLAYLIST_TOPIC}\"}"
+    networks:
+      - backing_services
+
+  pubsub-consumer:
+    image: golang:${GOLANG_VERSION:-1.24}
+    depends_on:
+      pubsub:
+        condition: service_healthy
+    environment:
+      PUBSUB_EMULATOR_HOST: pubsub:${PUBSUB_PORT}
+      FESTWRAP_PUBSUB_PROJECT_ID: ${FESTWRAP_PUBSUB_PROJECT_ID}
+      FESTWRAP_PUBSUB_TEST_SUBSCRIPTION: ${FESTWRAP_PUBSUB_TEST_SUBSCRIPTION}
+    volumes:
+      - $PWD/integration/consumer.go:/consumer.go
+      - $PWD/go.mod:/go.mod
+      - $PWD/go.sum:/go.sum
+    command: go run /consumer.go
+    networks:
+      - backing_services
+
+networks:
+  backing_services:

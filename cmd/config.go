@@ -21,6 +21,9 @@ type Config struct {
 	SpotifyClientId     string
 	SpotifyClientSecret string
 	SpotifyRefreshToken string
+
+	PubsubProjectId     string
+	CreatePlaylistTopic string
 }
 
 func ReadConfig() Config {
@@ -37,6 +40,8 @@ func ReadConfig() Config {
 		SpotifyClientId:            GetEnvStringOrFail("SPOTIFY_CLIENT_ID"),
 		SpotifyClientSecret:        GetEnvStringOrFail("SPOTIFY_CLIENT_SECRET"),
 		SpotifyRefreshToken:        GetEnvStringOrFail("SPOTIFY_REFRESH_TOKEN"),
+		PubsubProjectId:            GetEnvStringOrFail("FESTWRAP_PUBSUB_PROJECT_ID"),
+		CreatePlaylistTopic:        GetEnvStringOrFail("FESTWRAP_PUBSUB_CREATE_PLAYLIST_TOPIC"),
 	}
 }
 
