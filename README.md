@@ -90,7 +90,7 @@ curl --location 'http://localhost:8080/artists/search?name=<artist>'
 Creating a new playlist with setlists for some artists:
 
 ```shell
-curl -X PUT --location 'http://localhost:8080/playlists' \
+curl -X POST --location 'http://localhost:8080/playlists' \
       --header 'Content-Type: application/json' \
       --data '{"artists":[{"name": "<artist_name>"}],"playlist":{"name":"<playlist_name>"}}'
 ```
