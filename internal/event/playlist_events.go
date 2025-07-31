@@ -12,11 +12,15 @@ const (
 	PLAYLIST_TYPE_SPOTIFY PlaylistType = "spotify"
 )
 
+type CreatedPlaylistArtist struct {
+	Name string `json:"name"`
+}
+
 type CreatedPlaylist struct {
-	Id      string       `json:"id"`
-	Name    string       `json:"name"`
-	Artists []string     `json:"artists"`
-	Type    PlaylistType `json:"type"`
+	Id      string                  `json:"id"`
+	Name    string                  `json:"name"`
+	Artists []CreatedPlaylistArtist `json:"artists"`
+	Type    PlaylistType            `json:"type"`
 }
 
 type PlaylistCreatedEvent struct {

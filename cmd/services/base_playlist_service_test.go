@@ -149,11 +149,15 @@ func testPlaylist() playlist.PlaylistDetails {
 }
 
 func playlistCreatedEvent() event.PlaylistCreatedEvent {
+	artists := make([]event.CreatedPlaylistArtist, len(testArtistNames()))
+	for i, name := range testArtistNames() {
+		artists[i] = event.CreatedPlaylistArtist{Name: name}
+	}
 	return event.PlaylistCreatedEvent{
 		Playlist: event.CreatedPlaylist{
 			Id:      playlistId,
 			Name:    playlistName,
-			Artists: testArtistNames(),
+			Artists: artists,
 			Type:    event.PLAYLIST_TYPE_SPOTIFY,
 		},
 		CreationStatus: event.PLAYLIST_CREATED_OK,
