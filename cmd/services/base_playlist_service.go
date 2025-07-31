@@ -157,6 +157,21 @@ func (s *BasePlaylistService) notifyPlaylistCreated(
 	artists []string,
 	status CreationStatus,
 ) {
+	playlistCreatedEvent := s.createPlaylistCreatedEvent(
+		playlistId,
+		playlistName,
+		artists,
+		status,
+	)
+	s.playlistCreationNotifier.Notify(event.NewEventWrapper(playlistCreatedEvent))
+}
+
+func (s *BasePlaylistService) createPlaylistCreatedEvent(
+	playlistId,
+	playlistName string,
+	artists []string,
+	status CreationStatus,
+) event.PlaylistCreatedEvent {
 	var eventStatus event.PlaylistCreationStatus
 	if status == Success {
 		eventStatus = event.PLAYLIST_CREATED_OK
@@ -167,14 +182,18 @@ func (s *BasePlaylistService) notifyPlaylistCreated(
 		s.logger.Error(fmt.Sprintf("unknown playlist creation status: %v. Using ok status as default", status))
 	}
 
-	playlistCreatedEvent := event.PlaylistCreatedEvent{
+	artistArray := make([]event.CreatedPlaylistArtist, len(artists))
+	for i, artist := range artists {
+		artistArray[i] = event.CreatedPlaylistArtist{Name: artist}
+	}
+
+	return event.PlaylistCreatedEvent{
 		Playlist: event.CreatedPlaylist{
 			Id:      playlistId,
 			Name:    playlistName,
-			Artists: artists,
+			Artists: artistArray,
 			Type:    event.PLAYLIST_TYPE_SPOTIFY,
 		},
 		CreationStatus: eventStatus,
 	}
-	s.playlistCreationNotifier.Notify(event.NewEventWrapper(playlistCreatedEvent))
 }
