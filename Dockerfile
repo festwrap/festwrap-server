@@ -1,23 +1,22 @@
 ARG GO_VERSION="1.24.0-bookworm"
-FROM golang:${GO_VERSION}
+FROM golang:${GO_VERSION} AS builder
 
-ARG PORT=8080
-ARG USERNAME=server
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
-
-USER $USERNAME
-
-WORKDIR /app
+WORKDIR /src
 
 COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
 
+# Do not use CGO for statically linked self-contained binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd
+
+# https://labs.iximiuz.com/tutorials/gcr-distroless-container-images
+FROM gcr.io/distroless/static:nonroot
+
+ARG PORT=8080
 EXPOSE $PORT
 
-CMD ["go", "run", "/app/cmd"]
+COPY --from=builder /app/server /server
+
+ENTRYPOINT ["/server"]
