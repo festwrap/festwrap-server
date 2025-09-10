@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/pubsub v1.50.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
