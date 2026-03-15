@@ -1,11 +1,68 @@
 {
-    "tracks": {
-        "href": "https://api.spotify.com/v1/search?query=track%3Agoodbye+artist%3Atoe&type=track&offset=0&limit=5",
-        "items": [],
-        "limit": 5,
-        "next": null,
-        "offset": 0,
-        "previous": null,
-        "total": 0
-    }
+    "data": {
+        "id": "Daylily%20Movements",
+        "type": "searchResults",
+        "attributes": {
+            "trackingId": "42cfef42-1255-4c64-81fb-c8c3aba553fd"
+        },
+        "relationships": {}
+            "albums": {
+                "links": {
+                    "self": "/searchResults/Daylily%20Movements/relationships/albums?countryCode=US"
+                }
+            },
+            "artists": {
+                "links": {
+                    "self": "/searchResults/Daylily%20Movements/relationships/artists?countryCode=US"
+                }
+            },
+            "playlists": {
+                "links": {
+                    "self": "/searchResults/Daylily%20Movements/relationships/playlists?countryCode=US"
+                }
+            },
+            "videos": {
+                "links": {
+                    "self": "/searchResults/Daylily%20Movements/relationships/videos?countryCode=US"
+                }
+            },
+            "topHits": {
+                "links": {
+                    "self": "/searchResults/Daylily%20Movements/relationships/topHits?countryCode=US"
+                }
+            },
+            "tracks": {
+                "data": [
+                    {
+                        "id": "79847751",
+                        "type": "tracks"
+                    },
+                    {
+                        "id": "208571496",
+                        "type": "tracks"
+                    },
+                    {
+                        "id": "335321971",
+                        "type": "tracks"
+                    },
+                    {
+                        "id": "374818595",
+                        "type": "tracks"
+                    },
+                    {
+                        "id": "374752038",
+                        "type": "tracks"
+                    },
+                    {
+                        "id": "415822743",
+                        "type": "tracks"
+                    }
+                ],
+                "links": {
+                    "self": "/searchResults/Daylily%20Movements/relationships/tracks?countryCode=US"
+                }
+            }
+    },
+    "links": {},
+    "included": []
 }
