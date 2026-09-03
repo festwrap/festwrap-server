@@ -1,5 +1,9 @@
 # Overview
 
+> [!WARNING]
+> This repository is archived.
+> Due to the restrictions on API usage for Spotify apps, this is no longer working for Spotify playlists.
+
 The purpose of this application is to facilitate the creation of customized playlist using Golang.
 
 We are relying on Spotify for storing the playlists and Setlistfm for retrieving the top songs from each artist, though we can support other services in the future.
